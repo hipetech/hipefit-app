@@ -1,5 +1,5 @@
-import { Icon } from '@/ui/icon';
-import { TextClassContext } from '@/ui/text';
+import { Icon } from '@/components/ui/icon';
+import { TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 import * as TogglePrimitive from '@rn-primitives/toggle';
 import { cva, type VariantProps } from 'class-variance-authority';

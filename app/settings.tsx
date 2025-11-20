@@ -1,12 +1,14 @@
+import { Image } from "@/components/ui/Image";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Text } from "@/components/ui/text";
 import { settingsOptions } from "@/mock/settings";
-import { Image } from "@/ui/Image";
-import { GlassView } from "expo-glass-effect";
 import { useState } from "react";
 import {
+  Pressable,
   ScrollView,
-  Switch,
-  Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -17,10 +19,10 @@ export default function Settings() {
 
   return (
     <ScrollView className="flex-1 bg-gray-100">
-      <View className="p-5 pt-15">
+      <View className="p-4 pt-12">
       {/* Profile Header */}
-      <View className="mb-8">
-        <GlassView className="flex-row p-5 rounded-2xl items-center" glassEffectStyle="clear">
+      <View className="mb-6">
+        <Card className="flex-row p-4 items-center">
           <Image
             className="w-[70px] h-[70px] rounded-[35px] mr-4"
             source={{
@@ -30,99 +32,101 @@ export default function Settings() {
             transition={200}
           />
           <View className="flex-1">
-            <Text className="text-[22px] font-bold text-gray-900 mb-1">John Doe</Text>
-            <Text className="text-sm text-gray-600 mb-1">john.doe@example.com</Text>
-            <Text className="text-xs text-gray-500">
+            <Text variant="h3" className="mb-1">John Doe</Text>
+            <Text variant="muted" className="mb-1">john.doe@example.com</Text>
+            <Text variant="muted" className="text-xs">
               Intermediate • Member since 2024
             </Text>
           </View>
-        </GlassView>
+        </Card>
       </View>
 
       {/* Settings Sections */}
       {settingsOptions.map((section) => (
-        <View key={section.id} className="mb-6">
-          <Text className="text-base font-semibold text-gray-600 mb-3 uppercase tracking-wide">{section.category}</Text>
-          <GlassView className="rounded-2xl overflow-hidden" glassEffectStyle="clear">
+        <View key={section.id} className="mb-5">
+          <Text variant="small" className="mb-2 uppercase tracking-wide">{section.category}</Text>
+          <Card className="overflow-hidden">
             {section.items.map((item, index) => (
-              <TouchableOpacity
-                key={item.id}
-                className={`flex-row items-center justify-between p-4 bg-white ${
-                  index !== section.items.length - 1 ? "border-b border-gray-100" : ""
-                }`}
-                disabled={
-                  !(item.hasArrow ?? false) && !(item.hasSwitch ?? false)
-                }
-              >
-                <View className="flex-row items-center flex-1">
-                  <Text className="text-2xl mr-3">{item.icon}</Text>
-                  <View className="flex-1">
-                    <Text className="text-base font-medium text-gray-900 mb-0.5">{item.label}</Text>
-                    {item.value !== undefined && (
-                      <Text className="text-sm text-gray-600">{item.value}</Text>
+              <View key={item.id}>
+                <Pressable
+                  className="flex-row items-center justify-between p-3 w-full"
+                  disabled={
+                    !(item.hasArrow ?? false) && !(item.hasSwitch ?? false)
+                  }
+                >
+                  <View className="flex-row items-center flex-1">
+                    <View className="w-12 h-12 items-center justify-center mr-4">
+                      <Text className="text-3xl">{item.icon}</Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-base font-medium mb-0.5">{item.label}</Text>
+                      {item.value !== undefined && (
+                        <Text variant="muted" className="text-sm">{item.value}</Text>
+                      )}
+                    </View>
+                  </View>
+                  <View className="items-center justify-center">
+                    {(item.hasSwitch ?? false) && (
+                      <Switch
+                        checked={
+                          item.id === "notifications"
+                            ? notificationsEnabled
+                            : item.id === "reminders"
+                            ? remindersEnabled
+                            : autoPauseEnabled
+                        }
+                        onCheckedChange={(value) => {
+                          if (item.id === "notifications") {
+                            setNotificationsEnabled(value);
+                          } else if (item.id === "reminders") {
+                            setRemindersEnabled(value);
+                          } else {
+                            setAutoPauseEnabled(value);
+                          }
+                        }}
+                      />
+                    )}
+                    {(item.hasArrow ?? false) && (
+                      <Text className="text-2xl text-gray-500 font-light">›</Text>
                     )}
                   </View>
-                </View>
-                <View className="items-center justify-center">
-                  {(item.hasSwitch ?? false) && (
-                    <Switch
-                      value={
-                        item.id === "notifications"
-                          ? notificationsEnabled
-                          : item.id === "reminders"
-                          ? remindersEnabled
-                          : autoPauseEnabled
-                      }
-                      onValueChange={(value) => {
-                        if (item.id === "notifications") {
-                          setNotificationsEnabled(value);
-                        } else if (item.id === "reminders") {
-                          setRemindersEnabled(value);
-                        } else {
-                          setAutoPauseEnabled(value);
-                        }
-                      }}
-                      trackColor={{ false: "#767577", true: "#007AFF" }}
-                      thumbColor="#fff"
-                    />
-                  )}
-                  {(item.hasArrow ?? false) && (
-                    <Text className="text-2xl text-gray-500 font-light">›</Text>
-                  )}
-                </View>
-              </TouchableOpacity>
+                </Pressable>
+                {index !== section.items.length - 1 && (
+                  <Separator className="mx-3" />
+                )}
+              </View>
             ))}
-          </GlassView>
+          </Card>
         </View>
       ))}
 
       {/* Stats Summary */}
-      <View className="mb-6">
-        <Text className="text-base font-semibold text-gray-600 mb-3 uppercase tracking-wide">Your Stats</Text>
-        <GlassView className="rounded-2xl p-5" glassEffectStyle="regular">
-          <View className="flex-row justify-around items-center">
+      <View className="mb-5">
+        <Text variant="small" className="mb-2 uppercase tracking-wide">Your Stats</Text>
+        <Card className="p-4">
+          <CardContent className="flex-row justify-around items-center p-0">
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-bold text-gray-900 mb-1">156</Text>
-              <Text className="text-xs text-gray-600 text-center">Total Workouts</Text>
+              <Text className="text-2xl font-bold mb-1">156</Text>
+              <Text variant="muted" className="text-xs text-center">Total Workouts</Text>
             </View>
-            <View className="w-px h-10 bg-gray-300" />
+            <Separator orientation="vertical" className="h-10" />
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-bold text-gray-900 mb-1">42h</Text>
-              <Text className="text-xs text-gray-600 text-center">Time Exercised</Text>
+              <Text className="text-2xl font-bold mb-1">42h</Text>
+              <Text variant="muted" className="text-xs text-center">Time Exercised</Text>
             </View>
-            <View className="w-px h-10 bg-gray-300" />
+            <Separator orientation="vertical" className="h-10" />
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-bold text-gray-900 mb-1">8.2k</Text>
-              <Text className="text-xs text-gray-600 text-center">Calories Burned</Text>
+              <Text className="text-2xl font-bold mb-1">8.2k</Text>
+              <Text variant="muted" className="text-xs text-center">Calories Burned</Text>
             </View>
-          </View>
-        </GlassView>
+          </CardContent>
+        </Card>
       </View>
 
       {/* Logout Button */}
-      <TouchableOpacity className="bg-red-500 p-4 rounded-xl items-center mt-5 mb-10">
+      <Button variant="destructive" className="mt-4 mb-8">
         <Text className="text-white text-base font-semibold">Log Out</Text>
-      </TouchableOpacity>
+      </Button>
       </View>
     </ScrollView>
   );

@@ -1,19 +1,20 @@
-import { Image } from "@/ui/Image";
+import { Image } from "@/components/ui/Image";
+import { Button } from "@/components/ui/button";
+import { CardContent } from "@/components/ui/card";
+import { Text } from "@/components/ui/text";
 import {
   ScrollView,
-  Text,
-  TouchableOpacity,
   View,
 } from "react-native";
-import { exerciseData, muscleGroups } from "../mock/exercises";
+import { exerciseData, muscleGroups } from "@/mock/exercises";
 
 export default function Exercises() {
   return (
     <ScrollView className="flex-1 bg-gray-100">
       <View className="p-5 pt-15">
       <View className="mb-6">
-        <Text className="text-3xl font-bold text-gray-900 mb-2">Exercises</Text>
-        <Text className="text-base text-gray-600">Build your exercise library</Text>
+        <Text variant="h1" className="mb-2">Exercises</Text>
+        <Text variant="muted">Build your exercise library</Text>
       </View>
 
       {/* Muscle Group Filter */}
@@ -24,9 +25,9 @@ export default function Exercises() {
       >
         <View className="flex-row gap-3">
         {muscleGroups.map((group) => (
-          <TouchableOpacity key={group} className="px-5 py-2.5 rounded-2xl bg-white mr-2">
-            <Text className="text-sm font-semibold text-gray-900">{group}</Text>
-          </TouchableOpacity>
+          <Button key={group} variant="outline" className="mr-2">
+            <Text variant="small">{group}</Text>
+          </Button>
         ))}
         </View>
       </ScrollView>
@@ -34,33 +35,37 @@ export default function Exercises() {
       {/* Exercise List */}
       <View className="gap-4">
         {exerciseData.map((exercise) => (
-          <TouchableOpacity key={exercise.id} className="flex-row bg-white rounded-2xl overflow-hidden shadow-sm">
+          <Button
+            key={exercise.id}
+            variant="ghost"
+            className="flex-row bg-white rounded-2xl overflow-hidden shadow-sm p-0 h-auto"
+          >
             <Image
               className="w-[120px] h-[140px]"
               source={{ uri: exercise.image }}
               contentFit="cover"
               transition={200}
             />
-            <View className="flex-1 p-4">
-              <Text className="text-xl font-bold text-gray-900 mb-3">{exercise.name}</Text>
+            <CardContent className="flex-1 p-4">
+              <Text variant="h4" className="mb-3">{exercise.name}</Text>
               <View className="gap-2">
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-sm text-gray-600 font-medium">Muscle Group:</Text>
-                  <Text className="text-sm text-gray-900 font-semibold">{exercise.muscleGroup}</Text>
+                  <Text variant="muted" className="font-medium">Muscle Group:</Text>
+                  <Text variant="small" className="font-semibold">{exercise.muscleGroup}</Text>
                 </View>
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-sm text-gray-600 font-medium">Difficulty:</Text>
-                  <Text className="text-sm text-blue-500 font-semibold">
+                  <Text variant="muted" className="font-medium">Difficulty:</Text>
+                  <Text className="text-blue-500 font-semibold">
                     {exercise.difficulty}
                   </Text>
                 </View>
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-sm text-gray-600 font-medium">Equipment:</Text>
-                  <Text className="text-sm text-gray-900 font-semibold">{exercise.equipment}</Text>
+                  <Text variant="muted" className="font-medium">Equipment:</Text>
+                  <Text variant="small" className="font-semibold">{exercise.equipment}</Text>
                 </View>
               </View>
-            </View>
-          </TouchableOpacity>
+            </CardContent>
+          </Button>
         ))}
       </View>
       </View>

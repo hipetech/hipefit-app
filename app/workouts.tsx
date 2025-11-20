@@ -1,19 +1,21 @@
-import { Image } from "@/ui/Image";
+import { Image } from "@/components/ui/Image";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { CardContent } from "@/components/ui/card";
+import { Text } from "@/components/ui/text";
 import {
   ScrollView,
-  Text,
-  TouchableOpacity,
   View,
 } from "react-native";
-import { categories, workoutData } from "../mock/workouts";
+import { categories, workoutData } from "@/mock/workouts";
 
 export default function Workouts() {
   return (
     <ScrollView className="flex-1 bg-gray-100">
       <View className="p-5 pt-15">
       <View className="mb-6">
-        <Text className="text-3xl font-bold text-gray-900 mb-2">Workouts</Text>
-        <Text className="text-base text-gray-600">Choose your next challenge</Text>
+        <Text variant="h1" className="mb-2">Workouts</Text>
+        <Text variant="muted">Choose your next challenge</Text>
       </View>
 
       {/* Category Filter */}
@@ -24,9 +26,9 @@ export default function Workouts() {
       >
         <View className="flex-row gap-3">
         {categories.map((category) => (
-          <TouchableOpacity key={category} className="px-5 py-2.5 rounded-2xl bg-white mr-2">
-            <Text className="text-sm font-semibold text-gray-900">{category}</Text>
-          </TouchableOpacity>
+          <Button key={category} variant="outline" className="mr-2">
+            <Text variant="small">{category}</Text>
+          </Button>
         ))}
         </View>
       </ScrollView>
@@ -34,30 +36,34 @@ export default function Workouts() {
       {/* Workout List */}
       <View className="gap-4">
         {workoutData.map((workout) => (
-          <TouchableOpacity key={workout.id} className="flex-row bg-white rounded-2xl overflow-hidden shadow-sm">
+          <Button
+            key={workout.id}
+            variant="ghost"
+            className="flex-row bg-white rounded-2xl overflow-hidden shadow-sm p-0 h-auto"
+          >
             <Image
               className="w-[120px] h-[120px]"
               source={{ uri: workout.image }}
               contentFit="cover"
               transition={200}
             />
-            <View className="flex-1 p-4 justify-between">
+            <CardContent className="flex-1 p-4 justify-between">
               <View className="flex-row justify-between items-start mb-2">
-                <Text className="text-lg font-semibold text-gray-900 flex-1 mr-2">{workout.title}</Text>
-                <View className="bg-blue-500 px-2 py-1 rounded-md">
-                  <Text className="text-[10px] font-semibold text-white uppercase">
+                <Text className="text-lg font-semibold flex-1 mr-2">{workout.title}</Text>
+                <Badge>
+                  <Text className="text-[10px] font-semibold uppercase">
                     {workout.category}
                   </Text>
-                </View>
+                </Badge>
               </View>
               <View className="flex-row gap-4 items-center">
-                <Text className="text-sm text-gray-600">⏱ {workout.duration}</Text>
-                <Text className="text-sm text-blue-500 font-semibold">
+                <Text variant="muted">⏱ {workout.duration}</Text>
+                <Text className="text-blue-500 font-semibold">
                   {workout.difficulty}
                 </Text>
               </View>
-            </View>
-          </TouchableOpacity>
+            </CardContent>
+          </Button>
         ))}
       </View>
       </View>
