@@ -10,12 +10,25 @@ import { Platform } from "react-native";
 export default function TabLayout() {
   return (
     <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <Label>Home</Label>
+      <NativeTabs.Trigger name="workouts">
+        <Label>Workouts</Label>
         {Platform.select({
-          ios: <Icon sf="house.fill" />,
+          ios: <Icon sf="dumbbell.fill" />,
           android: (
-            <Icon src={<VectorIcon family={MaterialIcons} name="home" />} />
+            <Icon
+              src={<VectorIcon family={MaterialIcons} name="fitness-center" />}
+            />
+          ),
+        })}
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="exercises">
+        <Label>Exercises</Label>
+        {Platform.select({
+          ios: <Icon sf="figure.run" />,
+          android: (
+            <Icon
+              src={<VectorIcon family={MaterialIcons} name="directions-run" />}
+            />
           ),
         })}
       </NativeTabs.Trigger>
