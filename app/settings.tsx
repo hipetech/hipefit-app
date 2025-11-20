@@ -1,15 +1,14 @@
+import { settingsOptions } from "@/mock/settings";
+import { Image } from "@/ui/Image";
 import { GlassView } from "expo-glass-effect";
-import { Image } from "expo-image";
 import { useState } from "react";
 import {
   ScrollView,
-  StyleSheet,
   Switch,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { settingsOptions } from "@/mock/settings";
 
 export default function Settings() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -17,25 +16,23 @@ export default function Settings() {
   const [autoPauseEnabled, setAutoPauseEnabled] = useState(false);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
+    <ScrollView className="flex-1 bg-gray-100">
+      <View className="p-5 pt-15">
       {/* Profile Header */}
-      <View style={styles.profileSection}>
-        <GlassView style={styles.profileCard} glassEffectStyle="clear">
+      <View className="mb-8">
+        <GlassView className="flex-row p-5 rounded-2xl items-center" glassEffectStyle="clear">
           <Image
-            style={styles.avatar}
+            className="w-[70px] h-[70px] rounded-[35px] mr-4"
             source={{
               uri: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
             }}
             contentFit="cover"
             transition={200}
           />
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>John Doe</Text>
-            <Text style={styles.profileEmail}>john.doe@example.com</Text>
-            <Text style={styles.profileLevel}>
+          <View className="flex-1">
+            <Text className="text-[22px] font-bold text-gray-900 mb-1">John Doe</Text>
+            <Text className="text-sm text-gray-600 mb-1">john.doe@example.com</Text>
+            <Text className="text-xs text-gray-500">
               Intermediate • Member since 2024
             </Text>
           </View>
@@ -44,31 +41,29 @@ export default function Settings() {
 
       {/* Settings Sections */}
       {settingsOptions.map((section) => (
-        <View key={section.id} style={styles.section}>
-          <Text style={styles.sectionTitle}>{section.category}</Text>
-          <GlassView style={styles.settingsCard} glassEffectStyle="clear">
+        <View key={section.id} className="mb-6">
+          <Text className="text-base font-semibold text-gray-600 mb-3 uppercase tracking-wide">{section.category}</Text>
+          <GlassView className="rounded-2xl overflow-hidden" glassEffectStyle="clear">
             {section.items.map((item, index) => (
               <TouchableOpacity
                 key={item.id}
-                style={[
-                  styles.settingItem,
-                  index !== section.items.length - 1 &&
-                    styles.settingItemBorder,
-                ]}
+                className={`flex-row items-center justify-between p-4 bg-white ${
+                  index !== section.items.length - 1 ? "border-b border-gray-100" : ""
+                }`}
                 disabled={
                   !(item.hasArrow ?? false) && !(item.hasSwitch ?? false)
                 }
               >
-                <View style={styles.settingLeft}>
-                  <Text style={styles.settingIcon}>{item.icon}</Text>
-                  <View style={styles.settingTextContainer}>
-                    <Text style={styles.settingLabel}>{item.label}</Text>
+                <View className="flex-row items-center flex-1">
+                  <Text className="text-2xl mr-3">{item.icon}</Text>
+                  <View className="flex-1">
+                    <Text className="text-base font-medium text-gray-900 mb-0.5">{item.label}</Text>
                     {item.value !== undefined && (
-                      <Text style={styles.settingValue}>{item.value}</Text>
+                      <Text className="text-sm text-gray-600">{item.value}</Text>
                     )}
                   </View>
                 </View>
-                <View style={styles.settingRight}>
+                <View className="items-center justify-center">
                   {(item.hasSwitch ?? false) && (
                     <Switch
                       value={
@@ -92,7 +87,7 @@ export default function Settings() {
                     />
                   )}
                   {(item.hasArrow ?? false) && (
-                    <Text style={styles.arrow}>›</Text>
+                    <Text className="text-2xl text-gray-500 font-light">›</Text>
                   )}
                 </View>
               </TouchableOpacity>
@@ -102,175 +97,33 @@ export default function Settings() {
       ))}
 
       {/* Stats Summary */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your Stats</Text>
-        <GlassView style={styles.statsCard} glassEffectStyle="regular">
-          <View style={styles.statRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>156</Text>
-              <Text style={styles.statDescription}>Total Workouts</Text>
+      <View className="mb-6">
+        <Text className="text-base font-semibold text-gray-600 mb-3 uppercase tracking-wide">Your Stats</Text>
+        <GlassView className="rounded-2xl p-5" glassEffectStyle="regular">
+          <View className="flex-row justify-around items-center">
+            <View className="flex-1 items-center">
+              <Text className="text-2xl font-bold text-gray-900 mb-1">156</Text>
+              <Text className="text-xs text-gray-600 text-center">Total Workouts</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>42h</Text>
-              <Text style={styles.statDescription}>Time Exercised</Text>
+            <View className="w-px h-10 bg-gray-300" />
+            <View className="flex-1 items-center">
+              <Text className="text-2xl font-bold text-gray-900 mb-1">42h</Text>
+              <Text className="text-xs text-gray-600 text-center">Time Exercised</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>8.2k</Text>
-              <Text style={styles.statDescription}>Calories Burned</Text>
+            <View className="w-px h-10 bg-gray-300" />
+            <View className="flex-1 items-center">
+              <Text className="text-2xl font-bold text-gray-900 mb-1">8.2k</Text>
+              <Text className="text-xs text-gray-600 text-center">Calories Burned</Text>
             </View>
           </View>
         </GlassView>
       </View>
 
       {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton}>
-        <Text style={styles.logoutText}>Log Out</Text>
+      <TouchableOpacity className="bg-red-500 p-4 rounded-xl items-center mt-5 mb-10">
+        <Text className="text-white text-base font-semibold">Log Out</Text>
       </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  contentContainer: {
-    padding: 20,
-    paddingTop: 60,
-  },
-  profileSection: {
-    marginBottom: 30,
-  },
-  profileCard: {
-    flexDirection: "row",
-    padding: 20,
-    borderRadius: 20,
-    alignItems: "center",
-  },
-  avatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    marginRight: 16,
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    marginBottom: 4,
-  },
-  profileEmail: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 4,
-  },
-  profileLevel: {
-    fontSize: 12,
-    color: "#999",
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  settingsCard: {
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  settingItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    backgroundColor: "#fff",
-  },
-  settingItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  settingLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  settingIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  settingTextContainer: {
-    flex: 1,
-  },
-  settingLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#1a1a1a",
-    marginBottom: 2,
-  },
-  settingValue: {
-    fontSize: 14,
-    color: "#666",
-  },
-  settingRight: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  arrow: {
-    fontSize: 24,
-    color: "#999",
-    fontWeight: "300",
-  },
-  statsCard: {
-    borderRadius: 16,
-    padding: 20,
-  },
-  statRow: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: "#e0e0e0",
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    marginBottom: 4,
-  },
-  statDescription: {
-    fontSize: 12,
-    color: "#666",
-    textAlign: "center",
-  },
-  logoutButton: {
-    backgroundColor: "#FF3B30",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 20,
-    marginBottom: 40,
-  },
-  logoutText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});

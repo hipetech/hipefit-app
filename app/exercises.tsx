@@ -1,7 +1,6 @@
-import { Image } from "expo-image";
+import { Image } from "@/ui/Image";
 import {
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -10,152 +9,61 @@ import { exerciseData, muscleGroups } from "../mock/exercises";
 
 export default function Exercises() {
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Exercises</Text>
-        <Text style={styles.subtitle}>Build your exercise library</Text>
+    <ScrollView className="flex-1 bg-gray-100">
+      <View className="p-5 pt-15">
+      <View className="mb-6">
+        <Text className="text-3xl font-bold text-gray-900 mb-2">Exercises</Text>
+        <Text className="text-base text-gray-600">Build your exercise library</Text>
       </View>
 
       {/* Muscle Group Filter */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={styles.filterContainer}
-        contentContainerStyle={styles.filterContent}
+        className="mb-6"
       >
+        <View className="flex-row gap-3">
         {muscleGroups.map((group) => (
-          <TouchableOpacity key={group} style={styles.filterChip}>
-            <Text style={styles.filterText}>{group}</Text>
+          <TouchableOpacity key={group} className="px-5 py-2.5 rounded-2xl bg-white mr-2">
+            <Text className="text-sm font-semibold text-gray-900">{group}</Text>
           </TouchableOpacity>
         ))}
+        </View>
       </ScrollView>
 
       {/* Exercise List */}
-      <View style={styles.exercisesList}>
+      <View className="gap-4">
         {exerciseData.map((exercise) => (
-          <TouchableOpacity key={exercise.id} style={styles.exerciseCard}>
+          <TouchableOpacity key={exercise.id} className="flex-row bg-white rounded-2xl overflow-hidden shadow-sm">
             <Image
-              style={styles.exerciseImage}
+              className="w-[120px] h-[140px]"
               source={{ uri: exercise.image }}
               contentFit="cover"
               transition={200}
             />
-            <View style={styles.exerciseInfo}>
-              <Text style={styles.exerciseName}>{exercise.name}</Text>
-              <View style={styles.exerciseDetails}>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Muscle Group:</Text>
-                  <Text style={styles.detailValue}>{exercise.muscleGroup}</Text>
+            <View className="flex-1 p-4">
+              <Text className="text-xl font-bold text-gray-900 mb-3">{exercise.name}</Text>
+              <View className="gap-2">
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-sm text-gray-600 font-medium">Muscle Group:</Text>
+                  <Text className="text-sm text-gray-900 font-semibold">{exercise.muscleGroup}</Text>
                 </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Difficulty:</Text>
-                  <Text style={[styles.detailValue, styles.difficultyText]}>
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-sm text-gray-600 font-medium">Difficulty:</Text>
+                  <Text className="text-sm text-blue-500 font-semibold">
                     {exercise.difficulty}
                   </Text>
                 </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Equipment:</Text>
-                  <Text style={styles.detailValue}>{exercise.equipment}</Text>
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-sm text-gray-600 font-medium">Equipment:</Text>
+                  <Text className="text-sm text-gray-900 font-semibold">{exercise.equipment}</Text>
                 </View>
               </View>
             </View>
           </TouchableOpacity>
         ))}
       </View>
+      </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  contentContainer: {
-    padding: 20,
-    paddingTop: 60,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-  },
-  filterContainer: {
-    marginBottom: 24,
-  },
-  filterContent: {
-    gap: 12,
-  },
-  filterChip: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: "#fff",
-    marginRight: 8,
-  },
-  filterText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1a1a1a",
-  },
-  exercisesList: {
-    gap: 16,
-  },
-  exerciseCard: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  exerciseImage: {
-    width: 120,
-    height: 140,
-  },
-  exerciseInfo: {
-    flex: 1,
-    padding: 16,
-  },
-  exerciseName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    marginBottom: 12,
-  },
-  exerciseDetails: {
-    gap: 8,
-  },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
-  },
-  detailValue: {
-    fontSize: 14,
-    color: "#1a1a1a",
-    fontWeight: "600",
-  },
-  difficultyText: {
-    color: "#007AFF",
-  },
-});

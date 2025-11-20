@@ -1,7 +1,6 @@
-import { Image } from "expo-image";
+import { Image } from "@/ui/Image";
 import {
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -10,51 +9,50 @@ import { categories, workoutData } from "../mock/workouts";
 
 export default function Workouts() {
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Workouts</Text>
-        <Text style={styles.subtitle}>Choose your next challenge</Text>
+    <ScrollView className="flex-1 bg-gray-100">
+      <View className="p-5 pt-15">
+      <View className="mb-6">
+        <Text className="text-3xl font-bold text-gray-900 mb-2">Workouts</Text>
+        <Text className="text-base text-gray-600">Choose your next challenge</Text>
       </View>
 
       {/* Category Filter */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={styles.categoryContainer}
-        contentContainerStyle={styles.categoryContent}
+        className="mb-6"
       >
+        <View className="flex-row gap-3">
         {categories.map((category) => (
-          <TouchableOpacity key={category} style={styles.categoryChip}>
-            <Text style={styles.categoryText}>{category}</Text>
+          <TouchableOpacity key={category} className="px-5 py-2.5 rounded-2xl bg-white mr-2">
+            <Text className="text-sm font-semibold text-gray-900">{category}</Text>
           </TouchableOpacity>
         ))}
+        </View>
       </ScrollView>
 
       {/* Workout List */}
-      <View style={styles.workoutsList}>
+      <View className="gap-4">
         {workoutData.map((workout) => (
-          <TouchableOpacity key={workout.id} style={styles.workoutCard}>
+          <TouchableOpacity key={workout.id} className="flex-row bg-white rounded-2xl overflow-hidden shadow-sm">
             <Image
-              style={styles.workoutImage}
+              className="w-[120px] h-[120px]"
               source={{ uri: workout.image }}
               contentFit="cover"
               transition={200}
             />
-            <View style={styles.workoutInfo}>
-              <View style={styles.workoutHeader}>
-                <Text style={styles.workoutTitle}>{workout.title}</Text>
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryBadgeText}>
+            <View className="flex-1 p-4 justify-between">
+              <View className="flex-row justify-between items-start mb-2">
+                <Text className="text-lg font-semibold text-gray-900 flex-1 mr-2">{workout.title}</Text>
+                <View className="bg-blue-500 px-2 py-1 rounded-md">
+                  <Text className="text-[10px] font-semibold text-white uppercase">
                     {workout.category}
                   </Text>
                 </View>
               </View>
-              <View style={styles.workoutMeta}>
-                <Text style={styles.workoutDuration}>⏱ {workout.duration}</Text>
-                <Text style={styles.workoutDifficulty}>
+              <View className="flex-row gap-4 items-center">
+                <Text className="text-sm text-gray-600">⏱ {workout.duration}</Text>
+                <Text className="text-sm text-blue-500 font-semibold">
                   {workout.difficulty}
                 </Text>
               </View>
@@ -62,110 +60,7 @@ export default function Workouts() {
           </TouchableOpacity>
         ))}
       </View>
+      </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  contentContainer: {
-    padding: 20,
-    paddingTop: 60,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-  },
-  categoryContainer: {
-    marginBottom: 24,
-  },
-  categoryContent: {
-    gap: 12,
-  },
-  categoryChip: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: "#fff",
-    marginRight: 8,
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1a1a1a",
-  },
-  workoutsList: {
-    gap: 16,
-  },
-  workoutCard: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  workoutImage: {
-    width: 120,
-    height: 120,
-  },
-  workoutInfo: {
-    flex: 1,
-    padding: 16,
-    justifyContent: "space-between",
-  },
-  workoutHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-  workoutTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1a1a1a",
-    flex: 1,
-    marginRight: 8,
-  },
-  categoryBadge: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  categoryBadgeText: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: "#fff",
-    textTransform: "uppercase",
-  },
-  workoutMeta: {
-    flexDirection: "row",
-    gap: 16,
-    alignItems: "center",
-  },
-  workoutDuration: {
-    fontSize: 14,
-    color: "#666",
-  },
-  workoutDifficulty: {
-    fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "600",
-  },
-});
