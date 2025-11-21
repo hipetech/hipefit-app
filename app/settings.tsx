@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,11 +11,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+} from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -21,45 +24,43 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Text } from "@/components/ui/text";
-import { settingsOptions } from "@/mock/settings";
-import { useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Text } from '@/components/ui/text';
+import { settingsOptions } from '@/mock/settings';
 
 export default function Settings() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [autoPauseEnabled, setAutoPauseEnabled] = useState(false);
-  const [activeTab, setActiveTab] = useState("account");
+  const [activeTab, setActiveTab] = useState('account');
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
-  const [editName, setEditName] = useState("John Doe");
-  const [editEmail, setEditEmail] = useState("john.doe@example.com");
+  const [editName, setEditName] = useState('John Doe');
+  const [editEmail, setEditEmail] = useState('john.doe@example.com');
   const [selectedUnit, setSelectedUnit] = useState({
-    value: "Metric",
-    label: "Metric",
+    value: 'Metric',
+    label: 'Metric',
   });
   const [selectedTheme, setSelectedTheme] = useState({
-    value: "System",
-    label: "System",
+    value: 'System',
+    label: 'System',
   });
   const [selectedLanguage, setSelectedLanguage] = useState({
-    value: "English",
-    label: "English",
+    value: 'English',
+    label: 'English',
   });
 
   return (
@@ -69,10 +70,10 @@ export default function Settings() {
         <View className="mb-6">
           <Card className="p-4">
             <View className="flex-row items-center">
-              <Avatar className="w-[70px] h-[70px] mr-4" alt="Profile Picture">
+              <Avatar className="mr-4 h-[70px] w-[70px]" alt="Profile Picture">
                 <AvatarImage
                   source={{
-                    uri: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+                    uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
                   }}
                 />
                 <AvatarFallback>
@@ -168,7 +169,7 @@ export default function Settings() {
           <TabsContent value="account" className="mt-4">
             <View className="gap-5">
               {settingsOptions
-                .filter((section) => section.category === "Account")
+                .filter((section) => section.category === 'Account')
                 .map((section) => (
                   <View key={section.id}>
                     <Text
@@ -181,18 +182,18 @@ export default function Settings() {
                       {section.items.map((item, index) => (
                         <View key={item.id}>
                           <Pressable
-                            className="flex-row items-center justify-between p-3 w-full"
+                            className="w-full flex-row items-center justify-between p-3"
                             disabled={
                               !(item.hasArrow ?? false) &&
                               !(item.hasSwitch ?? false)
                             }
                           >
-                            <View className="flex-row items-center flex-1">
-                              <View className="w-12 h-12 items-center justify-center mr-4">
+                            <View className="flex-1 flex-row items-center">
+                              <View className="mr-4 h-12 w-12 items-center justify-center">
                                 <Text className="text-3xl">{item.icon}</Text>
                               </View>
                               <View className="flex-1">
-                                <Text className="text-base font-medium mb-0.5">
+                                <Text className="mb-0.5 text-base font-medium">
                                   {item.label}
                                 </Text>
                                 {item.value !== undefined && (
@@ -206,19 +207,19 @@ export default function Settings() {
                               {(item.hasSwitch ?? false) && (
                                 <Switch
                                   checked={
-                                    item.id === "notifications"
+                                    item.id === 'notifications'
                                       ? notificationsEnabled
                                       : notificationsEnabled
                                   }
                                   onCheckedChange={(value) => {
-                                    if (item.id === "notifications") {
+                                    if (item.id === 'notifications') {
                                       setNotificationsEnabled(value);
                                     }
                                   }}
                                 />
                               )}
                               {(item.hasArrow ?? false) && (
-                                <Text className="text-2xl text-gray-500 font-light">
+                                <Text className="text-2xl font-light text-gray-500">
                                   ›
                                 </Text>
                               )}
@@ -238,7 +239,7 @@ export default function Settings() {
           <TabsContent value="workout" className="mt-4">
             <View className="gap-5">
               {settingsOptions
-                .filter((section) => section.category === "Workout")
+                .filter((section) => section.category === 'Workout')
                 .map((section) => (
                   <View key={section.id}>
                     <Text
@@ -251,14 +252,14 @@ export default function Settings() {
                       {section.items.map((item, index) => (
                         <View key={item.id}>
                           <Pressable
-                            className="flex-row items-center justify-between p-3 w-full"
+                            className="w-full flex-row items-center justify-between p-3"
                             disabled={
                               !(item.hasArrow ?? false) &&
                               !(item.hasSwitch ?? false)
                             }
                           >
-                            <View className="flex-row items-center flex-1">
-                              <View className="w-12 h-12 items-center justify-center mr-4">
+                            <View className="flex-1 flex-row items-center">
+                              <View className="mr-4 h-12 w-12 items-center justify-center">
                                 <Text className="text-3xl">{item.icon}</Text>
                               </View>
                             </View>
@@ -266,12 +267,12 @@ export default function Settings() {
                               {(item.hasSwitch ?? false) && (
                                 <Switch
                                   checked={
-                                    item.id === "reminders"
+                                    item.id === 'reminders'
                                       ? remindersEnabled
                                       : autoPauseEnabled
                                   }
                                   onCheckedChange={(value) => {
-                                    if (item.id === "reminders") {
+                                    if (item.id === 'reminders') {
                                       setRemindersEnabled(value);
                                     } else {
                                       setAutoPauseEnabled(value);
@@ -280,8 +281,8 @@ export default function Settings() {
                                 />
                               )}
                               {(item.hasArrow ?? false) &&
-                                item.id !== "units" && (
-                                  <Text className="text-2xl text-gray-500 font-light">
+                                item.id !== 'units' && (
+                                  <Text className="text-2xl font-light text-gray-500">
                                     ›
                                   </Text>
                                 )}
@@ -301,7 +302,7 @@ export default function Settings() {
           <TabsContent value="app" className="mt-4">
             <View className="gap-5">
               {settingsOptions
-                .filter((section) => section.category === "App")
+                .filter((section) => section.category === 'App')
                 .map((section) => (
                   <View key={section.id}>
                     <Text
@@ -314,23 +315,23 @@ export default function Settings() {
                       {section.items.map((item, index) => (
                         <View key={item.id}>
                           <Pressable
-                            className="flex-row items-center justify-between p-3 w-full"
+                            className="w-full flex-row items-center justify-between p-3"
                             disabled={!(item.hasArrow ?? false)}
                           >
-                            <View className="flex-row items-center flex-1">
-                              <View className="w-12 h-12 items-center justify-center mr-4">
+                            <View className="flex-1 flex-row items-center">
+                              <View className="mr-4 h-12 w-12 items-center justify-center">
                                 <Text className="text-3xl">{item.icon}</Text>
                               </View>
                               <View className="flex-1">
-                                <Text className="text-base font-medium mb-0.5">
+                                <Text className="mb-0.5 text-base font-medium">
                                   {item.label}
                                 </Text>
-                                {item.id === "theme" && (
+                                {item.id === 'theme' && (
                                   <Select
                                     value={selectedTheme}
                                     onValueChange={setSelectedTheme}
                                   >
-                                    <SelectTrigger className="w-[120px] h-8 mt-1">
+                                    <SelectTrigger className="mt-1 h-8 w-[120px]">
                                       <SelectValue placeholder="Select theme" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -346,12 +347,12 @@ export default function Settings() {
                                     </SelectContent>
                                   </Select>
                                 )}
-                                {item.id === "language" && (
+                                {item.id === 'language' && (
                                   <Select
                                     value={selectedLanguage}
                                     onValueChange={setSelectedLanguage}
                                   >
-                                    <SelectTrigger className="w-[120px] h-8 mt-1">
+                                    <SelectTrigger className="mt-1 h-8 w-[120px]">
                                       <SelectValue placeholder="Select language" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -377,9 +378,9 @@ export default function Settings() {
                             </View>
                             <View className="items-center justify-center">
                               {(item.hasArrow ?? false) &&
-                                item.id !== "theme" &&
-                                item.id !== "language" && (
-                                  <Text className="text-2xl text-gray-500 font-light">
+                                item.id !== 'theme' &&
+                                item.id !== 'language' && (
+                                  <Text className="text-2xl font-light text-gray-500">
                                     ›
                                   </Text>
                                 )}
@@ -403,33 +404,33 @@ export default function Settings() {
             Your Stats
           </Text>
           <Card className="p-4">
-            <CardContent className="flex-row justify-around items-center p-0">
+            <CardContent className="flex-row items-center justify-around p-0">
               <View className="flex-1 items-center">
-                <Text className="text-2xl font-bold mb-1">156</Text>
-                <Text variant="muted" className="text-xs text-center">
+                <Text className="mb-1 text-2xl font-bold">156</Text>
+                <Text variant="muted" className="text-center text-xs">
                   Total Workouts
                 </Text>
-                <View className="w-full mt-2">
+                <View className="mt-2 w-full">
                   <Progress value={78} />
                 </View>
               </View>
               <Separator orientation="vertical" className="h-10" />
               <View className="flex-1 items-center">
-                <Text className="text-2xl font-bold mb-1">42h</Text>
-                <Text variant="muted" className="text-xs text-center">
+                <Text className="mb-1 text-2xl font-bold">42h</Text>
+                <Text variant="muted" className="text-center text-xs">
                   Time Exercised
                 </Text>
-                <View className="w-full mt-2">
+                <View className="mt-2 w-full">
                   <Progress value={65} />
                 </View>
               </View>
               <Separator orientation="vertical" className="h-10" />
               <View className="flex-1 items-center">
-                <Text className="text-2xl font-bold mb-1">8.2k</Text>
-                <Text variant="muted" className="text-xs text-center">
+                <Text className="mb-1 text-2xl font-bold">8.2k</Text>
+                <Text variant="muted" className="text-center text-xs">
                   Calories Burned
                 </Text>
-                <View className="w-full mt-2">
+                <View className="mt-2 w-full">
                   <Progress value={82} />
                 </View>
               </View>
@@ -440,8 +441,8 @@ export default function Settings() {
         {/* Logout Button with Alert Dialog */}
         <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" className="mt-4 mb-8">
-              <Text className="text-white text-base font-semibold">
+            <Button variant="destructive" className="mb-8 mt-4">
+              <Text className="text-base font-semibold text-white">
                 Log Out
               </Text>
             </Button>

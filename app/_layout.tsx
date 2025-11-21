@@ -1,15 +1,15 @@
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { Platform } from 'react-native';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { PortalHost } from '@rn-primitives/portal';
 import {
   Icon,
   Label,
   NativeTabs,
   VectorIcon,
-} from "expo-router/unstable-native-tabs";
-import { Platform } from "react-native";
-import {PortalHost} from "@rn-primitives/portal"
-import { SafeAreaProvider } from "react-native-safe-area-context";
+} from 'expo-router/unstable-native-tabs';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import "../global.css";
+import '../global.css';
 
 export default function TabLayout() {
   return (
@@ -21,7 +21,9 @@ export default function TabLayout() {
             ios: <Icon sf="dumbbell.fill" />,
             android: (
               <Icon
-                src={<VectorIcon family={MaterialIcons} name="fitness-center" />}
+                src={
+                  <VectorIcon family={MaterialIcons} name="fitness-center" />
+                }
               />
             ),
           })}
@@ -32,7 +34,9 @@ export default function TabLayout() {
             ios: <Icon sf="figure.run" />,
             android: (
               <Icon
-                src={<VectorIcon family={MaterialIcons} name="directions-run" />}
+                src={
+                  <VectorIcon family={MaterialIcons} name="directions-run" />
+                }
               />
             ),
           })}
@@ -42,7 +46,9 @@ export default function TabLayout() {
           {Platform.select({
             ios: <Icon sf="gear" />,
             android: (
-              <Icon src={<VectorIcon family={MaterialIcons} name="settings" />} />
+              <Icon
+                src={<VectorIcon family={MaterialIcons} name="settings" />}
+              />
             ),
           })}
         </NativeTabs.Trigger>

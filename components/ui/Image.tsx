@@ -1,9 +1,8 @@
-import { Image as ExpoImage } from "expo-image";
-import { cssInterop } from "nativewind";
+import { Image as ExpoImage } from 'expo-image';
+import { cssInterop } from 'nativewind';
 
 cssInterop(ExpoImage, {
-  className: "style",
+  className: 'style',
 });
 
 export const Image = ExpoImage;
-

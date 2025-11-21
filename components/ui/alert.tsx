@@ -1,9 +1,11 @@
+import type { LucideIcon } from 'lucide-react-native';
+import type { ViewProps } from 'react-native';
+import * as React from 'react';
+import { View } from 'react-native';
+
 import { Icon } from '@/components/ui/icon';
 import { Text, TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
-import type { LucideIcon } from 'lucide-react-native';
-import * as React from 'react';
-import { View, type ViewProps } from 'react-native';
 
 function Alert({
   className,
@@ -24,18 +26,24 @@ function Alert({
         'text-sm text-foreground',
         variant === 'destructive' && 'text-destructive',
         className
-      )}>
+      )}
+    >
       <View
         role="alert"
         className={cn(
-          'bg-card border-border relative w-full rounded-lg border px-4 pb-2 pt-3.5',
+          'relative w-full rounded-lg border border-border bg-card px-4 pb-2 pt-3.5',
           className
         )}
-        {...props}>
+        {...props}
+      >
         <View className="absolute left-3.5 top-3">
           <Icon
             as={icon}
-            className={cn('size-4', variant === 'destructive' && 'text-destructive', iconClassName)}
+            className={cn(
+              'size-4',
+              variant === 'destructive' && 'text-destructive',
+              iconClassName
+            )}
           />
         </View>
         {children}
@@ -50,7 +58,10 @@ function AlertTitle({
 }: React.ComponentProps<typeof Text> & React.RefAttributes<Text>) {
   return (
     <Text
-      className={cn('mb-1 ml-0.5 min-h-4 pl-6 font-medium leading-none tracking-tight', className)}
+      className={cn(
+        'mb-1 ml-0.5 min-h-4 pl-6 font-medium leading-none tracking-tight',
+        className
+      )}
       {...props}
     />
   );
@@ -64,7 +75,7 @@ function AlertDescription({
   return (
     <Text
       className={cn(
-        'text-muted-foreground ml-0.5 pb-1.5 pl-6 text-sm leading-relaxed',
+        'ml-0.5 pb-1.5 pl-6 text-sm leading-relaxed text-muted-foreground',
         textClass?.includes('text-destructive') && 'text-destructive/90',
         className
       )}
