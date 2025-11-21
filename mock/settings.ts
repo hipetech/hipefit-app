@@ -1,4 +1,19 @@
-export const settingsOptions = [
+export interface SettingsItem {
+  id: string;
+  label: string;
+  icon: string;
+  hasArrow: boolean;
+  hasSwitch: boolean;
+  value?: string;
+}
+
+export interface SettingsSection {
+  id: number;
+  category: string;
+  items: SettingsItem[];
+}
+
+export const settingsOptions: SettingsSection[] = [
   {
     id: 1,
     category: "Account",

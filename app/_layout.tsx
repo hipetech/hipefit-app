@@ -7,12 +7,13 @@ import {
 } from "expo-router/unstable-native-tabs";
 import { Platform } from "react-native";
 import {PortalHost} from "@rn-primitives/portal"
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import "../global.css";
 
 export default function TabLayout() {
   return (
-    <>
+    <SafeAreaProvider>
       <NativeTabs>
         <NativeTabs.Trigger name="workouts">
           <Label>Workouts</Label>
@@ -47,6 +48,6 @@ export default function TabLayout() {
         </NativeTabs.Trigger>
       </NativeTabs>
       <PortalHost />
-    </>
+    </SafeAreaProvider>
   );
 }
