@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+- Use yarn for all package management operations (install, add, remove, etc.)
+- Run yarn lint --fix on the end of command
+- Git add all new created files

@@ -1,5 +1,0 @@
-# Cursor Rules
-
-## Package Manager
-
-- Use yarn for all package management operations (install, add, remove, etc.)
