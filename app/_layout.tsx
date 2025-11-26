@@ -11,6 +11,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import '../global.css';
 
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.setOptions({
+  duration: 500,
+  fade: true,
+});
+
 export default function TabLayout() {
   return (
     <SafeAreaProvider>

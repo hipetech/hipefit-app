@@ -4,7 +4,11 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
+    "prebuild:dev": "ENVIRONMENT=development expo prebuild --clean && echo 'development' > .prebuild-env",
+    "prebuild:staging": "ENVIRONMENT=staging expo prebuild --clean && echo 'staging' > .prebuild-env",
+    "prebuild:production": "ENVIRONMENT=production expo prebuild --clean && echo 'production' > .prebuild-env",
+    "prebuild:status": "cat .prebuild-env 2>/dev/null || echo 'No environment prebuilt yet'",
+    "open:xcode": "xed ios",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
