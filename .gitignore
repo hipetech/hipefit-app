@@ -40,6 +40,10 @@ yarn-error.*
 .prebuild-env
 
 app-example
+# env files
+.env.production
+.env.staging
+.env.development
 
 # generated native folders
 /.idea

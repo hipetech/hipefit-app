@@ -3,14 +3,16 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		0F9A5AABFDBF7FBEA6ADEAAB /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF111BBB4EFFFC670085D0C /* ExpoModulesProvider.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1B1AA514C7C197C579B92F37 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
+		1B8A94E3FF08E86998F7B521 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
 		2D561A4F08654A56B1C2A5A7 /* ios-icon-prod.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon-prod.icon */; };
+		58358EC3653918278EEDC6B2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
 		9202FD59BBC34C3F296F7A31 /* libPods-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54F498D013FAA710340C7808 /* libPods-Hipefit.a */; };
 		B91792AF2EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */; };
 		B91792B02EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */; };
@@ -25,14 +27,12 @@
 		B967F3E42EDCBDBA00F22739 /* SplashScreenDev.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B967F3E32EDCBDBA00F22739 /* SplashScreenDev.storyboard */; };
 		B9F2A9EA2EDB983500FA37C1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		B9F2A9EB2EDB983500FA37C1 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF111BBB4EFFFC670085D0C /* ExpoModulesProvider.swift */; };
-		B9F2A9ED2EDB983500FA37C1 /* libPods-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54F498D013FAA710340C7808 /* libPods-Hipefit.a */; };
 		B9F2A9EF2EDB983500FA37C1 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		B9F2A9F02EDB983500FA37C1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		B9F2A9F22EDB983500FA37C1 /* ios-icon-prod.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon-prod.icon */; };
 		B9F2A9F32EDB983500FA37C1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
 		B9F2AA002EDB983800FA37C1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		B9F2AA012EDB983800FA37C1 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF111BBB4EFFFC670085D0C /* ExpoModulesProvider.swift */; };
-		B9F2AA032EDB983800FA37C1 /* libPods-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54F498D013FAA710340C7808 /* libPods-Hipefit.a */; };
 		B9F2AA052EDB983800FA37C1 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		B9F2AA062EDB983800FA37C1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		B9F2AA082EDB983800FA37C1 /* ios-icon-prod.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon-prod.icon */; };
@@ -41,7 +41,9 @@
 		B9F2AA262EDB9DBC00FA37C1 /* Info-dev.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9F2AA252EDB9DBC00FA37C1 /* Info-dev.plist */; };
 		B9F2AA2A2EDB9E0900FA37C1 /* SplashScreenStage.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B9F2AA292EDB9E0900FA37C1 /* SplashScreenStage.storyboard */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		E7006C7A02690CEC18386949 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		F4DF9A3BFD1CAF01C4A7829D /* libPods-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54F498D013FAA710340C7808 /* libPods-Hipefit.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,10 +112,10 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Hipefit/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info-prod.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Info-prod.plist"; path = "Hipefit/Info-prod.plist"; sourceTree = "<group>"; };
 		54F498D013FAA710340C7808 /* libPods-Hipefit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Hipefit.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		63BCD91A206F2B0D92CF2603 /* Pods-Hipefit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Hipefit.debug.xcconfig"; path = "Target Support Files/Pods-Hipefit/Pods-Hipefit.debug.xcconfig"; sourceTree = "<group>"; };
+		5E202D85E69EEBA0C3B4C9B3 /* Pods-Hipefit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Hipefit.release.xcconfig"; path = "Target Support Files/Pods-Hipefit/Pods-Hipefit.release.xcconfig"; sourceTree = "<group>"; };
 		6BF111BBB4EFFFC670085D0C /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Hipefit/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Hipefit/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		B20E4F7C245888CD1628CF9C /* Pods-Hipefit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Hipefit.release.xcconfig"; path = "Target Support Files/Pods-Hipefit/Pods-Hipefit.release.xcconfig"; sourceTree = "<group>"; };
+		89BD99671DAFDE8457F0910D /* Pods-Hipefit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Hipefit.debug.xcconfig"; path = "Target Support Files/Pods-Hipefit/Pods-Hipefit.debug.xcconfig"; sourceTree = "<group>"; };
 		B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "ios-icon-stage.icon"; sourceTree = "<group>"; };
 		B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "ios-icon-dev.icon"; sourceTree = "<group>"; };
 		B91792BA2EDCCDAC005ABE0C /* hipefit-watch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "hipefit-watch.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -133,7 +135,17 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "hipefit-watch Watch App"; sourceTree = "<group>"; };
+		B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "hipefit-watch Watch App";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -142,6 +154,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9202FD59BBC34C3F296F7A31 /* libPods-Hipefit.a in Frameworks */,
+				F4DF9A3BFD1CAF01C4A7829D /* libPods-Hipefit.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -170,7 +183,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B9F2A9ED2EDB983500FA37C1 /* libPods-Hipefit.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,7 +190,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B9F2AA032EDB983800FA37C1 /* libPods-Hipefit.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -209,8 +220,8 @@
 		20A7FCD9014871D369EF5FF2 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				63BCD91A206F2B0D92CF2603 /* Pods-Hipefit.debug.xcconfig */,
-				B20E4F7C245888CD1628CF9C /* Pods-Hipefit.release.xcconfig */,
+				89BD99671DAFDE8457F0910D /* Pods-Hipefit.debug.xcconfig */,
+				5E202D85E69EEBA0C3B4C9B3 /* Pods-Hipefit.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -328,8 +339,6 @@
 				B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */,
 			);
 			name = "hipefit-watch";
-			packageProductDependencies = (
-			);
 			productName = "hipefit-watch Watch App";
 			productReference = B91792BA2EDCCDAC005ABE0C /* hipefit-watch.app */;
 			productType = "com.apple.product-type.application";
@@ -350,8 +359,6 @@
 				B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */,
 			);
 			name = "hipefit-watch-stage";
-			packageProductDependencies = (
-			);
 			productName = "hipefit-watch Watch App";
 			productReference = B91792D02EDCCDC4005ABE0C /* hipefit-watch-stage.app */;
 			productType = "com.apple.product-type.application";
@@ -372,8 +379,6 @@
 				B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */,
 			);
 			name = "hipefit-watch-dev";
-			packageProductDependencies = (
-			);
 			productName = "hipefit-watch Watch App";
 			productReference = B91792D92EDCCDC7005ABE0C /* hipefit-watch-dev.app */;
 			productType = "com.apple.product-type.application";
@@ -382,14 +387,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B9F2A9F72EDB983500FA37C1 /* Build configuration list for PBXNativeTarget "Hipefit-stage" */;
 			buildPhases = (
-				B9F2A9E72EDB983500FA37C1 /* [CP] Check Pods Manifest.lock */,
 				B9F2A9E82EDB983500FA37C1 /* [Expo] Configure project */,
 				B9F2A9E92EDB983500FA37C1 /* Sources */,
 				B9F2A9EC2EDB983500FA37C1 /* Frameworks */,
 				B9F2A9EE2EDB983500FA37C1 /* Resources */,
 				B9F2A9F42EDB983500FA37C1 /* Bundle React Native code and images */,
-				B9F2A9F52EDB983500FA37C1 /* [CP] Copy Pods Resources */,
-				B9F2A9F62EDB983500FA37C1 /* [CP] Embed Pods Frameworks */,
 				B91792DE2EDCCEE3005ABE0C /* Embed Watch Content */,
 			);
 			buildRules = (
@@ -406,14 +408,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B9F2AA0D2EDB983800FA37C1 /* Build configuration list for PBXNativeTarget "Hipefit-dev" */;
 			buildPhases = (
-				B9F2A9FD2EDB983800FA37C1 /* [CP] Check Pods Manifest.lock */,
 				B9F2A9FE2EDB983800FA37C1 /* [Expo] Configure project */,
 				B9F2A9FF2EDB983800FA37C1 /* Sources */,
 				B9F2AA022EDB983800FA37C1 /* Frameworks */,
 				B9F2AA042EDB983800FA37C1 /* Resources */,
 				B9F2AA0A2EDB983800FA37C1 /* Bundle React Native code and images */,
-				B9F2AA0B2EDB983800FA37C1 /* [CP] Copy Pods Resources */,
-				B9F2AA0C2EDB983800FA37C1 /* [CP] Embed Pods Frameworks */,
 				B91792E22EDCCEFC005ABE0C /* Embed Watch Content */,
 			);
 			buildRules = (
@@ -485,6 +484,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				58358EC3653918278EEDC6B2 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -492,6 +492,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1B8A94E3FF08E86998F7B521 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -499,6 +500,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E7006C7A02690CEC18386949 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -630,28 +632,6 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Hipefit/Pods-Hipefit-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		B9F2A9E72EDB983500FA37C1 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-Hipefit-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
 		B9F2A9E82EDB983500FA37C1 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -693,82 +673,6 @@
 			shellPath = /bin/sh;
 			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
-		B9F2A9F52EDB983500FA37C1 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Hipefit/Pods-Hipefit-resources.sh",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Hipefit/Pods-Hipefit-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		B9F2A9F62EDB983500FA37C1 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Hipefit/Pods-Hipefit-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Hipefit/Pods-Hipefit-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		B9F2A9FD2EDB983800FA37C1 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-Hipefit-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
 		B9F2A9FE2EDB983800FA37C1 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -809,60 +713,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
-		};
-		B9F2AA0B2EDB983800FA37C1 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Hipefit/Pods-Hipefit-resources.sh",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Hipefit/Pods-Hipefit-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		B9F2AA0C2EDB983800FA37C1 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Hipefit/Pods-Hipefit-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Hipefit/Pods-Hipefit-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
 		};
 		F9B6A6ED2B6D611817900D88 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -960,7 +810,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 63BCD91A206F2B0D92CF2603 /* Pods-Hipefit.debug.xcconfig */;
+			baseConfigurationReference = 89BD99671DAFDE8457F0910D /* Pods-Hipefit.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-prod";
 				CLANG_ENABLE_MODULES = YES;
@@ -997,7 +847,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B20E4F7C245888CD1628CF9C /* Pods-Hipefit.release.xcconfig */;
+			baseConfigurationReference = 5E202D85E69EEBA0C3B4C9B3 /* Pods-Hipefit.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-prod";
 				CLANG_ENABLE_MODULES = YES;
@@ -1178,6 +1028,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -1227,6 +1078,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -1266,7 +1118,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Hipefit Watch Stage";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp.staging;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1275,7 +1127,8 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp.stage;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.staging.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1316,7 +1169,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Hipefit Watch Stage";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp.staging;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1324,7 +1177,8 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp.stage;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.staging.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1363,7 +1217,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Hipefit Watch Dev";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp.development;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1372,7 +1226,8 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp.dev;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.development.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1413,7 +1268,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Hipefit Watch Dev";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp.development;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1421,7 +1276,8 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp.dev;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.development.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1439,7 +1295,6 @@
 		};
 		B9F2A9F82EDB983500FA37C1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 63BCD91A206F2B0D92CF2603 /* Pods-Hipefit.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-stage";
 				CLANG_ENABLE_MODULES = YES;
@@ -1476,7 +1331,6 @@
 		};
 		B9F2A9F92EDB983500FA37C1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B20E4F7C245888CD1628CF9C /* Pods-Hipefit.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-stage";
 				CLANG_ENABLE_MODULES = YES;
@@ -1507,7 +1361,6 @@
 		};
 		B9F2AA0E2EDB983800FA37C1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 63BCD91A206F2B0D92CF2603 /* Pods-Hipefit.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-dev";
 				CLANG_ENABLE_MODULES = YES;
@@ -1544,7 +1397,6 @@
 		};
 		B9F2AA0F2EDB983800FA37C1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B20E4F7C245888CD1628CF9C /* Pods-Hipefit.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-dev";
 				CLANG_ENABLE_MODULES = YES;
