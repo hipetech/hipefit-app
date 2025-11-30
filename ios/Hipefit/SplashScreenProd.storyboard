@@ -20,19 +20,11 @@
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="BrandLogo" translatesAutoresizingMaskIntoConstraints="NO" id="p3X-Bb-znz">
                                 <rect key="frame" x="25.666666666666657" y="255" width="342" height="342"/>
                             </imageView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Staging" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="WVf-wN-uio">
-                                <rect key="frame" x="151" y="567" width="91" height="30"/>
-                                <fontDescription key="fontDescription" type="boldSystem" pointSize="25"/>
-                                <nil key="textColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Rmq-lb-GrQ"/>
                         <color key="backgroundColor" name="SplashScreenBackground"/>
                         <constraints>
                             <constraint firstItem="p3X-Bb-znz" firstAttribute="centerY" secondItem="EXPO-ContainerView" secondAttribute="centerY" id="VKt-M4-dt0"/>
-                            <constraint firstItem="WVf-wN-uio" firstAttribute="centerY" secondItem="EXPO-ContainerView" secondAttribute="centerY" constant="156" id="Zay-ec-AfN"/>
-                            <constraint firstItem="WVf-wN-uio" firstAttribute="centerX" secondItem="EXPO-ContainerView" secondAttribute="centerX" id="fj1-4i-IDt"/>
                             <constraint firstItem="p3X-Bb-znz" firstAttribute="centerX" secondItem="EXPO-ContainerView" secondAttribute="centerX" id="tgP-On-Ndy"/>
                         </constraints>
                     </view>

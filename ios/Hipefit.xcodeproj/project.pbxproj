@@ -11,14 +11,14 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1B1AA514C7C197C579B92F37 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
 		2D561A4F08654A56B1C2A5A7 /* ios-icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon.icon */; };
-		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		9202FD59BBC34C3F296F7A31 /* libPods-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54F498D013FAA710340C7808 /* libPods-Hipefit.a */; };
+		B967F3E22EDCBDA600F22739 /* SplashScreenProd.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B967F3E12EDCBDA600F22739 /* SplashScreenProd.storyboard */; };
+		B967F3E42EDCBDBA00F22739 /* SplashScreenDev.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B967F3E32EDCBDBA00F22739 /* SplashScreenDev.storyboard */; };
 		B9F2A9EA2EDB983500FA37C1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		B9F2A9EB2EDB983500FA37C1 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF111BBB4EFFFC670085D0C /* ExpoModulesProvider.swift */; };
 		B9F2A9ED2EDB983500FA37C1 /* libPods-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54F498D013FAA710340C7808 /* libPods-Hipefit.a */; };
 		B9F2A9EF2EDB983500FA37C1 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		B9F2A9F02EDB983500FA37C1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		B9F2A9F12EDB983500FA37C1 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		B9F2A9F22EDB983500FA37C1 /* ios-icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon.icon */; };
 		B9F2A9F32EDB983500FA37C1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
 		B9F2AA002EDB983800FA37C1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
@@ -26,12 +26,10 @@
 		B9F2AA032EDB983800FA37C1 /* libPods-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54F498D013FAA710340C7808 /* libPods-Hipefit.a */; };
 		B9F2AA052EDB983800FA37C1 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		B9F2AA062EDB983800FA37C1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		B9F2AA072EDB983800FA37C1 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		B9F2AA082EDB983800FA37C1 /* ios-icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon.icon */; };
 		B9F2AA092EDB983800FA37C1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
 		B9F2AA242EDB9DAB00FA37C1 /* Info-stage.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9F2AA232EDB9DAB00FA37C1 /* Info-stage.plist */; };
 		B9F2AA262EDB9DBC00FA37C1 /* Info-dev.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9F2AA252EDB9DBC00FA37C1 /* Info-dev.plist */; };
-		B9F2AA282EDB9DF700FA37C1 /* SplashScreenDev.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B9F2AA272EDB9DF700FA37C1 /* SplashScreenDev.storyboard */; };
 		B9F2AA2A2EDB9E0900FA37C1 /* SplashScreenStage.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B9F2AA292EDB9E0900FA37C1 /* SplashScreenStage.storyboard */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
@@ -46,13 +44,13 @@
 		63BCD91A206F2B0D92CF2603 /* Pods-Hipefit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Hipefit.debug.xcconfig"; path = "Target Support Files/Pods-Hipefit/Pods-Hipefit.debug.xcconfig"; sourceTree = "<group>"; };
 		6BF111BBB4EFFFC670085D0C /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Hipefit/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Hipefit/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Hipefit/SplashScreen.storyboard; sourceTree = "<group>"; };
 		B20E4F7C245888CD1628CF9C /* Pods-Hipefit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Hipefit.release.xcconfig"; path = "Target Support Files/Pods-Hipefit/Pods-Hipefit.release.xcconfig"; sourceTree = "<group>"; };
+		B967F3E12EDCBDA600F22739 /* SplashScreenProd.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreenProd.storyboard; path = Hipefit/SplashScreenProd.storyboard; sourceTree = "<group>"; };
+		B967F3E32EDCBDBA00F22739 /* SplashScreenDev.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreenDev.storyboard; path = Hipefit/SplashScreenDev.storyboard; sourceTree = "<group>"; };
 		B9F2A9FA2EDB983500FA37C1 /* Hipefit-stage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hipefit-stage.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B9F2AA102EDB983800FA37C1 /* Hipefit-dev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hipefit-dev.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B9F2AA232EDB9DAB00FA37C1 /* Info-stage.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Info-stage.plist"; path = "Hipefit/Info-stage.plist"; sourceTree = "<group>"; };
 		B9F2AA252EDB9DBC00FA37C1 /* Info-dev.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Info-dev.plist"; path = "Hipefit/Info-dev.plist"; sourceTree = "<group>"; };
-		B9F2AA272EDB9DF700FA37C1 /* SplashScreenDev.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreenDev.storyboard; path = Hipefit/SplashScreenDev.storyboard; sourceTree = "<group>"; };
 		B9F2AA292EDB9E0900FA37C1 /* SplashScreenStage.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreenStage.storyboard; path = Hipefit/SplashScreenStage.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -95,9 +93,9 @@
 				F11748442D0722820044C1D9 /* Hipefit-Bridging-Header.h */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
-				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
+				B967F3E12EDCBDA600F22739 /* SplashScreenProd.storyboard */,
 				B9F2AA292EDB9E0900FA37C1 /* SplashScreenStage.storyboard */,
-				B9F2AA272EDB9DF700FA37C1 /* SplashScreenDev.storyboard */,
+				B967F3E32EDCBDBA00F22739 /* SplashScreenDev.storyboard */,
 				0549E74ED9654FCAAD7B3EE7 /* ios-icon.icon */,
 				77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */,
 				13B07FB61A68108700A75B9A /* Info-prod.plist */,
@@ -291,8 +289,8 @@
 			files = (
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
-				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				2D561A4F08654A56B1C2A5A7 /* ios-icon.icon in Resources */,
+				B967F3E22EDCBDA600F22739 /* SplashScreenProd.storyboard in Resources */,
 				1B1AA514C7C197C579B92F37 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -304,7 +302,6 @@
 				B9F2AA2A2EDB9E0900FA37C1 /* SplashScreenStage.storyboard in Resources */,
 				B9F2A9EF2EDB983500FA37C1 /* Expo.plist in Resources */,
 				B9F2A9F02EDB983500FA37C1 /* Images.xcassets in Resources */,
-				B9F2A9F12EDB983500FA37C1 /* SplashScreen.storyboard in Resources */,
 				B9F2A9F22EDB983500FA37C1 /* ios-icon.icon in Resources */,
 				B9F2A9F32EDB983500FA37C1 /* PrivacyInfo.xcprivacy in Resources */,
 				B9F2AA242EDB9DAB00FA37C1 /* Info-stage.plist in Resources */,
@@ -316,12 +313,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				B9F2AA052EDB983800FA37C1 /* Expo.plist in Resources */,
+				B967F3E42EDCBDBA00F22739 /* SplashScreenDev.storyboard in Resources */,
 				B9F2AA062EDB983800FA37C1 /* Images.xcassets in Resources */,
-				B9F2AA072EDB983800FA37C1 /* SplashScreen.storyboard in Resources */,
 				B9F2AA082EDB983800FA37C1 /* ios-icon.icon in Resources */,
 				B9F2AA262EDB9DBC00FA37C1 /* Info-dev.plist in Resources */,
 				B9F2AA092EDB983800FA37C1 /* PrivacyInfo.xcprivacy in Resources */,
-				B9F2AA282EDB9DF700FA37C1 /* SplashScreenDev.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
