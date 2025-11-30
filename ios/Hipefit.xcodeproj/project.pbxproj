@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -18,6 +18,9 @@
 		B91792B32EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */; };
 		B91792B42EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */; };
 		B91792B52EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */; };
+		B91792C42EDCCDAE005ABE0C /* hipefit-watch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B91792BA2EDCCDAC005ABE0C /* hipefit-watch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B91792DB2EDCCEE3005ABE0C /* hipefit-watch-stage.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B91792D02EDCCDC4005ABE0C /* hipefit-watch-stage.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B91792DF2EDCCEFC005ABE0C /* hipefit-watch-dev.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B91792D92EDCCDC7005ABE0C /* hipefit-watch-dev.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B967F3E22EDCBDA600F22739 /* SplashScreenProd.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B967F3E12EDCBDA600F22739 /* SplashScreenProd.storyboard */; };
 		B967F3E42EDCBDBA00F22739 /* SplashScreenDev.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B967F3E32EDCBDBA00F22739 /* SplashScreenDev.storyboard */; };
 		B9F2A9EA2EDB983500FA37C1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
@@ -41,6 +44,66 @@
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		B91792C22EDCCDAE005ABE0C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B91792B92EDCCDAC005ABE0C;
+			remoteInfo = "hipefit-watch Watch App";
+		};
+		B91792DC2EDCCEE3005ABE0C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B91792C92EDCCDC4005ABE0C;
+			remoteInfo = "hipefit-watch-stage";
+		};
+		B91792E02EDCCEFC005ABE0C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B91792D22EDCCDC7005ABE0C;
+			remoteInfo = "hipefit-watch-dev";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B91792C52EDCCDAE005ABE0C /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				B91792C42EDCCDAE005ABE0C /* hipefit-watch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B91792DE2EDCCEE3005ABE0C /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				B91792DB2EDCCEE3005ABE0C /* hipefit-watch-stage.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B91792E22EDCCEFC005ABE0C /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				B91792DF2EDCCEFC005ABE0C /* hipefit-watch-dev.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		0549E74ED9654FCAAD7B3EE7 /* ios-icon-prod.icon */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.iconcomposer.icon; name = "ios-icon-prod.icon"; path = "Hipefit/ios-icon-prod.icon"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Hipefit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hipefit.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -53,6 +116,9 @@
 		B20E4F7C245888CD1628CF9C /* Pods-Hipefit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Hipefit.release.xcconfig"; path = "Target Support Files/Pods-Hipefit/Pods-Hipefit.release.xcconfig"; sourceTree = "<group>"; };
 		B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "ios-icon-stage.icon"; sourceTree = "<group>"; };
 		B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "ios-icon-dev.icon"; sourceTree = "<group>"; };
+		B91792BA2EDCCDAC005ABE0C /* hipefit-watch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "hipefit-watch.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B91792D02EDCCDC4005ABE0C /* hipefit-watch-stage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "hipefit-watch-stage.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B91792D92EDCCDC7005ABE0C /* hipefit-watch-dev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "hipefit-watch-dev.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B967F3E12EDCBDA600F22739 /* SplashScreenProd.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreenProd.storyboard; path = Hipefit/SplashScreenProd.storyboard; sourceTree = "<group>"; };
 		B967F3E32EDCBDBA00F22739 /* SplashScreenDev.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreenDev.storyboard; path = Hipefit/SplashScreenDev.storyboard; sourceTree = "<group>"; };
 		B9F2A9FA2EDB983500FA37C1 /* Hipefit-stage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hipefit-stage.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -66,12 +132,37 @@
 		F11748442D0722820044C1D9 /* Hipefit-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Hipefit-Bridging-Header.h"; path = "Hipefit/Hipefit-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "hipefit-watch Watch App"; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				9202FD59BBC34C3F296F7A31 /* libPods-Hipefit.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B91792B72EDCCDAC005ABE0C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B91792CB2EDCCDC4005ABE0C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B91792D42EDCCDC7005ABE0C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -153,6 +244,7 @@
 			children = (
 				13B07FAE1A68108700A75B9A /* Hipefit */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				20A7FCD9014871D369EF5FF2 /* Pods */,
@@ -169,6 +261,9 @@
 				13B07F961A680F5B00A75B9A /* Hipefit.app */,
 				B9F2A9FA2EDB983500FA37C1 /* Hipefit-stage.app */,
 				B9F2AA102EDB983800FA37C1 /* Hipefit-dev.app */,
+				B91792BA2EDCCDAC005ABE0C /* hipefit-watch.app */,
+				B91792D02EDCCDC4005ABE0C /* hipefit-watch-stage.app */,
+				B91792D92EDCCDC7005ABE0C /* hipefit-watch-dev.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -205,14 +300,82 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				F9B6A6ED2B6D611817900D88 /* [CP] Embed Pods Frameworks */,
+				B91792C52EDCCDAE005ABE0C /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B91792C32EDCCDAE005ABE0C /* PBXTargetDependency */,
+			);
+			name = Hipefit;
+			productName = Hipefit;
+			productReference = 13B07F961A680F5B00A75B9A /* Hipefit.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B91792B92EDCCDAC005ABE0C /* hipefit-watch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B91792C82EDCCDAE005ABE0C /* Build configuration list for PBXNativeTarget "hipefit-watch" */;
+			buildPhases = (
+				B91792B62EDCCDAC005ABE0C /* Sources */,
+				B91792B72EDCCDAC005ABE0C /* Frameworks */,
+				B91792B82EDCCDAC005ABE0C /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = Hipefit;
-			productName = Hipefit;
-			productReference = 13B07F961A680F5B00A75B9A /* Hipefit.app */;
+			fileSystemSynchronizedGroups = (
+				B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */,
+			);
+			name = "hipefit-watch";
+			packageProductDependencies = (
+			);
+			productName = "hipefit-watch Watch App";
+			productReference = B91792BA2EDCCDAC005ABE0C /* hipefit-watch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B91792C92EDCCDC4005ABE0C /* hipefit-watch-stage */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B91792CD2EDCCDC4005ABE0C /* Build configuration list for PBXNativeTarget "hipefit-watch-stage" */;
+			buildPhases = (
+				B91792CA2EDCCDC4005ABE0C /* Sources */,
+				B91792CB2EDCCDC4005ABE0C /* Frameworks */,
+				B91792CC2EDCCDC4005ABE0C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */,
+			);
+			name = "hipefit-watch-stage";
+			packageProductDependencies = (
+			);
+			productName = "hipefit-watch Watch App";
+			productReference = B91792D02EDCCDC4005ABE0C /* hipefit-watch-stage.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B91792D22EDCCDC7005ABE0C /* hipefit-watch-dev */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B91792D62EDCCDC7005ABE0C /* Build configuration list for PBXNativeTarget "hipefit-watch-dev" */;
+			buildPhases = (
+				B91792D32EDCCDC7005ABE0C /* Sources */,
+				B91792D42EDCCDC7005ABE0C /* Frameworks */,
+				B91792D52EDCCDC7005ABE0C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */,
+			);
+			name = "hipefit-watch-dev";
+			packageProductDependencies = (
+			);
+			productName = "hipefit-watch Watch App";
+			productReference = B91792D92EDCCDC7005ABE0C /* hipefit-watch-dev.app */;
 			productType = "com.apple.product-type.application";
 		};
 		B9F2A9E62EDB983500FA37C1 /* Hipefit-stage */ = {
@@ -227,10 +390,12 @@
 				B9F2A9F42EDB983500FA37C1 /* Bundle React Native code and images */,
 				B9F2A9F52EDB983500FA37C1 /* [CP] Copy Pods Resources */,
 				B9F2A9F62EDB983500FA37C1 /* [CP] Embed Pods Frameworks */,
+				B91792DE2EDCCEE3005ABE0C /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B91792DD2EDCCEE3005ABE0C /* PBXTargetDependency */,
 			);
 			name = "Hipefit-stage";
 			productName = Hipefit;
@@ -249,10 +414,12 @@
 				B9F2AA0A2EDB983800FA37C1 /* Bundle React Native code and images */,
 				B9F2AA0B2EDB983800FA37C1 /* [CP] Copy Pods Resources */,
 				B9F2AA0C2EDB983800FA37C1 /* [CP] Embed Pods Frameworks */,
+				B91792E22EDCCEFC005ABE0C /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B91792E12EDCCEFC005ABE0C /* PBXTargetDependency */,
 			);
 			name = "Hipefit-dev";
 			productName = Hipefit;
@@ -265,10 +432,14 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 1130;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1250;
+					};
+					B91792B92EDCCDAC005ABE0C = {
+						CreatedOnToolsVersion = 26.1.1;
 					};
 				};
 			};
@@ -288,6 +459,9 @@
 				13B07F861A680F5B00A75B9A /* Hipefit */,
 				B9F2A9E62EDB983500FA37C1 /* Hipefit-stage */,
 				B9F2A9FC2EDB983800FA37C1 /* Hipefit-dev */,
+				B91792B92EDCCDAC005ABE0C /* hipefit-watch */,
+				B91792C92EDCCDC4005ABE0C /* hipefit-watch-stage */,
+				B91792D22EDCCDC7005ABE0C /* hipefit-watch-dev */,
 			);
 		};
 /* End PBXProject section */
@@ -304,6 +478,27 @@
 				B967F3E22EDCBDA600F22739 /* SplashScreenProd.storyboard in Resources */,
 				B91792AF2EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */,
 				1B1AA514C7C197C579B92F37 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B91792B82EDCCDAC005ABE0C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B91792CC2EDCCDC4005ABE0C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B91792D52EDCCDC7005ABE0C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -703,6 +898,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B91792B62EDCCDAC005ABE0C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B91792CA2EDCCDC4005ABE0C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B91792D32EDCCDC7005ABE0C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B9F2A9E92EDB983500FA37C1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -722,6 +938,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B91792C32EDCCDAE005ABE0C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B91792B92EDCCDAC005ABE0C /* hipefit-watch */;
+			targetProxy = B91792C22EDCCDAE005ABE0C /* PBXContainerItemProxy */;
+		};
+		B91792DD2EDCCEE3005ABE0C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B91792C92EDCCDC4005ABE0C /* hipefit-watch-stage */;
+			targetProxy = B91792DC2EDCCEE3005ABE0C /* PBXContainerItemProxy */;
+		};
+		B91792E12EDCCEFC005ABE0C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B91792D22EDCCDC7005ABE0C /* hipefit-watch-dev */;
+			targetProxy = B91792E02EDCCEFC005ABE0C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
@@ -912,6 +1146,297 @@
 			};
 			name = Release;
 		};
+		B91792C62EDCCDAE005ABE0C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = BL898J4D3L;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hipefit Watch";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Debug;
+		};
+		B91792C72EDCCDAE005ABE0C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = BL898J4D3L;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hipefit Watch";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Release;
+		};
+		B91792CE2EDCCDC4005ABE0C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = BL898J4D3L;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hipefit Watch Stage";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp.stage;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Debug;
+		};
+		B91792CF2EDCCDC4005ABE0C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = BL898J4D3L;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hipefit Watch Stage";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp.stage;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Release;
+		};
+		B91792D72EDCCDC7005ABE0C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = BL898J4D3L;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hipefit Watch Dev";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp.dev;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Debug;
+		};
+		B91792D82EDCCDC7005ABE0C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = BL898J4D3L;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hipefit Watch Dev";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.kyrylokorota.hipefitapp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kyrylokorota.hipefitapp.watchkitapp.dev;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Release;
+		};
 		B9F2A9F82EDB983500FA37C1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 63BCD91A206F2B0D92CF2603 /* Pods-Hipefit.debug.xcconfig */;
@@ -1065,6 +1590,33 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B91792C82EDCCDAE005ABE0C /* Build configuration list for PBXNativeTarget "hipefit-watch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B91792C62EDCCDAE005ABE0C /* Debug */,
+				B91792C72EDCCDAE005ABE0C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B91792CD2EDCCDC4005ABE0C /* Build configuration list for PBXNativeTarget "hipefit-watch-stage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B91792CE2EDCCDC4005ABE0C /* Debug */,
+				B91792CF2EDCCDC4005ABE0C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B91792D62EDCCDC7005ABE0C /* Build configuration list for PBXNativeTarget "hipefit-watch-dev" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B91792D72EDCCDC7005ABE0C /* Debug */,
+				B91792D82EDCCDC7005ABE0C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
