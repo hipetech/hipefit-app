@@ -10,8 +10,14 @@
 		0F9A5AABFDBF7FBEA6ADEAAB /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF111BBB4EFFFC670085D0C /* ExpoModulesProvider.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1B1AA514C7C197C579B92F37 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
-		2D561A4F08654A56B1C2A5A7 /* ios-icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon.icon */; };
+		2D561A4F08654A56B1C2A5A7 /* ios-icon-prod.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon-prod.icon */; };
 		9202FD59BBC34C3F296F7A31 /* libPods-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54F498D013FAA710340C7808 /* libPods-Hipefit.a */; };
+		B91792AF2EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */; };
+		B91792B02EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */; };
+		B91792B12EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */; };
+		B91792B32EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */; };
+		B91792B42EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */; };
+		B91792B52EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */; };
 		B967F3E22EDCBDA600F22739 /* SplashScreenProd.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B967F3E12EDCBDA600F22739 /* SplashScreenProd.storyboard */; };
 		B967F3E42EDCBDBA00F22739 /* SplashScreenDev.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B967F3E32EDCBDBA00F22739 /* SplashScreenDev.storyboard */; };
 		B9F2A9EA2EDB983500FA37C1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
@@ -19,14 +25,14 @@
 		B9F2A9ED2EDB983500FA37C1 /* libPods-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54F498D013FAA710340C7808 /* libPods-Hipefit.a */; };
 		B9F2A9EF2EDB983500FA37C1 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		B9F2A9F02EDB983500FA37C1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		B9F2A9F22EDB983500FA37C1 /* ios-icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon.icon */; };
+		B9F2A9F22EDB983500FA37C1 /* ios-icon-prod.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon-prod.icon */; };
 		B9F2A9F32EDB983500FA37C1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
 		B9F2AA002EDB983800FA37C1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		B9F2AA012EDB983800FA37C1 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF111BBB4EFFFC670085D0C /* ExpoModulesProvider.swift */; };
 		B9F2AA032EDB983800FA37C1 /* libPods-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 54F498D013FAA710340C7808 /* libPods-Hipefit.a */; };
 		B9F2AA052EDB983800FA37C1 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		B9F2AA062EDB983800FA37C1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		B9F2AA082EDB983800FA37C1 /* ios-icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon.icon */; };
+		B9F2AA082EDB983800FA37C1 /* ios-icon-prod.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon-prod.icon */; };
 		B9F2AA092EDB983800FA37C1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
 		B9F2AA242EDB9DAB00FA37C1 /* Info-stage.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9F2AA232EDB9DAB00FA37C1 /* Info-stage.plist */; };
 		B9F2AA262EDB9DBC00FA37C1 /* Info-dev.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9F2AA252EDB9DBC00FA37C1 /* Info-dev.plist */; };
@@ -36,7 +42,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0549E74ED9654FCAAD7B3EE7 /* ios-icon.icon */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "ios-icon.icon"; path = "Hipefit/ios-icon.icon"; sourceTree = "<group>"; };
+		0549E74ED9654FCAAD7B3EE7 /* ios-icon-prod.icon */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.iconcomposer.icon; name = "ios-icon-prod.icon"; path = "Hipefit/ios-icon-prod.icon"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Hipefit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hipefit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Hipefit/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info-prod.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Info-prod.plist"; path = "Hipefit/Info-prod.plist"; sourceTree = "<group>"; };
@@ -45,6 +51,8 @@
 		6BF111BBB4EFFFC670085D0C /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Hipefit/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Hipefit/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B20E4F7C245888CD1628CF9C /* Pods-Hipefit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Hipefit.release.xcconfig"; path = "Target Support Files/Pods-Hipefit/Pods-Hipefit.release.xcconfig"; sourceTree = "<group>"; };
+		B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "ios-icon-stage.icon"; sourceTree = "<group>"; };
+		B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "ios-icon-dev.icon"; sourceTree = "<group>"; };
 		B967F3E12EDCBDA600F22739 /* SplashScreenProd.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreenProd.storyboard; path = Hipefit/SplashScreenProd.storyboard; sourceTree = "<group>"; };
 		B967F3E32EDCBDBA00F22739 /* SplashScreenDev.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreenDev.storyboard; path = Hipefit/SplashScreenDev.storyboard; sourceTree = "<group>"; };
 		B9F2A9FA2EDB983500FA37C1 /* Hipefit-stage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hipefit-stage.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -96,7 +104,9 @@
 				B967F3E12EDCBDA600F22739 /* SplashScreenProd.storyboard */,
 				B9F2AA292EDB9E0900FA37C1 /* SplashScreenStage.storyboard */,
 				B967F3E32EDCBDBA00F22739 /* SplashScreenDev.storyboard */,
-				0549E74ED9654FCAAD7B3EE7 /* ios-icon.icon */,
+				0549E74ED9654FCAAD7B3EE7 /* ios-icon-prod.icon */,
+				B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */,
+				B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */,
 				77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */,
 				13B07FB61A68108700A75B9A /* Info-prod.plist */,
 				B9F2AA232EDB9DAB00FA37C1 /* Info-stage.plist */,
@@ -289,8 +299,10 @@
 			files = (
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
-				2D561A4F08654A56B1C2A5A7 /* ios-icon.icon in Resources */,
+				B91792B52EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */,
+				2D561A4F08654A56B1C2A5A7 /* ios-icon-prod.icon in Resources */,
 				B967F3E22EDCBDA600F22739 /* SplashScreenProd.storyboard in Resources */,
+				B91792AF2EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */,
 				1B1AA514C7C197C579B92F37 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -302,8 +314,10 @@
 				B9F2AA2A2EDB9E0900FA37C1 /* SplashScreenStage.storyboard in Resources */,
 				B9F2A9EF2EDB983500FA37C1 /* Expo.plist in Resources */,
 				B9F2A9F02EDB983500FA37C1 /* Images.xcassets in Resources */,
-				B9F2A9F22EDB983500FA37C1 /* ios-icon.icon in Resources */,
+				B9F2A9F22EDB983500FA37C1 /* ios-icon-prod.icon in Resources */,
 				B9F2A9F32EDB983500FA37C1 /* PrivacyInfo.xcprivacy in Resources */,
+				B91792B42EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */,
+				B91792B02EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */,
 				B9F2AA242EDB9DAB00FA37C1 /* Info-stage.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -315,8 +329,10 @@
 				B9F2AA052EDB983800FA37C1 /* Expo.plist in Resources */,
 				B967F3E42EDCBDBA00F22739 /* SplashScreenDev.storyboard in Resources */,
 				B9F2AA062EDB983800FA37C1 /* Images.xcassets in Resources */,
-				B9F2AA082EDB983800FA37C1 /* ios-icon.icon in Resources */,
+				B9F2AA082EDB983800FA37C1 /* ios-icon-prod.icon in Resources */,
 				B9F2AA262EDB9DBC00FA37C1 /* Info-dev.plist in Resources */,
+				B91792B32EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */,
+				B91792B12EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */,
 				B9F2AA092EDB983800FA37C1 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -712,7 +728,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 63BCD91A206F2B0D92CF2603 /* Pods-Hipefit.debug.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-prod";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Hipefit/Hipefit.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
@@ -749,7 +765,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = B20E4F7C245888CD1628CF9C /* Pods-Hipefit.release.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-prod";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Hipefit/Hipefit.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
@@ -900,7 +916,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 63BCD91A206F2B0D92CF2603 /* Pods-Hipefit.debug.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-stage";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Hipefit/Hipefit.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
@@ -937,7 +953,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = B20E4F7C245888CD1628CF9C /* Pods-Hipefit.release.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-stage";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Hipefit/Hipefit.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
@@ -968,7 +984,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 63BCD91A206F2B0D92CF2603 /* Pods-Hipefit.debug.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-dev";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Hipefit/Hipefit.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
@@ -1005,7 +1021,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = B20E4F7C245888CD1628CF9C /* Pods-Hipefit.release.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-dev";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Hipefit/Hipefit.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
