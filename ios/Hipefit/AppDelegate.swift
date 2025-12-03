@@ -1,6 +1,7 @@
 import Expo
 import React
 import ReactAppDependencyProvider
+import Firebase
 
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
@@ -13,6 +14,9 @@ public class AppDelegate: ExpoAppDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    // Configure Firebase based on environment
+    configureFirebase()
+    
     let delegate = ReactNativeDelegate()
     let factory = ExpoReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
@@ -30,6 +34,33 @@ public class AppDelegate: ExpoAppDelegate {
 #endif
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  private func configureFirebase() {
+    guard let bundleIdentifier = Bundle.main.bundleIdentifier else {
+      print("Firebase: Unable to determine bundle identifier")
+      return
+    }
+    
+    let googleServiceInfoFileName: String
+    
+    // Determine environment based on bundle identifier
+    if bundleIdentifier.contains(".development") {
+      googleServiceInfoFileName = "GoogleService-Info-dev"
+    } else if bundleIdentifier.contains(".staging") {
+      googleServiceInfoFileName = "GoogleService-Info-stage"
+    } else {
+      googleServiceInfoFileName = "GoogleService-Info-prod"
+    }
+    
+    guard let path = Bundle.main.path(forResource: googleServiceInfoFileName, ofType: "plist"),
+          let options = FirebaseOptions(contentsOfFile: path) else {
+      print("Firebase: Unable to load \(googleServiceInfoFileName).plist")
+      return
+    }
+    
+    FirebaseApp.configure(options: options)
+    print("Firebase: Configured with \(googleServiceInfoFileName).plist")
   }
 
   // Linking API
