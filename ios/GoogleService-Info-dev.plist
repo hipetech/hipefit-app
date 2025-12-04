@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyAXmlT4lX-fh8WP5G_CePwYt5yRUo1c6KI</string>
+	<string>AIzaSyBoyxXq7aAU1suU0OSYDyhBQxvUVL4H6vE</string>
 	<key>GCM_SENDER_ID</key>
-	<string>540552465988</string>
+	<string>1074405333984</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.kyrylokorota.hipefitapp.development</string>
 	<key>PROJECT_ID</key>
-	<string>hipefit-app</string>
+	<string>hipefit-app-dev</string>
 	<key>STORAGE_BUCKET</key>
-	<string>hipefit-app.firebasestorage.app</string>
+	<string>hipefit-app-dev.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:540552465988:ios:4d834e9db7840b2a333611</string>
+	<string>1:1074405333984:ios:12a35df3b46f8343602985</string>
 </dict>
 </plist>

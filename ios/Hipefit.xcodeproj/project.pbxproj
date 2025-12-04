@@ -21,12 +21,6 @@
 		B90846132EE0EE73009CCAE6 /* GoogleService-Info-prod.plist in Resources */ = {isa = PBXBuildFile; fileRef = B90846122EE0EE73009CCAE6 /* GoogleService-Info-prod.plist */; };
 		B90846142EE0EE73009CCAE6 /* GoogleService-Info-prod.plist in Resources */ = {isa = PBXBuildFile; fileRef = B90846122EE0EE73009CCAE6 /* GoogleService-Info-prod.plist */; };
 		B90846152EE0EE73009CCAE6 /* GoogleService-Info-prod.plist in Resources */ = {isa = PBXBuildFile; fileRef = B90846122EE0EE73009CCAE6 /* GoogleService-Info-prod.plist */; };
-		B90846172EE0EEA5009CCAE6 /* GoogleService-Info-stage.plist in Resources */ = {isa = PBXBuildFile; fileRef = B90846162EE0EEA5009CCAE6 /* GoogleService-Info-stage.plist */; };
-		B90846182EE0EEA5009CCAE6 /* GoogleService-Info-stage.plist in Resources */ = {isa = PBXBuildFile; fileRef = B90846162EE0EEA5009CCAE6 /* GoogleService-Info-stage.plist */; };
-		B90846192EE0EEA5009CCAE6 /* GoogleService-Info-stage.plist in Resources */ = {isa = PBXBuildFile; fileRef = B90846162EE0EEA5009CCAE6 /* GoogleService-Info-stage.plist */; };
-		B908461B2EE0EED1009CCAE6 /* GoogleService-Info-dev.plist in Resources */ = {isa = PBXBuildFile; fileRef = B908461A2EE0EED1009CCAE6 /* GoogleService-Info-dev.plist */; };
-		B908461C2EE0EED1009CCAE6 /* GoogleService-Info-dev.plist in Resources */ = {isa = PBXBuildFile; fileRef = B908461A2EE0EED1009CCAE6 /* GoogleService-Info-dev.plist */; };
-		B908461D2EE0EED1009CCAE6 /* GoogleService-Info-dev.plist in Resources */ = {isa = PBXBuildFile; fileRef = B908461A2EE0EED1009CCAE6 /* GoogleService-Info-dev.plist */; };
 		B91792AF2EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */; };
 		B91792B02EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */; };
 		B91792B12EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */ = {isa = PBXBuildFile; fileRef = B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */; };
@@ -38,6 +32,12 @@
 		B91792DF2EDCCEFC005ABE0C /* hipefit-watch-dev.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B91792D92EDCCDC7005ABE0C /* hipefit-watch-dev.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B967F3E22EDCBDA600F22739 /* SplashScreenProd.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B967F3E12EDCBDA600F22739 /* SplashScreenProd.storyboard */; };
 		B967F3E42EDCBDBA00F22739 /* SplashScreenDev.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B967F3E32EDCBDBA00F22739 /* SplashScreenDev.storyboard */; };
+		B9ED64142EE229840070CB9A /* GoogleService-Info-stage.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9ED64132EE229840070CB9A /* GoogleService-Info-stage.plist */; };
+		B9ED64152EE229840070CB9A /* GoogleService-Info-stage.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9ED64132EE229840070CB9A /* GoogleService-Info-stage.plist */; };
+		B9ED64162EE229840070CB9A /* GoogleService-Info-stage.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9ED64132EE229840070CB9A /* GoogleService-Info-stage.plist */; };
+		B9ED64182EE22A5A0070CB9A /* GoogleService-Info-dev.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9ED64172EE22A5A0070CB9A /* GoogleService-Info-dev.plist */; };
+		B9ED64192EE22A5A0070CB9A /* GoogleService-Info-dev.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9ED64172EE22A5A0070CB9A /* GoogleService-Info-dev.plist */; };
+		B9ED641A2EE22A5A0070CB9A /* GoogleService-Info-dev.plist in Resources */ = {isa = PBXBuildFile; fileRef = B9ED64172EE22A5A0070CB9A /* GoogleService-Info-dev.plist */; };
 		B9F2A9EA2EDB983500FA37C1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		B9F2A9EF2EDB983500FA37C1 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		B9F2A9F02EDB983500FA37C1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
@@ -132,8 +132,6 @@
 		905BCC1172EEBDAD9FAF1012 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-common-Hipefit-dev/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ABE3918005FAAC691522FD2D /* libPods-common-Hipefit-dev.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-common-Hipefit-dev.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B90846122EE0EE73009CCAE6 /* GoogleService-Info-prod.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-prod.plist"; sourceTree = "<group>"; };
-		B90846162EE0EEA5009CCAE6 /* GoogleService-Info-stage.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-stage.plist"; sourceTree = "<group>"; };
-		B908461A2EE0EED1009CCAE6 /* GoogleService-Info-dev.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-dev.plist"; sourceTree = "<group>"; };
 		B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "ios-icon-stage.icon"; sourceTree = "<group>"; };
 		B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "ios-icon-dev.icon"; sourceTree = "<group>"; };
 		B91792BA2EDCCDAC005ABE0C /* hipefit-watch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "hipefit-watch.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -141,6 +139,8 @@
 		B91792D92EDCCDC7005ABE0C /* hipefit-watch-dev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "hipefit-watch-dev.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B967F3E12EDCBDA600F22739 /* SplashScreenProd.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreenProd.storyboard; path = Hipefit/SplashScreenProd.storyboard; sourceTree = "<group>"; };
 		B967F3E32EDCBDBA00F22739 /* SplashScreenDev.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreenDev.storyboard; path = Hipefit/SplashScreenDev.storyboard; sourceTree = "<group>"; };
+		B9ED64132EE229840070CB9A /* GoogleService-Info-stage.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-stage.plist"; sourceTree = "<group>"; };
+		B9ED64172EE22A5A0070CB9A /* GoogleService-Info-dev.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-dev.plist"; sourceTree = "<group>"; };
 		B9F2A9FA2EDB983500FA37C1 /* Hipefit-stage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hipefit-stage.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B9F2AA102EDB983800FA37C1 /* Hipefit-dev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hipefit-dev.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B9F2AA232EDB9DAB00FA37C1 /* Info-stage.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Info-stage.plist"; path = "Hipefit/Info-stage.plist"; sourceTree = "<group>"; };
@@ -156,17 +156,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = "hipefit-watch Watch App";
-			sourceTree = "<group>";
-		};
+		B91792BB2EDCCDAC005ABE0C /* hipefit-watch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "hipefit-watch Watch App"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -236,8 +226,8 @@
 				B9F2AA232EDB9DAB00FA37C1 /* Info-stage.plist */,
 				B9F2AA252EDB9DBC00FA37C1 /* Info-dev.plist */,
 				B90846122EE0EE73009CCAE6 /* GoogleService-Info-prod.plist */,
-				B90846162EE0EEA5009CCAE6 /* GoogleService-Info-stage.plist */,
-				B908461A2EE0EED1009CCAE6 /* GoogleService-Info-dev.plist */,
+				B9ED64132EE229840070CB9A /* GoogleService-Info-stage.plist */,
+				B9ED64172EE22A5A0070CB9A /* GoogleService-Info-dev.plist */,
 			);
 			name = Hipefit;
 			sourceTree = "<group>";
@@ -525,15 +515,15 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B9ED641A2EE22A5A0070CB9A /* GoogleService-Info-dev.plist in Resources */,
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
-				B90846172EE0EEA5009CCAE6 /* GoogleService-Info-stage.plist in Resources */,
 				B90846142EE0EE73009CCAE6 /* GoogleService-Info-prod.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				B91792B52EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */,
 				2D561A4F08654A56B1C2A5A7 /* ios-icon-prod.icon in Resources */,
 				B967F3E22EDCBDA600F22739 /* SplashScreenProd.storyboard in Resources */,
 				B91792AF2EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */,
-				B908461C2EE0EED1009CCAE6 /* GoogleService-Info-dev.plist in Resources */,
+				B9ED64162EE229840070CB9A /* GoogleService-Info-stage.plist in Resources */,
 				1B1AA514C7C197C579B92F37 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -571,12 +561,12 @@
 				B90846152EE0EE73009CCAE6 /* GoogleService-Info-prod.plist in Resources */,
 				B9F2A9F02EDB983500FA37C1 /* Images.xcassets in Resources */,
 				B9F2A9F22EDB983500FA37C1 /* ios-icon-prod.icon in Resources */,
-				B908461B2EE0EED1009CCAE6 /* GoogleService-Info-dev.plist in Resources */,
 				B9F2A9F32EDB983500FA37C1 /* PrivacyInfo.xcprivacy in Resources */,
 				B91792B42EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */,
-				B90846192EE0EEA5009CCAE6 /* GoogleService-Info-stage.plist in Resources */,
 				B91792B02EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */,
+				B9ED64192EE22A5A0070CB9A /* GoogleService-Info-dev.plist in Resources */,
 				B9F2AA242EDB9DAB00FA37C1 /* Info-stage.plist in Resources */,
+				B9ED64142EE229840070CB9A /* GoogleService-Info-stage.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -589,12 +579,12 @@
 				B90846132EE0EE73009CCAE6 /* GoogleService-Info-prod.plist in Resources */,
 				B9F2AA062EDB983800FA37C1 /* Images.xcassets in Resources */,
 				B9F2AA082EDB983800FA37C1 /* ios-icon-prod.icon in Resources */,
-				B908461D2EE0EED1009CCAE6 /* GoogleService-Info-dev.plist in Resources */,
 				B9F2AA262EDB9DBC00FA37C1 /* Info-dev.plist in Resources */,
 				B91792B32EDCCAD4005ABE0C /* ios-icon-dev.icon in Resources */,
-				B90846182EE0EEA5009CCAE6 /* GoogleService-Info-stage.plist in Resources */,
 				B91792B12EDCCA8F005ABE0C /* ios-icon-stage.icon in Resources */,
+				B9ED64182EE22A5A0070CB9A /* GoogleService-Info-dev.plist in Resources */,
 				B9F2AA092EDB983800FA37C1 /* PrivacyInfo.xcprivacy in Resources */,
+				B9ED64152EE229840070CB9A /* GoogleService-Info-stage.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -672,9 +662,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -689,9 +683,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -706,9 +704,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -723,9 +725,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -844,9 +850,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -861,9 +871,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

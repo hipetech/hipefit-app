@@ -5,6 +5,7 @@ import {
   getAuth,
   onAuthStateChanged,
   signInWithCredential,
+  signOut,
 } from '@react-native-firebase/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
@@ -70,9 +71,9 @@ export default function Workouts() {
     }
   };
 
-  const signOut = async () => {
+  const handleSignOut = async () => {
     try {
-      await getAuth().signOut();
+      await signOut(getAuth());
     } catch (error) {
       console.error('Sign out error:', error);
     }
@@ -96,7 +97,7 @@ export default function Workouts() {
         {Platform.OS === 'ios' && (
           <View className="w-full max-w-xs">
             {isLoggedIn ? (
-              <Button onPress={signOut} className="w-full">
+              <Button onPress={handleSignOut} className="w-full">
                 <Text>Sign Out</Text>
               </Button>
             ) : (
