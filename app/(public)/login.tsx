@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { Redirect } from 'expo-router';
 
+import { AuthScreen } from '@/features/auth';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 
-export default function Index() {
+export default function Login() {
   const { isLoggedIn, isLoading, initialize } = useAuthStore();
 
   useEffect(() => {
@@ -19,5 +20,5 @@ export default function Index() {
     return <Redirect href="/(private)" />;
   }
 
-  return <Redirect href="/(public)/login" />;
+  return <AuthScreen />;
 }

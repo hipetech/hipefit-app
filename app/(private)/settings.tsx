@@ -39,9 +39,11 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Text } from '@/components/ui/text';
+import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { settingsOptions } from '@/mock/settings';
 
 export default function Settings() {
+  const { signOut } = useAuthStore();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [autoPauseEnabled, setAutoPauseEnabled] = useState(false);
@@ -50,10 +52,6 @@ export default function Settings() {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [editName, setEditName] = useState('John Doe');
   const [editEmail, setEditEmail] = useState('john.doe@example.com');
-  const [selectedUnit, setSelectedUnit] = useState({
-    value: 'Metric',
-    label: 'Metric',
-  });
   const [selectedTheme, setSelectedTheme] = useState({
     value: 'System',
     label: 'System',
@@ -459,7 +457,16 @@ export default function Settings() {
               <AlertDialogCancel>
                 <Text>Cancel</Text>
               </AlertDialogCancel>
-              <AlertDialogAction>
+              <AlertDialogAction
+                onPress={async () => {
+                  try {
+                    await signOut();
+                    setLogoutDialogOpen(false);
+                  } catch (error) {
+                    console.error('Logout error:', error);
+                  }
+                }}
+              >
                 <Text className="text-white">Log Out</Text>
               </AlertDialogAction>
             </AlertDialogFooter>

@@ -1,66 +1,45 @@
-import { Platform } from 'react-native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useEffect } from 'react';
+import { View } from 'react-native';
 import { PortalHost } from '@rn-primitives/portal';
-import {
-  Icon,
-  Label,
-  NativeTabs,
-  VectorIcon,
-} from 'expo-router/unstable-native-tabs';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Stack } from 'expo-router';
 
 import '../global.css';
 
 import * as SplashScreen from 'expo-splash-screen';
+
+import { useAuthStore } from '@/features/auth/store/use-auth-store';
 
 SplashScreen.setOptions({
   duration: 500,
   fade: true,
 });
 
-export default function TabLayout() {
+export default function RootLayout() {
+  const { isLoggedIn, isLoading, initialize } = useAuthStore();
+
+  useEffect(() => {
+    const cleanup = initialize();
+    return cleanup;
+  }, [initialize]);
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        {/* Loading state */}
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaProvider>
-      <NativeTabs>
-        <NativeTabs.Trigger name="workouts">
-          <Label>Workouts</Label>
-          {Platform.select({
-            ios: <Icon sf="dumbbell.fill" />,
-            android: (
-              <Icon
-                src={
-                  <VectorIcon family={MaterialIcons} name="fitness-center" />
-                }
-              />
-            ),
-          })}
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="exercises">
-          <Label>Exercises</Label>
-          {Platform.select({
-            ios: <Icon sf="figure.run" />,
-            android: (
-              <Icon
-                src={
-                  <VectorIcon family={MaterialIcons} name="directions-run" />
-                }
-              />
-            ),
-          })}
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="settings">
-          <Label>Settings</Label>
-          {Platform.select({
-            ios: <Icon sf="gear" />,
-            android: (
-              <Icon
-                src={<VectorIcon family={MaterialIcons} name="settings" />}
-              />
-            ),
-          })}
-        </NativeTabs.Trigger>
-      </NativeTabs>
+    <>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(public)/login" options={{ headerShown: false }} />
+        <Stack.Protected guard={isLoggedIn}>
+          <Stack.Screen name="(private)" options={{ headerShown: false }} />
+        </Stack.Protected>
+      </Stack>
       <PortalHost />
-    </SafeAreaProvider>
+    </>
   );
 }

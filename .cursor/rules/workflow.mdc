@@ -2,5 +2,5 @@
 alwaysApply: true
 ---
 - Use yarn for all package management operations (install, add, remove, etc.)
-- Run yarn lint --fix on the end of command
+- Run yarn lint on the end of command and fix all issues
 - Git add all new created files
