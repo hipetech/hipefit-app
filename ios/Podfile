@@ -1,5 +1,10 @@
 require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
-require File.join(File.dirname(`node --print "require.resolve('react-native/package.json')"`), "scripts/react_native_pods")
+# Use Pod::Executable to resolve react-native pods script (required for static frameworks solution)
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
 
 require 'json'
 podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
@@ -17,6 +22,47 @@ ENV['RCT_USE_PREBUILT_RNCORE'] ||= '1' if podfile_properties['ios.buildReactNati
 platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
 
 prepare_react_native_project!
+
+#
+# Static Frameworks Solution for Firebase
+# ========================================
+# Firebase pods are configured as static frameworks to resolve module/linking issues
+# that occur when using Firebase with Expo and React Native. This approach:
+# - Prevents "module not found" errors during compilation
+# - Resolves Swift/Objective-C interop issues
+# - Ensures proper linking when using use_frameworks! with Expo
+#
+# The pre_install hook runs before pod installation and configures each Firebase
+# pod to be built as a static framework (static linkage, framework packaging).
+#
+static_frameworks = [
+  'FirebaseAuthInterop',
+  'FirebaseAppCheckInterop',
+  'FirebaseCore',
+  'FirebaseCoreExtension',
+  'GoogleUtilities',
+  'RecaptchaInterop',
+  'FirebaseCoreInternal',
+  'FirebaseInstallations',
+  'GoogleDataTransport',
+  'nanopb',
+  'FirebaseABTesting',
+  'FirebaseAuth',
+  'FirebaseCrashlytics',
+  'FirebaseSessions'
+]
+
+pre_install do |installer|
+  # Configure Firebase pods as static frameworks before installation
+  installer.pod_targets.each do |pod|
+    if static_frameworks.include?(pod.name)
+      puts "Configuring #{pod.name} as static framework"
+      def pod.build_type
+        Pod::BuildType.new(:linkage => :static, :packaging => :framework)
+      end
+    end
+  end
+end
 
 abstract_target 'common' do
   use_expo_modules!
@@ -47,29 +93,36 @@ abstract_target 'common' do
   )
 
   #
-  # FIX: Enable modular headers ONLY for pods that require modules for Swift
+  # Firebase Pods
+  # =============
+  # Explicitly declare Firebase pods to ensure proper installation and linking.
+  # These pods are configured as static frameworks via the pre_install hook above.
   #
-  pod 'GoogleUtilities', :modular_headers => true
-  pod 'FirebaseCore', :modular_headers => true
-  pod 'FirebaseInstallations', :modular_headers => true
-  pod 'GoogleDataTransport', :modular_headers => true
-  pod 'nanopb', :modular_headers => true
-  pod 'FirebaseCoreExtension', :modular_headers => true
-
-  # Crashlytics + Sessions
+  pod 'FirebaseAuth'
+  pod 'FirebaseAuthInterop'
+  pod 'FirebaseAppCheckInterop'
+  pod 'FirebaseCore'
+  pod 'FirebaseCoreExtension'
+  pod 'FirebaseCoreInternal'
+  pod 'GoogleUtilities'
+  pod 'RecaptchaInterop'
+  pod 'nanopb'
+  pod 'FirebaseABTesting'
+  pod 'FirebaseInstallations'
+  pod 'GoogleDataTransport'
   pod 'FirebaseCrashlytics'
   pod 'FirebaseSessions'
 
   #
-  # Firebase Analytics flags
+  # Firebase Analytics Configuration Flags
+  # =======================================
+  # $RNFirebaseAnalyticsWithoutAdIdSupport: Disables IDFA (Identifier for Advertisers) collection
+  # $RNFirebaseAsStaticFramework: Required flag for Expo Bare workflow with React Native Firebase
   #
   $RNFirebaseAnalyticsWithoutAdIdSupport = true  # no IDFA
   $RNFirebaseAsStaticFramework = true            # required for Expo Bare + RNFirebase
 
-
-  #
   # Your iOS targets
-  #
   target 'Hipefit' do
   end
 
@@ -80,6 +133,7 @@ abstract_target 'common' do
   end
 
   post_install do |installer|
+    # Run React Native post-install configuration
     react_native_post_install(
       installer,
       config[:reactNativePath],
@@ -87,9 +141,15 @@ abstract_target 'common' do
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
 
-    installer.pods_project.targets.each do |t|
-      t.build_configurations.each do |config|
+    # Configure build settings for all pod targets
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        # Disable warning about quoted includes in framework headers (common with Firebase)
         config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+        # Set Swift version to 5.0 for compatibility with Firebase and React Native
+        config.build_settings['SWIFT_VERSION'] = '5.0'
+        # Enable module definition to allow proper Swift/Objective-C interop
+        config.build_settings['DEFINES_MODULE'] = 'YES'
       end
     end
   end

@@ -1,220 +1,123 @@
-import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { Grid, List, Search } from 'lucide-react-native';
-
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { Platform, View } from 'react-native';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Image } from '@/components/ui/Image';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+  AppleAuthProvider,
+  getAuth,
+  onAuthStateChanged,
+  signInWithCredential,
+} from '@react-native-firebase/auth';
+import * as AppleAuthentication from 'expo-apple-authentication';
+
+import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { categories, workoutData } from '@/mock/workouts';
 
 export default function Workouts() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [viewMode, setViewMode] = useState('list');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedWorkout, setSelectedWorkout] = useState<
-    (typeof workoutData)[0] | null
-  >(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredWorkouts = workoutData.filter((workout) => {
-    const matchesSearch = workout.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === 'All' || workout.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    // Check initial auth state
+    const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
+      setIsLoggedIn(!!user);
+      setIsLoading(false);
+    });
 
-  const openWorkoutDialog = (workout: (typeof workoutData)[0]) => {
-    setSelectedWorkout(workout);
-    setDialogOpen(true);
+    return unsubscribe;
+  }, []);
+
+  const signInWithApple = async () => {
+    try {
+      if (Platform.OS !== 'ios') {
+        console.warn('Apple Authentication is only available on iOS');
+        return;
+      }
+
+      // Check if Apple Authentication is available
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      if (!isAvailable) {
+        console.warn('Apple Authentication is not available on this device');
+        return;
+      }
+
+      // Request Apple authentication
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      // Ensure Apple returned a user identityToken
+      if (!credential.identityToken) {
+        throw new Error('Apple Sign-In failed - no identity token returned');
+      }
+
+      // Create a Firebase credential from the response
+      // Note: Expo's Apple Authentication doesn't provide nonce, so we pass undefined
+      const appleCredential = AppleAuthProvider.credential(
+        credential.identityToken,
+        undefined
+      );
+
+      // Sign the user in with the credential
+      await signInWithCredential(getAuth(), appleCredential);
+    } catch (error: any) {
+      if (error.code === 'ERR_REQUEST_CANCELED') {
+        console.log('User canceled Apple Sign-In');
+      } else {
+        console.error('Apple Sign-In Error:', error);
+      }
+    }
   };
 
-  return (
-    <ScrollView className="flex-1 bg-gray-100">
-      <View className="pt-15 p-5">
-        <View className="mb-6">
-          <Text variant="h1" className="mb-2">
-            Workouts
-          </Text>
-          <Text variant="muted">Choose your next challenge</Text>
-        </View>
+  const signOut = async () => {
+    try {
+      await getAuth().signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
 
-        {/* Search Input */}
-        <View className="mb-4">
-          <View className="relative">
-            <View className="absolute left-3 top-3 z-10">
-              <Search size={20} className="text-muted-foreground" />
-            </View>
-            <Input
-              className="bg-white pl-10"
-              placeholder="Search workouts..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-        </View>
-
-        {/* View Mode Toggle */}
-        <View className="mb-4 flex-row items-center justify-between">
-          <ToggleGroup
-            type="single"
-            value={viewMode}
-            onValueChange={(value) => value && setViewMode(value)}
-          >
-            <ToggleGroupItem value="list" aria-label="List view">
-              <List size={16} />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="grid" aria-label="Grid view">
-              <Grid size={16} />
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </View>
-
-        {/* Category Filter */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-6"
-        >
-          <View className="flex-row gap-3">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
-                className="mr-2"
-                onPress={() => setSelectedCategory(category)}
-              >
-                <Text variant="small">{category}</Text>
-              </Button>
-            ))}
-          </View>
-        </ScrollView>
-
-        {/* Workout List */}
-        <View className="gap-4">
-          {filteredWorkouts.map((workout) => (
-            <Card
-              key={workout.id}
-              className="overflow-hidden rounded-2xl bg-white shadow-sm"
-            >
-              <Button
-                variant="ghost"
-                className="h-auto flex-row p-0"
-                onPress={() => openWorkoutDialog(workout)}
-              >
-                <View className="flex-1 flex-row">
-                  <Image
-                    className="h-[120px] w-[120px]"
-                    source={{ uri: workout.image }}
-                    contentFit="cover"
-                    transition={200}
-                  />
-                  <CardContent className="flex-1 justify-between p-4">
-                    <View className="mb-2 flex-row items-start justify-between">
-                      <Text className="mr-2 flex-1 text-lg font-semibold">
-                        {workout.title}
-                      </Text>
-                      <Badge>
-                        <Text className="text-[10px] font-semibold uppercase">
-                          {workout.category}
-                        </Text>
-                      </Badge>
-                    </View>
-                    <View className="gap-2">
-                      <View className="flex-row items-center gap-4">
-                        <Text variant="muted">⏱ {workout.duration}</Text>
-                        <Text className="font-semibold text-blue-500">
-                          {workout.difficulty}
-                        </Text>
-                      </View>
-                      <View className="gap-1">
-                        <View className="flex-row items-center justify-between">
-                          <Text variant="muted" className="text-xs">
-                            Progress
-                          </Text>
-                          <Text variant="small" className="font-semibold">
-                            0%
-                          </Text>
-                        </View>
-                        <Progress value={0} />
-                      </View>
-                    </View>
-                  </CardContent>
-                </View>
-              </Button>
-            </Card>
-          ))}
-        </View>
-
-        {/* Workout Detail Dialog */}
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="max-w-md">
-            {selectedWorkout && (
-              <>
-                <DialogHeader>
-                  <DialogTitle>{selectedWorkout.title}</DialogTitle>
-                  <DialogDescription>
-                    {selectedWorkout.category} • {selectedWorkout.duration} •{' '}
-                    {selectedWorkout.difficulty}
-                  </DialogDescription>
-                </DialogHeader>
-                <View className="gap-4">
-                  <Image
-                    className="h-[200px] w-full rounded-lg"
-                    source={{ uri: selectedWorkout.image }}
-                    contentFit="cover"
-                    transition={200}
-                  />
-                  <Separator />
-                  <View className="gap-3">
-                    <View className="flex-row items-center justify-between">
-                      <Text variant="muted">Workout Progress</Text>
-                      <Text className="font-semibold">0%</Text>
-                    </View>
-                    <Progress value={0} className="h-2" />
-                  </View>
-                  <View className="gap-2">
-                    <Text variant="h4" className="mb-2">
-                      Description
-                    </Text>
-                    <Text variant="muted">
-                      A comprehensive workout designed to challenge your entire
-                      body. This session includes strength training, cardio
-                      intervals, and flexibility exercises.
-                    </Text>
-                  </View>
-                </View>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onPress={() => setDialogOpen(false)}
-                  >
-                    <Text>Close</Text>
-                  </Button>
-                  <Button onPress={() => setDialogOpen(false)}>
-                    <Text className="text-white">Start Workout</Text>
-                  </Button>
-                </DialogFooter>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <Text>Loading...</Text>
       </View>
-    </ScrollView>
+    );
+  }
+
+  return (
+    <View className="flex-1 bg-background p-4">
+      <View className="flex-1 items-center justify-center gap-4">
+        <Text className="text-2xl font-bold">
+          {isLoggedIn ? 'Logged In' : 'Not Logged In'}
+        </Text>
+
+        {Platform.OS === 'ios' && (
+          <View className="w-full max-w-xs">
+            {isLoggedIn ? (
+              <Button onPress={signOut} className="w-full">
+                <Text>Sign Out</Text>
+              </Button>
+            ) : (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={
+                  AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+                }
+                buttonStyle={
+                  AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                }
+                cornerRadius={8}
+                style={{
+                  width: '100%',
+                  height: 50,
+                }}
+                onPress={signInWithApple}
+              />
+            )}
+          </View>
+        )}
+      </View>
+    </View>
   );
 }
