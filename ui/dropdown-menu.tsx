@@ -1,8 +1,7 @@
 import type { StyleProp, TextProps, ViewStyle } from 'react-native';
 import * as React from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import * as MenubarPrimitive from '@rn-primitives/menubar';
-import { Portal } from '@rn-primitives/portal';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import * as DropdownMenuPrimitive from '@rn-primitives/dropdown-menu';
 import {
   Check,
   ChevronDown,
@@ -12,104 +11,36 @@ import {
 import { FadeIn } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 
-import { Icon } from '@/components/ui/icon';
-import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
-import { TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
+import { Icon } from '@/ui/icon';
+import { NativeOnlyAnimatedView } from '@/ui/native-only-animated-view';
+import { TextClassContext } from '@/ui/text';
 
-const MenubarMenu = MenubarPrimitive.Menu;
+const DropdownMenu = DropdownMenuPrimitive.Root;
 
-const MenubarGroup = MenubarPrimitive.Group;
+const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
-const MenubarPortal = MenubarPrimitive.Portal;
+const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 
-const MenubarSub = MenubarPrimitive.Sub;
+const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
 
-const MenubarRadioGroup = MenubarPrimitive.RadioGroup;
+const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 
-const FullWindowOverlay =
-  Platform.OS === 'ios' ? RNFullWindowOverlay : React.Fragment;
+const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
-function Menubar({
-  className,
-  value: valueProp,
-  onValueChange: onValueChangeProp,
-  ...props
-}: MenubarPrimitive.RootProps & React.RefAttributes<MenubarPrimitive.RootRef>) {
-  const id = React.useId();
-  const [value, setValue] = React.useState<string | undefined>(undefined);
-
-  function closeMenu() {
-    if (onValueChangeProp) {
-      onValueChangeProp(undefined);
-      return;
-    }
-    setValue(undefined);
-  }
-
-  return (
-    <>
-      {Platform.OS !== 'web' && (value || valueProp) ? (
-        <Portal name={`menubar-overlay-${id}`}>
-          <Pressable onPress={closeMenu} style={StyleSheet.absoluteFill} />
-        </Portal>
-      ) : null}
-      <MenubarPrimitive.Root
-        className={cn(
-          'flex h-10 flex-row items-center gap-1 rounded-md border border-border bg-background p-1 shadow-sm shadow-black/5 sm:h-9',
-          className
-        )}
-        value={value ?? valueProp}
-        onValueChange={onValueChangeProp ?? setValue}
-        {...props}
-      />
-    </>
-  );
-}
-
-function MenubarTrigger({
-  className,
-  ...props
-}: MenubarPrimitive.TriggerProps &
-  React.RefAttributes<MenubarPrimitive.TriggerRef>) {
-  const { value } = MenubarPrimitive.useRootContext();
-  const { value: itemValue } = MenubarPrimitive.useMenuContext();
-
-  return (
-    <TextClassContext.Provider
-      value={cn(
-        'text-sm font-medium select-none group-active:text-accent-foreground',
-        value === itemValue && 'text-accent-foreground'
-      )}
-    >
-      <MenubarPrimitive.Trigger
-        className={cn(
-          'group flex items-center rounded-md px-2 py-1.5 sm:py-1',
-          Platform.select({
-            web: 'cursor-default outline-none focus:bg-accent focus:text-accent-foreground',
-          }),
-          value === itemValue && 'bg-accent',
-          className
-        )}
-        {...props}
-      />
-    </TextClassContext.Provider>
-  );
-}
-
-function MenubarSubTrigger({
+function DropdownMenuSubTrigger({
   className,
   inset,
   children,
   iconClassName,
   ...props
-}: MenubarPrimitive.SubTriggerProps &
-  React.RefAttributes<MenubarPrimitive.SubTriggerRef> & {
+}: DropdownMenuPrimitive.SubTriggerProps &
+  React.RefAttributes<DropdownMenuPrimitive.SubTriggerRef> & {
     children?: React.ReactNode;
     iconClassName?: string;
     inset?: boolean;
   }) {
-  const { open } = MenubarPrimitive.useSubContext();
+  const { open } = DropdownMenuPrimitive.useSubContext();
   const icon =
     Platform.OS === 'web' ? ChevronRight : open ? ChevronUp : ChevronDown;
   return (
@@ -119,7 +50,7 @@ function MenubarSubTrigger({
         open && 'text-accent-foreground'
       )}
     >
-      <MenubarPrimitive.SubTrigger
+      <DropdownMenuPrimitive.SubTrigger
         className={cn(
           'group flex flex-row items-center rounded-sm px-2 py-2 active:bg-accent sm:py-1.5',
           Platform.select({
@@ -138,19 +69,19 @@ function MenubarSubTrigger({
             iconClassName
           )}
         />
-      </MenubarPrimitive.SubTrigger>
+      </DropdownMenuPrimitive.SubTrigger>
     </TextClassContext.Provider>
   );
 }
 
-function MenubarSubContent({
+function DropdownMenuSubContent({
   className,
   ...props
-}: MenubarPrimitive.SubContentProps &
-  React.RefAttributes<MenubarPrimitive.SubContentRef>) {
+}: DropdownMenuPrimitive.SubContentProps &
+  React.RefAttributes<DropdownMenuPrimitive.SubContentRef>) {
   return (
     <NativeOnlyAnimatedView entering={FadeIn}>
-      <MenubarPrimitive.SubContent
+      <DropdownMenuPrimitive.SubContent
         className={cn(
           'overflow-hidden rounded-md border border-border bg-popover p-1 shadow-lg shadow-black/5',
           Platform.select({
@@ -164,61 +95,67 @@ function MenubarSubContent({
   );
 }
 
-function MenubarContent({
+const FullWindowOverlay =
+  Platform.OS === 'ios' ? RNFullWindowOverlay : React.Fragment;
+
+function DropdownMenuContent({
   className,
   overlayClassName,
   overlayStyle,
   portalHost,
-  align = 'start',
-  alignOffset = -4,
-  sideOffset = 8,
   ...props
-}: MenubarPrimitive.ContentProps &
-  React.RefAttributes<MenubarPrimitive.ContentRef> & {
+}: DropdownMenuPrimitive.ContentProps &
+  React.RefAttributes<DropdownMenuPrimitive.ContentRef> & {
     overlayStyle?: StyleProp<ViewStyle>;
     overlayClassName?: string;
     portalHost?: string;
   }) {
   return (
-    <MenubarPrimitive.Portal hostName={portalHost}>
+    <DropdownMenuPrimitive.Portal hostName={portalHost}>
       <FullWindowOverlay>
-        <NativeOnlyAnimatedView
-          entering={FadeIn}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="box-none"
+        <DropdownMenuPrimitive.Overlay
+          style={Platform.select({
+            web: overlayStyle ?? undefined,
+            native: overlayStyle
+              ? StyleSheet.flatten([
+                  StyleSheet.absoluteFill,
+                  overlayStyle as typeof StyleSheet.absoluteFill,
+                ])
+              : StyleSheet.absoluteFill,
+          })}
+          className={overlayClassName}
         >
-          <TextClassContext.Provider value="text-popover-foreground">
-            <MenubarPrimitive.Content
-              className={cn(
-                'min-w-[12rem] overflow-hidden rounded-md border border-border bg-popover p-1 shadow-lg shadow-black/5',
-                Platform.select({
-                  web: cn(
-                    'max-h-(--radix-context-menu-content-available-height) origin-(--radix-context-menu-content-transform-origin) z-50 cursor-default animate-in fade-in-0 zoom-in-95',
-                    props.side === 'bottom' && 'slide-in-from-top-2',
-                    props.side === 'top' && 'slide-in-from-bottom-2'
-                  ),
-                }),
-                className
-              )}
-              align={align}
-              alignOffset={alignOffset}
-              sideOffset={sideOffset}
-              {...props}
-            />
-          </TextClassContext.Provider>
-        </NativeOnlyAnimatedView>
+          <NativeOnlyAnimatedView entering={FadeIn}>
+            <TextClassContext.Provider value="text-popover-foreground">
+              <DropdownMenuPrimitive.Content
+                className={cn(
+                  'min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover p-1 shadow-lg shadow-black/5',
+                  Platform.select({
+                    web: cn(
+                      'max-h-(--radix-context-menu-content-available-height) origin-(--radix-context-menu-content-transform-origin) z-50 cursor-default animate-in fade-in-0 zoom-in-95',
+                      props.side === 'bottom' && 'slide-in-from-top-2',
+                      props.side === 'top' && 'slide-in-from-bottom-2'
+                    ),
+                  }),
+                  className
+                )}
+                {...props}
+              />
+            </TextClassContext.Provider>
+          </NativeOnlyAnimatedView>
+        </DropdownMenuPrimitive.Overlay>
       </FullWindowOverlay>
-    </MenubarPrimitive.Portal>
+    </DropdownMenuPrimitive.Portal>
   );
 }
 
-function MenubarItem({
+function DropdownMenuItem({
   className,
   inset,
   variant,
   ...props
-}: MenubarPrimitive.ItemProps &
-  React.RefAttributes<MenubarPrimitive.ItemRef> & {
+}: DropdownMenuPrimitive.ItemProps &
+  React.RefAttributes<DropdownMenuPrimitive.ItemRef> & {
     className?: string;
     inset?: boolean;
     variant?: 'default' | 'destructive';
@@ -231,7 +168,7 @@ function MenubarItem({
           'text-destructive group-active:text-destructive'
       )}
     >
-      <MenubarPrimitive.Item
+      <DropdownMenuPrimitive.Item
         className={cn(
           'group relative flex flex-row items-center gap-2 rounded-sm px-2 py-2 active:bg-accent sm:py-1.5',
           Platform.select({
@@ -253,17 +190,17 @@ function MenubarItem({
   );
 }
 
-function MenubarCheckboxItem({
+function DropdownMenuCheckboxItem({
   className,
   children,
   ...props
-}: MenubarPrimitive.CheckboxItemProps &
-  React.RefAttributes<MenubarPrimitive.CheckboxItemRef> & {
+}: DropdownMenuPrimitive.CheckboxItemProps &
+  React.RefAttributes<DropdownMenuPrimitive.CheckboxItemRef> & {
     children?: React.ReactNode;
   }) {
   return (
     <TextClassContext.Provider value="text-sm text-popover-foreground select-none group-active:text-accent-foreground">
-      <MenubarPrimitive.CheckboxItem
+      <DropdownMenuPrimitive.CheckboxItem
         className={cn(
           'group relative flex flex-row items-center gap-2 rounded-sm py-2 pl-8 pr-2 active:bg-accent sm:py-1.5',
           Platform.select({
@@ -275,7 +212,7 @@ function MenubarCheckboxItem({
         {...props}
       >
         <View className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-          <MenubarPrimitive.ItemIndicator>
+          <DropdownMenuPrimitive.ItemIndicator>
             <Icon
               as={Check}
               className={cn(
@@ -283,25 +220,25 @@ function MenubarCheckboxItem({
                 Platform.select({ web: 'pointer-events-none' })
               )}
             />
-          </MenubarPrimitive.ItemIndicator>
+          </DropdownMenuPrimitive.ItemIndicator>
         </View>
         <>{children}</>
-      </MenubarPrimitive.CheckboxItem>
+      </DropdownMenuPrimitive.CheckboxItem>
     </TextClassContext.Provider>
   );
 }
 
-function MenubarRadioItem({
+function DropdownMenuRadioItem({
   className,
   children,
   ...props
-}: MenubarPrimitive.RadioItemProps &
-  React.RefAttributes<MenubarPrimitive.RadioItemRef> & {
+}: DropdownMenuPrimitive.RadioItemProps &
+  React.RefAttributes<DropdownMenuPrimitive.RadioItemRef> & {
     children?: React.ReactNode;
   }) {
   return (
     <TextClassContext.Provider value="text-sm text-popover-foreground select-none group-active:text-accent-foreground">
-      <MenubarPrimitive.RadioItem
+      <DropdownMenuPrimitive.RadioItem
         className={cn(
           'group relative flex flex-row items-center gap-2 rounded-sm py-2 pl-8 pr-2 active:bg-accent sm:py-1.5',
           Platform.select({
@@ -313,27 +250,27 @@ function MenubarRadioItem({
         {...props}
       >
         <View className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-          <MenubarPrimitive.ItemIndicator>
+          <DropdownMenuPrimitive.ItemIndicator>
             <View className="h-2 w-2 rounded-full bg-foreground" />
-          </MenubarPrimitive.ItemIndicator>
+          </DropdownMenuPrimitive.ItemIndicator>
         </View>
         <>{children}</>
-      </MenubarPrimitive.RadioItem>
+      </DropdownMenuPrimitive.RadioItem>
     </TextClassContext.Provider>
   );
 }
 
-function MenubarLabel({
+function DropdownMenuLabel({
   className,
   inset,
   ...props
-}: MenubarPrimitive.LabelProps &
-  React.RefAttributes<MenubarPrimitive.LabelRef> & {
+}: DropdownMenuPrimitive.LabelProps &
+  React.RefAttributes<DropdownMenuPrimitive.LabelRef> & {
     className?: string;
     inset?: boolean;
   }) {
   return (
-    <MenubarPrimitive.Label
+    <DropdownMenuPrimitive.Label
       className={cn(
         'px-2 py-2 text-sm font-medium text-foreground sm:py-1.5',
         inset && 'pl-8',
@@ -344,20 +281,20 @@ function MenubarLabel({
   );
 }
 
-function MenubarSeparator({
+function DropdownMenuSeparator({
   className,
   ...props
-}: MenubarPrimitive.SeparatorProps &
-  React.RefAttributes<MenubarPrimitive.SeparatorRef>) {
+}: DropdownMenuPrimitive.SeparatorProps &
+  React.RefAttributes<DropdownMenuPrimitive.SeparatorRef>) {
   return (
-    <MenubarPrimitive.Separator
+    <DropdownMenuPrimitive.Separator
       className={cn('-mx-1 my-1 h-px bg-border', className)}
       {...props}
     />
   );
 }
 
-function MenubarShortcut({
+function DropdownMenuShortcut({
   className,
   ...props
 }: TextProps & React.RefAttributes<Text>) {
@@ -373,20 +310,19 @@ function MenubarShortcut({
 }
 
 export {
-  Menubar,
-  MenubarCheckboxItem,
-  MenubarContent,
-  MenubarGroup,
-  MenubarItem,
-  MenubarLabel,
-  MenubarMenu,
-  MenubarPortal,
-  MenubarRadioGroup,
-  MenubarRadioItem,
-  MenubarSeparator,
-  MenubarShortcut,
-  MenubarSub,
-  MenubarSubContent,
-  MenubarSubTrigger,
-  MenubarTrigger,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
 };

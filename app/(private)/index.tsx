@@ -2,25 +2,25 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Info, Search } from 'lucide-react-native';
 
+import { stats } from '@/mock/home';
+import { homeWorkoutData } from '@/mock/workouts';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Image } from '@/components/ui/Image';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Text } from '@/components/ui/text';
-import { stats } from '@/mock/home';
-import { homeWorkoutData } from '@/mock/workouts';
+} from '@/ui/accordion';
+import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/ui/avatar';
+import { Badge } from '@/ui/badge';
+import { Button } from '@/ui/button';
+import { Card, CardContent } from '@/ui/card';
+import { Image } from '@/ui/Image';
+import { Input } from '@/ui/input';
+import { Progress } from '@/ui/progress';
+import { Separator } from '@/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/tabs';
+import { Text } from '@/ui/text';
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');

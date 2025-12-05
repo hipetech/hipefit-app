@@ -4,9 +4,9 @@ import * as PopoverPrimitive from '@rn-primitives/popover';
 import { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 
-import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
-import { TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
+import { NativeOnlyAnimatedView } from '@/ui/native-only-animated-view';
+import { TextClassContext } from '@/ui/text';
 
 const Popover = PopoverPrimitive.Root;
 

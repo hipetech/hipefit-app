@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { useAuthStore } from '@/features/auth/store/use-auth-store';
+import { settingsOptions } from '@/mock/settings';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,11 +13,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+} from '@/ui/alert-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/ui/avatar';
+import { Badge } from '@/ui/badge';
+import { Button } from '@/ui/button';
+import { Card, CardContent } from '@/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -24,23 +26,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
+} from '@/ui/dialog';
+import { Input } from '@/ui/input';
+import { Label } from '@/ui/label';
+import { Progress } from '@/ui/progress';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Text } from '@/components/ui/text';
-import { useAuthStore } from '@/features/auth/store/use-auth-store';
-import { settingsOptions } from '@/mock/settings';
+} from '@/ui/select';
+import { Separator } from '@/ui/separator';
+import { Switch } from '@/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/tabs';
+import { Text } from '@/ui/text';
 
 export default function Settings() {
   const { signOut } = useAuthStore();

@@ -5,10 +5,10 @@ import * as AlertDialogPrimitive from '@rn-primitives/alert-dialog';
 import { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 
-import { buttonTextVariants, buttonVariants } from '@/components/ui/button';
-import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
-import { TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
+import { buttonTextVariants, buttonVariants } from '@/ui/button';
+import { NativeOnlyAnimatedView } from '@/ui/native-only-animated-view';
+import { TextClassContext } from '@/ui/text';
 
 const AlertDialog = AlertDialogPrimitive.Root;
 

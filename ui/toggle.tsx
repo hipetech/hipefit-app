@@ -4,9 +4,9 @@ import { Platform } from 'react-native';
 import * as TogglePrimitive from '@rn-primitives/toggle';
 import { cva } from 'class-variance-authority';
 
-import { Icon } from '@/components/ui/icon';
-import { TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
+import { Icon } from '@/ui/icon';
+import { TextClassContext } from '@/ui/text';
 
 const toggleVariants = cva(
   cn(

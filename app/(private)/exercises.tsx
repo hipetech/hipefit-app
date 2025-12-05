@@ -2,15 +2,16 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Search } from 'lucide-react-native';
 
+import { exerciseData, muscleGroups } from '@/mock/exercises';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+} from '@/ui/accordion';
+import { Badge } from '@/ui/badge';
+import { Button } from '@/ui/button';
+import { Card, CardContent } from '@/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -18,15 +19,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Image } from '@/components/ui/Image';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
-import { Text } from '@/components/ui/text';
-import { exerciseData, muscleGroups } from '@/mock/exercises';
+} from '@/ui/dialog';
+import { Image } from '@/ui/Image';
+import { Input } from '@/ui/input';
+import { Label } from '@/ui/label';
+import { Progress } from '@/ui/progress';
+import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
+import { Separator } from '@/ui/separator';
+import { Text } from '@/ui/text';
 
 export default function Exercises() {
   const [searchQuery, setSearchQuery] = useState('');

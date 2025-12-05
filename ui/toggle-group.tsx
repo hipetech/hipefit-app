@@ -3,10 +3,10 @@ import * as React from 'react';
 import { Platform } from 'react-native';
 import * as ToggleGroupPrimitive from '@rn-primitives/toggle-group';
 
-import { Icon } from '@/components/ui/icon';
-import { TextClassContext } from '@/components/ui/text';
-import { toggleVariants } from '@/components/ui/toggle';
 import { cn } from '@/lib/utils';
+import { Icon } from '@/ui/icon';
+import { TextClassContext } from '@/ui/text';
+import { toggleVariants } from '@/ui/toggle';
 
 const ToggleGroupContext = React.createContext<VariantProps<
   typeof toggleVariants

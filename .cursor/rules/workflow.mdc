@@ -1,6 +1,6 @@
 ---
 alwaysApply: true
 ---
-- Use yarn for all package management operations (install, add, remove, etc.)
-- Run yarn lint on the end of command and fix all issues
+- Use bun for all package management operations (install, add, remove, etc.)
+- Run bun run lint on the end of command and fix all issues
 - Git add all new created files

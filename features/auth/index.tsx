@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { Platform, View } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
-import { Button } from '@/components/ui/button';
-import { Text } from '@/components/ui/text';
+import { Button } from '@/ui/button';
+import { Text } from '@/ui/text';
 
 import { useAuthStore } from './store/use-auth-store';
 
