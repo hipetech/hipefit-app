@@ -1,0 +1,68 @@
+name: EAS Build
+
+on:
+  push:
+    branches:
+      - production
+      - staging
+      - development
+  pull_request:
+    branches:
+      - production
+      - staging
+      - development
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Build profile (development, staging, production)'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+jobs:
+  build:
+    name: Build iOS - ${{ inputs.profile || 'auto' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Determine build profile
+        id: profile
+        run: |
+          if [ "${{ inputs.profile }}" != "" ]; then
+            echo "profile=${{ inputs.profile }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/production" ]]; then
+            echo "profile=production" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "profile=staging" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/development" ]]; then
+            echo "profile=development" >> $GITHUB_OUTPUT
+          else
+            echo "profile=development" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run EAS Build
+        run: |
+          eas build \
+            --platform ios \
+            --profile ${{ steps.profile.outputs.profile }} \
+            --non-interactive \
+            --no-wait

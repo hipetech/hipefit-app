@@ -1,0 +1,43 @@
+{
+  "cli": {
+    "version": ">= 16.28.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "ios": {
+        "scheme": "Hipefit-dev"
+      }
+    },
+    "staging": {
+      "ios": {
+        "scheme": "Hipefit-stage"
+      }
+    },
+    "production": {
+      "ios": {
+        "scheme": "Hipefit"
+      }
+    }
+  },
+  "submit": {
+    "development": {
+      "ios": {
+        "bundleIdentifier": "com.kyrylokorota.hipefitapp.development",
+        "ascAppId": "6756241378"
+      }
+    },
+    "staging": {
+      "ios": {
+        "bundleIdentifier": "com.kyrylokorota.hipefitapp.staging",
+        "ascAppId": "6756242005"
+      }
+    },
+    "production": {
+      "ios": {
+        "bundleIdentifier": "com.kyrylokorota.hipefitapp",
+        "ascAppId": "6756242193"
+      }
+    }
+  }
+}

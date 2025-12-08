@@ -2,6 +2,7 @@
   "name": "hipefit-app",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "packageManager": "bun@latest",
   "scripts": {
     "start": "expo start",
     "open:xcode": "xed ios",
