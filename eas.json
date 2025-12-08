@@ -30,13 +30,13 @@
     "staging": {
       "ios": {
         "bundleIdentifier": "com.kyrylokorota.hipefitapp.staging",
-        "ascAppId": "6756241378"
+        "ascAppId": "6756242005"
       }
     },
     "production": {
       "ios": {
         "bundleIdentifier": "com.kyrylokorota.hipefitapp",
-        "ascAppId": "6756241378"
+        "ascAppId": "6756242193"
       }
     }
   }
