@@ -42,10 +42,12 @@ jobs:
               --platform ios \
               --profile ${{ inputs.environment }} \
               --id ${{ inputs.build_id }} \
-              --non-interactive
+              --non-interactive \
+              --no-wait
           else
             eas submit \
               --platform ios \
               --profile ${{ inputs.environment }} \
-              --non-interactive
+              --non-interactive \
+              --no-wait
           fi
