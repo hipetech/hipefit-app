@@ -65,4 +65,5 @@ jobs:
             --platform ios \
             --profile ${{ steps.profile.outputs.profile }} \
             --non-interactive \
-            --no-wait
+            --no-wait \
+            --auto-submit
