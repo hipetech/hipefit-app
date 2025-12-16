@@ -35,6 +35,9 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      - name: Install dependencies
+        run: bun install
+
       - name: Run EAS Submit
         run: |
           if [ -n "${{ inputs.build_id }}" ]; then
