@@ -76,5 +76,13 @@ jobs:
             --profile ${{ steps.profile.outputs.profile }} \
             --local \
             --non-interactive \
-            --no-wait \
-            --auto-submit
+            --output ${{ github.workspace }}/app-release.ipa
+
+      - name: Submit to App Store
+        if: success()
+        run: |
+          eas submit \
+            --platform ios \
+            --profile ${{ steps.profile.outputs.profile }} \
+            --path ${{ github.workspace }}/app-release.ipa \
+            --non-interactive
