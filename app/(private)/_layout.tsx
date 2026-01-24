@@ -59,17 +59,19 @@ export default function TabsLayout() {
             ),
           })}
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="testing">
-          <Label>Testing</Label>
-          {Platform.select({
-            ios: <Icon sf="flask.fill" />,
-            android: (
-              <Icon
-                src={<VectorIcon family={MaterialIcons} name="science" />}
-              />
-            ),
-          })}
-        </NativeTabs.Trigger>
+        {__DEV__ && (
+          <NativeTabs.Trigger name="testing">
+            <Label>Testing</Label>
+            {Platform.select({
+              ios: <Icon sf="flask.fill" />,
+              android: (
+                <Icon
+                  src={<VectorIcon family={MaterialIcons} name="science" />}
+                />
+              ),
+            })}
+          </NativeTabs.Trigger>
+        )}
       </NativeTabs>
       <PortalHost />
     </SafeAreaProvider>
