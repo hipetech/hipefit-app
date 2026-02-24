@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "development": "hipefit-app-dev",
+    "staging": "hipefit-app-stage",
+    "production": "hipefit-app"
+  },
+  "targets": {}
+}

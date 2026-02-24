@@ -1,13 +1,26 @@
+import type { UserProfile } from '@/types/firestore';
 import {
   AppleAuthProvider,
+  FirebaseAuthTypes,
   getAuth,
   onAuthStateChanged,
   signInWithCredential,
   signOut,
-  User,
 } from '@react-native-firebase/auth';
+import {
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+  serverTimestamp,
+  writeBatch,
+} from '@react-native-firebase/firestore';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { create } from 'zustand';
+
+import { globalGroupsRef, userRef } from '@/lib/firestore';
+
+type User = FirebaseAuthTypes.User;
 
 interface AuthState {
   user: User | null;
@@ -18,12 +31,83 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
+const createUserProfile = async (firebaseUser: User): Promise<void> => {
+  const db = getFirestore();
+  const batch = writeBatch(db);
+  const uid = firebaseUser.uid;
+  const now = serverTimestamp();
+
+  // 1. Create user profile document
+  const profileData: Omit<UserProfile, 'createdAt' | 'updatedAt'> & {
+    createdAt: ReturnType<typeof serverTimestamp>;
+    updatedAt: ReturnType<typeof serverTimestamp>;
+  } = {
+    displayName: firebaseUser.displayName ?? '',
+    email: firebaseUser.email ?? null,
+    photoURL: firebaseUser.photoURL ?? null,
+    settings: {
+      units: 'metric',
+      theme: 'system',
+      language: 'en',
+      notificationsEnabled: true,
+      workoutRemindersEnabled: false,
+      autoPauseEnabled: true,
+    },
+    stats: {
+      totalWorkouts: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      lastWorkoutAt: null,
+    },
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  batch.set(userRef(uid), profileData);
+
+  // 2. Seed default exercise groups from global collection
+  const globalGroupsSnapshot = await getDocs(globalGroupsRef());
+
+  for (const groupDoc of globalGroupsSnapshot.docs) {
+    const groupData = groupDoc.data();
+    const userGroupRef = doc(db, 'users', uid, 'exerciseGroups', groupDoc.id);
+
+    batch.set(userGroupRef, {
+      name: groupData.name,
+      order: groupData.order,
+      icon: groupData.icon ?? null,
+      isDefault: true,
+      globalGroupId: groupDoc.id,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  await batch.commit();
+};
+
+const ensureUserProfile = async (firebaseUser: User): Promise<void> => {
+  try {
+    const userDocSnap = await getDoc(userRef(firebaseUser.uid));
+
+    if (!userDocSnap.exists()) {
+      await createUserProfile(firebaseUser);
+    }
+  } catch (error) {
+    console.error('Error ensuring user profile:', error);
+  }
+};
+
 export const useAuthStore = create<AuthState>((set) => {
   let unsubscribe: (() => void) | null = null;
 
   const initialize = () => {
     const auth = getAuth();
-    unsubscribe = onAuthStateChanged(auth, (user) => {
+    unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await ensureUserProfile(user);
+      }
+
       set({
         user,
         isLoggedIn: !!user,
