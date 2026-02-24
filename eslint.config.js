@@ -3,7 +3,6 @@ const { defineConfig } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
 const prettierConfig = require('eslint-config-prettier');
 const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
-const prettierPlugin = require('eslint-plugin-prettier');
 
 module.exports = defineConfig([
   expoConfig,
@@ -12,7 +11,6 @@ module.exports = defineConfig([
     files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
       'jsx-a11y': jsxA11yPlugin,
-      prettier: prettierPlugin,
     },
     languageOptions: {
       ecmaVersion: 'latest',
@@ -50,7 +48,6 @@ module.exports = defineConfig([
       'jsx-a11y/role-has-required-aria-props': 'warn',
       'jsx-a11y/role-supports-aria-props': 'warn',
       'jsx-a11y/scope': 'warn',
-      'prettier/prettier': 'error',
     },
   },
   {

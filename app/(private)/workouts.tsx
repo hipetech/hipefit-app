@@ -1,16 +1,193 @@
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
+import { useRoutineStore } from '@/features/routines/store/use-routine-store';
+import { useWorkoutStore } from '@/features/workouts/store/use-workout-store';
+import { formatDuration, formatShortDate, formatVolume } from '@/lib/format';
+import { Badge } from '@/ui/badge';
+import { Button } from '@/ui/button';
+import { Card } from '@/ui/card';
+import { Separator } from '@/ui/separator';
+import { Skeleton } from '@/ui/skeleton';
 import { Text } from '@/ui/text';
 
 export default function Workouts() {
+  const {
+    workouts,
+    inProgressWorkout,
+    isLoading: workoutsLoading,
+  } = useWorkoutStore();
+  const { activeRoutines, isLoading: routinesLoading } = useRoutineStore();
+
+  const isLoading = workoutsLoading || routinesLoading;
+  const completedWorkouts = workouts.filter(
+    (w) => w.data.status !== 'in_progress'
+  );
+
+  if (isLoading) {
+    return (
+      <ScrollView className="flex-1 bg-muted">
+        <View className="pt-15 p-5">
+          <View className="mb-6 gap-2">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </View>
+          <Skeleton className="mb-4 h-6 w-32" />
+          <View className="mb-6 flex-row gap-3">
+            <Skeleton className="h-[120px] w-[200px] rounded-lg" />
+            <Skeleton className="h-[120px] w-[200px] rounded-lg" />
+          </View>
+          <Skeleton className="mb-4 h-6 w-24" />
+          <View className="gap-3">
+            <Skeleton className="h-[80px] w-full rounded-lg" />
+            <Skeleton className="h-[80px] w-full rounded-lg" />
+            <Skeleton className="h-[80px] w-full rounded-lg" />
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
+
   return (
-    <View className="flex-1 bg-background p-4">
-      <View className="flex-1 items-center justify-center">
-        <Text className="text-2xl font-bold">Workouts</Text>
-        <Text variant="muted" className="mt-2">
-          Your workouts will appear here
-        </Text>
+    <ScrollView className="flex-1 bg-muted">
+      <View className="pt-15 p-5">
+        {/* Header */}
+        <View className="mb-6">
+          <Text variant="h1" className="mb-2">
+            Workouts
+          </Text>
+          <Text variant="muted">Track your progress</Text>
+        </View>
+
+        {/* Active Workout Banner */}
+        {inProgressWorkout && (
+          <Card className="mb-6 border-2 border-primary p-4">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1">
+                <Text className="text-base font-bold">Workout in progress</Text>
+                <Text variant="muted" className="text-sm">
+                  {inProgressWorkout.data.routineName ?? 'Quick Workout'} •{' '}
+                  {inProgressWorkout.data.totalExercises} exercises
+                </Text>
+              </View>
+              <Button>
+                <Text className="font-semibold text-white">Continue</Text>
+              </Button>
+            </View>
+          </Card>
+        )}
+
+        {/* Routines Section */}
+        <View className="mb-6">
+          <View className="mb-4 flex-row items-center justify-between">
+            <Text variant="h4">My Routines</Text>
+            <Badge variant="secondary">
+              <Text variant="small">{activeRoutines.length}</Text>
+            </Badge>
+          </View>
+          {activeRoutines.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="mb-2"
+            >
+              <View className="flex-row gap-3">
+                {activeRoutines.map((routine) => (
+                  <Card key={routine.id} className="w-[200px] p-4">
+                    <Text
+                      className="mb-2 text-base font-bold"
+                      numberOfLines={1}
+                    >
+                      {routine.data.name}
+                    </Text>
+                    <View className="gap-1">
+                      <Text variant="muted" className="text-xs">
+                        {routine.data.exercises.length} exercises
+                      </Text>
+                      {routine.data.estimatedDuration ? (
+                        <Text variant="muted" className="text-xs">
+                          ~{routine.data.estimatedDuration} min
+                        </Text>
+                      ) : null}
+                      <Text variant="muted" className="text-xs">
+                        Performed {routine.data.timesPerformed} times
+                      </Text>
+                    </View>
+                    <Button className="mt-3" size="sm">
+                      <Text className="text-sm text-white">Start</Text>
+                    </Button>
+                  </Card>
+                ))}
+              </View>
+            </ScrollView>
+          ) : (
+            <Card className="p-5">
+              <Text variant="muted" className="mb-3 text-center">
+                No routines yet
+              </Text>
+              <Button variant="outline" className="self-center">
+                <Text>Create your first routine</Text>
+              </Button>
+            </Card>
+          )}
+        </View>
+
+        <Separator className="mb-6" />
+
+        {/* Workout History */}
+        <View className="mb-8">
+          <Text variant="h4" className="mb-4">
+            History
+          </Text>
+          {completedWorkouts.length > 0 ? (
+            <View className="gap-3">
+              {completedWorkouts.map((workout) => (
+                <Card key={workout.id} className="p-4">
+                  <View className="flex-row items-start justify-between">
+                    <View className="flex-1">
+                      <Text className="mb-1 text-base font-semibold">
+                        {workout.data.routineName ?? 'Quick Workout'}
+                      </Text>
+                      <Text variant="muted" className="mb-2 text-xs">
+                        {formatShortDate(workout.data.startedAt)}
+                      </Text>
+                      <View className="flex-row items-center gap-3">
+                        <Text variant="muted" className="text-xs">
+                          {formatDuration(workout.data.duration)}
+                        </Text>
+                        <Text variant="muted" className="text-xs">
+                          {workout.data.totalExercises} exercises
+                        </Text>
+                        <Text variant="muted" className="text-xs">
+                          {formatVolume(workout.data.totalVolume)}
+                        </Text>
+                      </View>
+                    </View>
+                    <Badge
+                      variant={
+                        workout.data.status === 'completed'
+                          ? 'default'
+                          : 'secondary'
+                      }
+                    >
+                      <Text variant="small" className="text-[10px]">
+                        {workout.data.status === 'completed'
+                          ? 'Completed'
+                          : 'Abandoned'}
+                      </Text>
+                    </Badge>
+                  </View>
+                </Card>
+              ))}
+            </View>
+          ) : (
+            <Card className="p-5">
+              <Text variant="muted" className="text-center">
+                No workouts yet
+              </Text>
+            </Card>
+          )}
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
-import { settingsOptions } from '@/mock/settings';
+import { useUserStore } from '@/features/user/store/use-user-store';
+import { capitalize, getInitials } from '@/lib/format';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +16,6 @@ import {
   AlertDialogTrigger,
 } from '@/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/avatar';
-import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 import { Card, CardContent } from '@/ui/card';
 import {
@@ -29,7 +29,6 @@ import {
 } from '@/ui/dialog';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
-import { Progress } from '@/ui/progress';
 import {
   Select,
   SelectContent,
@@ -38,365 +37,269 @@ import {
   SelectValue,
 } from '@/ui/select';
 import { Separator } from '@/ui/separator';
-import { Switch } from '@/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/tabs';
+import { Skeleton } from '@/ui/skeleton';
 import { Text } from '@/ui/text';
+
+interface SettingsItem {
+  id: string;
+  label: string;
+  icon: string;
+  hasArrow: boolean;
+}
+
+interface SettingsSection {
+  id: number;
+  category: string;
+  items: SettingsItem[];
+}
+
+const appSections: SettingsSection[] = [
+  {
+    id: 1,
+    category: 'App',
+    items: [
+      {
+        id: 'theme',
+        label: 'Theme',
+        icon: '🎨',
+        hasArrow: true,
+      },
+    ],
+  },
+];
+
+function SettingsItemList({
+  sections,
+  renderExtra,
+}: {
+  sections: SettingsSection[];
+  renderExtra?: (itemId: string) => React.ReactNode;
+}) {
+  return (
+    <View className="gap-5">
+      {sections.map((section) => (
+        <View key={section.id}>
+          <Text variant="small" className="mb-2 uppercase tracking-wide">
+            {section.category}
+          </Text>
+          <Card className="overflow-hidden">
+            {section.items.map((item, index) => {
+              const extra = renderExtra?.(item.id);
+              return (
+                <View key={item.id}>
+                  <Pressable
+                    className="w-full flex-row items-start justify-between p-3"
+                    disabled={!item.hasArrow}
+                  >
+                    <View className="flex-1 flex-row items-start">
+                      <View className="mr-4 h-10 w-10 items-center justify-center">
+                        <Text className="text-2xl">{item.icon}</Text>
+                      </View>
+                      <View className="flex-1">
+                        <Text className="mb-0.5 text-base font-medium">
+                          {item.label}
+                        </Text>
+                        {extra}
+                      </View>
+                    </View>
+                    {item.hasArrow && !extra && (
+                      <View className="items-center justify-center">
+                        <Text className="text-2xl font-light text-gray-500">
+                          ›
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                  {index !== section.items.length - 1 && (
+                    <Separator className="mx-3" />
+                  )}
+                </View>
+              );
+            })}
+          </Card>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 export default function Settings() {
   const { signOut } = useAuthStore();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [remindersEnabled, setRemindersEnabled] = useState(true);
-  const [autoPauseEnabled, setAutoPauseEnabled] = useState(false);
-  const [activeTab, setActiveTab] = useState('account');
+  const { profile, isLoading, updateSettings, updateProfile } = useUserStore();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
-  const [editName, setEditName] = useState('John Doe');
-  const [editEmail, setEditEmail] = useState('john.doe@example.com');
-  const [selectedTheme, setSelectedTheme] = useState({
-    value: 'System',
-    label: 'System',
-  });
-  const [selectedLanguage, setSelectedLanguage] = useState({
-    value: 'English',
-    label: 'English',
-  });
+  const [editName, setEditName] = useState('');
+
+  const displayName = profile?.displayName ?? '';
+  const email = profile?.email ?? '';
+  const photoURL = profile?.photoURL ?? null;
+  const settings = profile?.settings;
+  const stats = profile?.stats;
+  const memberSince = profile?.createdAt
+    ? profile.createdAt.toDate().getFullYear()
+    : '';
+
+  const openProfileDialog = () => {
+    setEditName(displayName);
+    setProfileDialogOpen(true);
+  };
+
+  const saveProfile = async () => {
+    await updateProfile({ displayName: editName });
+    setProfileDialogOpen(false);
+  };
+
+  const themeValue = settings
+    ? {
+        value: settings.theme,
+        label: capitalize(settings.theme),
+      }
+    : { value: 'system', label: 'System' };
+
+  const renderAppExtra = (itemId: string): React.ReactNode => {
+    if (itemId === 'theme') {
+      return (
+        <Select
+          value={themeValue}
+          onValueChange={(val) => {
+            if (val) {
+              updateSettings({
+                theme: val.value as 'light' | 'dark' | 'system',
+              });
+            }
+          }}
+        >
+          <SelectTrigger className="mt-1 w-[120px] py-1">
+            <SelectValue placeholder="Select theme" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="system" label="System">
+              <Text>System</Text>
+            </SelectItem>
+            <SelectItem value="light" label="Light">
+              <Text>Light</Text>
+            </SelectItem>
+            <SelectItem value="dark" label="Dark">
+              <Text>Dark</Text>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      );
+    }
+    return null;
+  };
+
+  if (isLoading) {
+    return (
+      <ScrollView className="flex-1 bg-muted">
+        <View className="p-4 pt-12">
+          <View className="mb-6">
+            <Card className="p-4">
+              <View className="flex-row items-center">
+                <Skeleton className="mr-4 h-[70px] w-[70px] rounded-full" />
+                <View className="flex-1 gap-2">
+                  <Skeleton className="h-6 w-40" />
+                  <Skeleton className="h-4 w-52" />
+                  <Skeleton className="h-4 w-32" />
+                </View>
+              </View>
+            </Card>
+          </View>
+          <View className="gap-4">
+            <Skeleton className="h-40 w-full rounded-lg" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
 
   return (
-    <ScrollView className="flex-1 bg-gray-100">
+    <ScrollView className="flex-1 bg-muted">
       <View className="p-4 pt-12">
         {/* Profile Header with Avatar */}
         <View className="mb-6">
           <Card className="p-4">
             <View className="flex-row items-center">
               <Avatar className="mr-4 h-[70px] w-[70px]" alt="Profile Picture">
-                <AvatarImage
-                  source={{
-                    uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
-                  }}
-                />
+                {photoURL ? <AvatarImage source={{ uri: photoURL }} /> : null}
                 <AvatarFallback>
-                  <Text className="text-2xl">JD</Text>
+                  <Text className="text-2xl">
+                    {displayName ? getInitials(displayName) : '?'}
+                  </Text>
                 </AvatarFallback>
               </Avatar>
               <View className="flex-1">
                 <Text variant="h3" className="mb-1">
-                  {editName}
+                  {displayName || 'User'}
                 </Text>
-                <Text variant="muted" className="mb-1">
-                  {editEmail}
+                <Text variant="muted" className="mb-1 text-xs">
+                  {email || 'No email'}
                 </Text>
-                <View className="flex-row items-center gap-2">
-                  <Badge variant="secondary">
-                    <Text variant="small">Intermediate</Text>
-                  </Badge>
+                {memberSince ? (
                   <Text variant="muted" className="text-xs">
-                    Member since 2024
+                    Member since {memberSince}
                   </Text>
-                </View>
+                ) : null}
               </View>
-              <Dialog
-                open={profileDialogOpen}
-                onOpenChange={setProfileDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Text>Edit</Text>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Edit Profile</DialogTitle>
-                    <DialogDescription>
-                      Update your profile information
-                    </DialogDescription>
-                  </DialogHeader>
-                  <View className="gap-4">
-                    <View className="gap-2">
-                      <Label>
-                        <Text>Name</Text>
-                      </Label>
-                      <Input
-                        value={editName}
-                        onChangeText={setEditName}
-                        placeholder="Enter your name"
-                      />
-                    </View>
-                    <View className="gap-2">
-                      <Label>
-                        <Text>Email</Text>
-                      </Label>
-                      <Input
-                        value={editEmail}
-                        onChangeText={setEditEmail}
-                        placeholder="Enter your email"
-                        keyboardType="email-address"
-                      />
-                    </View>
-                  </View>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onPress={() => setProfileDialogOpen(false)}
-                    >
-                      <Text>Cancel</Text>
-                    </Button>
-                    <Button onPress={() => setProfileDialogOpen(false)}>
-                      <Text className="text-white">Save</Text>
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
             </View>
+            <Dialog
+              open={profileDialogOpen}
+              onOpenChange={setProfileDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="mt-3"
+                  onPress={openProfileDialog}
+                >
+                  <Text>Edit Profile</Text>
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Profile</DialogTitle>
+                  <DialogDescription>
+                    Update your profile information
+                  </DialogDescription>
+                </DialogHeader>
+                <View className="gap-4">
+                  <View className="gap-2">
+                    <Label>
+                      <Text>Name</Text>
+                    </Label>
+                    <Input
+                      value={editName}
+                      onChangeText={setEditName}
+                      placeholder="Enter your name"
+                    />
+                  </View>
+                </View>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onPress={() => setProfileDialogOpen(false)}
+                  >
+                    <Text>Cancel</Text>
+                  </Button>
+                  <Button onPress={saveProfile}>
+                    <Text>Save</Text>
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </Card>
         </View>
 
-        {/* Settings Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="w-full">
-            <TabsTrigger value="account" className="flex-1">
-              <Text variant="small">Account</Text>
-            </TabsTrigger>
-            <TabsTrigger value="workout" className="flex-1">
-              <Text variant="small">Workout</Text>
-            </TabsTrigger>
-            <TabsTrigger value="app" className="flex-1">
-              <Text variant="small">App</Text>
-            </TabsTrigger>
-          </TabsList>
+        {/* Settings */}
+        <View className="mb-6">
+          <SettingsItemList
+            sections={appSections}
+            renderExtra={renderAppExtra}
+          />
+        </View>
 
-          <TabsContent value="account" className="mt-4">
-            <View className="gap-5">
-              {settingsOptions
-                .filter((section) => section.category === 'Account')
-                .map((section) => (
-                  <View key={section.id}>
-                    <Text
-                      variant="small"
-                      className="mb-2 uppercase tracking-wide"
-                    >
-                      {section.category}
-                    </Text>
-                    <Card className="overflow-hidden">
-                      {section.items.map((item, index) => (
-                        <View key={item.id}>
-                          <Pressable
-                            className="w-full flex-row items-center justify-between p-3"
-                            disabled={
-                              !(item.hasArrow ?? false) &&
-                              !(item.hasSwitch ?? false)
-                            }
-                          >
-                            <View className="flex-1 flex-row items-center">
-                              <View className="mr-4 h-12 w-12 items-center justify-center">
-                                <Text className="text-3xl">{item.icon}</Text>
-                              </View>
-                              <View className="flex-1">
-                                <Text className="mb-0.5 text-base font-medium">
-                                  {item.label}
-                                </Text>
-                                {item.value !== undefined && (
-                                  <Text variant="muted" className="text-sm">
-                                    {item.value}
-                                  </Text>
-                                )}
-                              </View>
-                            </View>
-                            <View className="items-center justify-center">
-                              {(item.hasSwitch ?? false) && (
-                                <Switch
-                                  checked={
-                                    item.id === 'notifications'
-                                      ? notificationsEnabled
-                                      : notificationsEnabled
-                                  }
-                                  onCheckedChange={(value) => {
-                                    if (item.id === 'notifications') {
-                                      setNotificationsEnabled(value);
-                                    }
-                                  }}
-                                />
-                              )}
-                              {(item.hasArrow ?? false) && (
-                                <Text className="text-2xl font-light text-gray-500">
-                                  ›
-                                </Text>
-                              )}
-                            </View>
-                          </Pressable>
-                          {index !== section.items.length - 1 && (
-                            <Separator className="mx-3" />
-                          )}
-                        </View>
-                      ))}
-                    </Card>
-                  </View>
-                ))}
-            </View>
-          </TabsContent>
-
-          <TabsContent value="workout" className="mt-4">
-            <View className="gap-5">
-              {settingsOptions
-                .filter((section) => section.category === 'Workout')
-                .map((section) => (
-                  <View key={section.id}>
-                    <Text
-                      variant="small"
-                      className="mb-2 uppercase tracking-wide"
-                    >
-                      {section.category}
-                    </Text>
-                    <Card className="overflow-hidden">
-                      {section.items.map((item, index) => (
-                        <View key={item.id}>
-                          <Pressable
-                            className="w-full flex-row items-center justify-between p-3"
-                            disabled={
-                              !(item.hasArrow ?? false) &&
-                              !(item.hasSwitch ?? false)
-                            }
-                          >
-                            <View className="flex-1 flex-row items-center">
-                              <View className="mr-4 h-12 w-12 items-center justify-center">
-                                <Text className="text-3xl">{item.icon}</Text>
-                              </View>
-                            </View>
-                            <View className="items-center justify-center">
-                              {(item.hasSwitch ?? false) && (
-                                <Switch
-                                  checked={
-                                    item.id === 'reminders'
-                                      ? remindersEnabled
-                                      : autoPauseEnabled
-                                  }
-                                  onCheckedChange={(value) => {
-                                    if (item.id === 'reminders') {
-                                      setRemindersEnabled(value);
-                                    } else {
-                                      setAutoPauseEnabled(value);
-                                    }
-                                  }}
-                                />
-                              )}
-                              {(item.hasArrow ?? false) &&
-                                item.id !== 'units' && (
-                                  <Text className="text-2xl font-light text-gray-500">
-                                    ›
-                                  </Text>
-                                )}
-                            </View>
-                          </Pressable>
-                          {index !== section.items.length - 1 && (
-                            <Separator className="mx-3" />
-                          )}
-                        </View>
-                      ))}
-                    </Card>
-                  </View>
-                ))}
-            </View>
-          </TabsContent>
-
-          <TabsContent value="app" className="mt-4">
-            <View className="gap-5">
-              {settingsOptions
-                .filter((section) => section.category === 'App')
-                .map((section) => (
-                  <View key={section.id}>
-                    <Text
-                      variant="small"
-                      className="mb-2 uppercase tracking-wide"
-                    >
-                      {section.category}
-                    </Text>
-                    <Card className="overflow-hidden">
-                      {section.items.map((item, index) => (
-                        <View key={item.id}>
-                          <Pressable
-                            className="w-full flex-row items-center justify-between p-3"
-                            disabled={!(item.hasArrow ?? false)}
-                          >
-                            <View className="flex-1 flex-row items-center">
-                              <View className="mr-4 h-12 w-12 items-center justify-center">
-                                <Text className="text-3xl">{item.icon}</Text>
-                              </View>
-                              <View className="flex-1">
-                                <Text className="mb-0.5 text-base font-medium">
-                                  {item.label}
-                                </Text>
-                                {item.id === 'theme' && (
-                                  <Select
-                                    value={selectedTheme}
-                                    onValueChange={setSelectedTheme}
-                                  >
-                                    <SelectTrigger className="mt-1 h-8 w-[120px]">
-                                      <SelectValue placeholder="Select theme" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="System" label="System">
-                                        <Text>System</Text>
-                                      </SelectItem>
-                                      <SelectItem value="Light" label="Light">
-                                        <Text>Light</Text>
-                                      </SelectItem>
-                                      <SelectItem value="Dark" label="Dark">
-                                        <Text>Dark</Text>
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                )}
-                                {item.id === 'language' && (
-                                  <Select
-                                    value={selectedLanguage}
-                                    onValueChange={setSelectedLanguage}
-                                  >
-                                    <SelectTrigger className="mt-1 h-8 w-[120px]">
-                                      <SelectValue placeholder="Select language" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem
-                                        value="English"
-                                        label="English"
-                                      >
-                                        <Text>English</Text>
-                                      </SelectItem>
-                                      <SelectItem
-                                        value="Spanish"
-                                        label="Spanish"
-                                      >
-                                        <Text>Spanish</Text>
-                                      </SelectItem>
-                                      <SelectItem value="French" label="French">
-                                        <Text>French</Text>
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                )}
-                              </View>
-                            </View>
-                            <View className="items-center justify-center">
-                              {(item.hasArrow ?? false) &&
-                                item.id !== 'theme' &&
-                                item.id !== 'language' && (
-                                  <Text className="text-2xl font-light text-gray-500">
-                                    ›
-                                  </Text>
-                                )}
-                            </View>
-                          </Pressable>
-                          {index !== section.items.length - 1 && (
-                            <Separator className="mx-3" />
-                          )}
-                        </View>
-                      ))}
-                    </Card>
-                  </View>
-                ))}
-            </View>
-          </TabsContent>
-        </Tabs>
-
-        {/* Stats Summary with Progress */}
+        {/* Stats Summary */}
         <View className="mb-5">
           <Text variant="small" className="mb-2 uppercase tracking-wide">
             Your Stats
@@ -404,33 +307,30 @@ export default function Settings() {
           <Card className="p-4">
             <CardContent className="flex-row items-center justify-around p-0">
               <View className="flex-1 items-center">
-                <Text className="mb-1 text-2xl font-bold">156</Text>
+                <Text className="mb-1 text-2xl font-bold">
+                  {stats?.totalWorkouts ?? 0}
+                </Text>
                 <Text variant="muted" className="text-center text-xs">
                   Total Workouts
                 </Text>
-                <View className="mt-2 w-full">
-                  <Progress value={78} />
-                </View>
               </View>
               <Separator orientation="vertical" className="h-10" />
               <View className="flex-1 items-center">
-                <Text className="mb-1 text-2xl font-bold">42h</Text>
-                <Text variant="muted" className="text-center text-xs">
-                  Time Exercised
+                <Text className="mb-1 text-2xl font-bold">
+                  {stats?.currentStreak ?? 0}
                 </Text>
-                <View className="mt-2 w-full">
-                  <Progress value={65} />
-                </View>
+                <Text variant="muted" className="text-center text-xs">
+                  Current Streak (days)
+                </Text>
               </View>
               <Separator orientation="vertical" className="h-10" />
               <View className="flex-1 items-center">
-                <Text className="mb-1 text-2xl font-bold">8.2k</Text>
-                <Text variant="muted" className="text-center text-xs">
-                  Calories Burned
+                <Text className="mb-1 text-2xl font-bold">
+                  {stats?.longestStreak ?? 0}
                 </Text>
-                <View className="mt-2 w-full">
-                  <Progress value={82} />
-                </View>
+                <Text variant="muted" className="text-center text-xs">
+                  Longest Streak (days)
+                </Text>
               </View>
             </CardContent>
           </Card>

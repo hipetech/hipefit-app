@@ -1,4 +1,4 @@
-import type { UserProfile } from '@/types/firestore';
+import type { UserProfile } from '@/database';
 import {
   AppleAuthProvider,
   FirebaseAuthTypes,
@@ -13,12 +13,13 @@ import {
   getDocs,
   getFirestore,
   serverTimestamp,
+  updateDoc,
   writeBatch,
 } from '@react-native-firebase/firestore';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { create } from 'zustand';
 
-import { globalGroupsRef, userRef } from '@/lib/firestore';
+import { globalGroupsRef, userRef } from '@/database';
 
 type User = FirebaseAuthTypes.User;
 
@@ -31,18 +32,41 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
-const createUserProfile = async (firebaseUser: User): Promise<void> => {
+interface AppleName {
+  firstName: string | null;
+  lastName: string | null;
+}
+
+const buildDisplayName = (
+  firstName: string | null,
+  lastName: string | null
+): string => {
+  return [firstName, lastName].filter(Boolean).join(' ');
+};
+
+const createUserProfile = async (
+  firebaseUser: User,
+  appleName: AppleName
+): Promise<void> => {
   const db = getFirestore();
   const batch = writeBatch(db);
   const uid = firebaseUser.uid;
   const now = serverTimestamp();
 
-  // 1. Create user profile document
+  const firstName = appleName.firstName ?? '';
+  const lastName = appleName.lastName ?? '';
+  const displayName =
+    buildDisplayName(appleName.firstName, appleName.lastName) ||
+    firebaseUser.displayName ||
+    '';
+
   const profileData: Omit<UserProfile, 'createdAt' | 'updatedAt'> & {
     createdAt: ReturnType<typeof serverTimestamp>;
     updatedAt: ReturnType<typeof serverTimestamp>;
   } = {
-    displayName: firebaseUser.displayName ?? '',
+    firstName,
+    lastName,
+    displayName,
     email: firebaseUser.email ?? null,
     photoURL: firebaseUser.photoURL ?? null,
     settings: {
@@ -65,7 +89,7 @@ const createUserProfile = async (firebaseUser: User): Promise<void> => {
 
   batch.set(userRef(uid), profileData);
 
-  // 2. Seed default exercise groups from global collection
+  // Seed default exercise groups from global collection
   const globalGroupsSnapshot = await getDocs(globalGroupsRef());
 
   for (const groupDoc of globalGroupsSnapshot.docs) {
@@ -86,15 +110,25 @@ const createUserProfile = async (firebaseUser: User): Promise<void> => {
   await batch.commit();
 };
 
-const ensureUserProfile = async (firebaseUser: User): Promise<void> => {
-  try {
-    const userDocSnap = await getDoc(userRef(firebaseUser.uid));
+const ensureUserProfile = async (
+  firebaseUser: User,
+  appleName: AppleName
+): Promise<void> => {
+  const userDocSnap = await getDoc(userRef(firebaseUser.uid));
 
-    if (!userDocSnap.exists()) {
-      await createUserProfile(firebaseUser);
-    }
-  } catch (error) {
-    console.error('Error ensuring user profile:', error);
+  if (!userDocSnap.exists()) {
+    await createUserProfile(firebaseUser, appleName);
+  } else if (appleName.firstName || appleName.lastName) {
+    const updates: Record<string, unknown> = {
+      updatedAt: serverTimestamp(),
+    };
+    if (appleName.firstName) updates.firstName = appleName.firstName;
+    if (appleName.lastName) updates.lastName = appleName.lastName;
+    updates.displayName = buildDisplayName(
+      appleName.firstName,
+      appleName.lastName
+    );
+    await updateDoc(userRef(firebaseUser.uid), updates);
   }
 };
 
@@ -103,11 +137,7 @@ export const useAuthStore = create<AuthState>((set) => {
 
   const initialize = () => {
     const auth = getAuth();
-    unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        await ensureUserProfile(user);
-      }
-
+    unsubscribe = onAuthStateChanged(auth, (user) => {
       set({
         user,
         isLoggedIn: !!user,
@@ -142,12 +172,18 @@ export const useAuthStore = create<AuthState>((set) => {
         throw new Error('Apple Sign-In failed - no identity token returned');
       }
 
+      const appleName: AppleName = {
+        firstName: credential.fullName?.givenName ?? null,
+        lastName: credential.fullName?.familyName ?? null,
+      };
+
       const appleCredential = AppleAuthProvider.credential(
         credential.identityToken,
         undefined
       );
 
-      await signInWithCredential(getAuth(), appleCredential);
+      const { user } = await signInWithCredential(getAuth(), appleCredential);
+      await ensureUserProfile(user, appleName);
     } catch (error: any) {
       if (error.code === 'ERR_REQUEST_CANCELED') {
         console.log('User canceled Apple Sign-In');

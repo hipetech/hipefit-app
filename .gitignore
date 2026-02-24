@@ -46,3 +46,7 @@ app-example
 # generated native folders
 /.idea
 /.vscode
+
+# Firebase service account keys
+scripts/service-account.json
+scripts/*-firebase-adminsdk-*.json

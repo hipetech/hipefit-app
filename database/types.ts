@@ -1,6 +1,6 @@
 import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
-type Timestamp = FirebaseFirestoreTypes.Timestamp;
+export type Timestamp = FirebaseFirestoreTypes.Timestamp;
 
 // ─── Shared Type Aliases ────────────────────────────────────────────────────
 
@@ -90,6 +90,8 @@ export interface UserStats {
 }
 
 export interface UserProfile {
+  firstName: string;
+  lastName: string;
   displayName: string;
   email: string | null;
   photoURL: string | null;
