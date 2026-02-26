@@ -1,40 +1,37 @@
 import type { MergedExercise } from '@/features/exercises/store/use-exercise-store';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import { LegendList } from '@legendapp/list';
+import {
+  Button,
+  Card,
+  Chip,
+  Dialog,
+  Input,
+  RadioGroup,
+  Separator,
+  Skeleton,
+  TextField,
+} from 'heroui-native';
 import { Search } from 'lucide-react-native';
 
 import { ExerciseCard } from '@/features/exercises/exercise-card';
 import { useExerciseStore } from '@/features/exercises/store/use-exercise-store';
 import { EXERCISE_PLACEHOLDER_IMAGE } from '@/lib/constants';
 import { capitalize, getDifficultyValue } from '@/lib/format';
-import { Accordion } from '@/ui/accordion';
-import { Badge } from '@/ui/badge';
-import { Button } from '@/ui/button';
-import { Card } from '@/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/ui/dialog';
 import { Image } from '@/ui/Image';
-import { Input } from '@/ui/input';
-import { Label } from '@/ui/label';
 import { Progress } from '@/ui/progress';
-import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
-import { Separator } from '@/ui/separator';
-import { Skeleton } from '@/ui/skeleton';
 import { Text } from '@/ui/text';
+
+const ItemSeparator = () => <View className="h-3" />;
 
 export default function Exercises() {
   const { exercises, isLoading } = useExerciseStore();
   const [searchQuery, setSearchQuery] = useState('');
-
   const [difficultyFilter, setDifficultyFilter] = useState('all');
   const [selectedExercise, setSelectedExercise] =
     useState<MergedExercise | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const dialogOpen = selectedExercise !== null;
 
@@ -47,10 +44,90 @@ export default function Exercises() {
     return matchesSearch && matchesDifficulty;
   });
 
+  useEffect(() => {
+    setExpandedId(null);
+  }, [searchQuery, difficultyFilter]);
+
+  const renderExerciseItem = useCallback(
+    ({ item: exercise }: { item: MergedExercise }) => (
+      <ExerciseCard
+        exercise={exercise}
+        onSelect={setSelectedExercise}
+        isExpanded={expandedId === exercise.id}
+        onToggle={() =>
+          setExpandedId((prev) => (prev === exercise.id ? null : exercise.id))
+        }
+      />
+    ),
+    [expandedId]
+  );
+
+  const ListHeader = useCallback(
+    () => (
+      <View>
+        <View className="mb-6">
+          <Text variant="h1" className="mb-2">
+            Exercises
+          </Text>
+          <Text variant="muted">Build your exercise library</Text>
+        </View>
+
+        {/* Search Input */}
+        <View className="mb-4">
+          <TextField>
+            <View className="relative">
+              <View className="absolute top-3 left-3 z-10">
+                <Search size={20} className="text-muted" />
+              </View>
+              <Input
+                className="pl-10"
+                placeholder="Search exercises..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+          </TextField>
+        </View>
+
+        {/* Difficulty Filter with Radio Group */}
+        <Card className="mb-4 p-4">
+          <Text variant="small" className="mb-3 tracking-wide uppercase">
+            Filter by Difficulty
+          </Text>
+          <RadioGroup
+            value={difficultyFilter}
+            onValueChange={setDifficultyFilter}
+          >
+            <View className="flex-row flex-wrap gap-4">
+              <RadioGroup.Item value="all">All</RadioGroup.Item>
+              <RadioGroup.Item value="beginner">Beginner</RadioGroup.Item>
+              <RadioGroup.Item value="intermediate">
+                Intermediate
+              </RadioGroup.Item>
+              <RadioGroup.Item value="advanced">Advanced</RadioGroup.Item>
+            </View>
+          </RadioGroup>
+        </Card>
+      </View>
+    ),
+    [searchQuery, difficultyFilter]
+  );
+
+  const ListEmpty = useCallback(
+    () => (
+      <Card className="p-8">
+        <Text variant="muted" className="text-center">
+          No exercises found
+        </Text>
+      </Card>
+    ),
+    []
+  );
+
   if (isLoading) {
     return (
-      <ScrollView className="flex-1 bg-muted">
-        <View className="pt-15 p-5">
+      <ScrollView className="bg-background flex-1">
+        <View className="p-5 pt-15">
           <View className="mb-6 gap-2">
             <Skeleton className="h-8 w-32" />
             <Skeleton className="h-4 w-48" />
@@ -68,108 +145,45 @@ export default function Exercises() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-muted">
-      <View className="pt-15 p-5">
-        <View className="mb-6">
-          <Text variant="h1" className="mb-2">
-            Exercises
-          </Text>
-          <Text variant="muted">Build your exercise library</Text>
-        </View>
+    <>
+      <LegendList
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingTop: 60,
+          paddingHorizontal: 20,
+          paddingBottom: 32,
+        }}
+        data={filteredExercises}
+        renderItem={renderExerciseItem}
+        keyExtractor={(item) => item.id}
+        estimatedItemSize={180}
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={ListEmpty}
+        ItemSeparatorComponent={ItemSeparator}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      />
 
-        {/* Search Input */}
-        <View className="mb-4">
-          <View className="relative">
-            <View className="absolute left-3 top-3 z-10">
-              <Search size={20} className="text-muted-foreground" />
-            </View>
-            <Input
-              className="bg-card pl-10"
-              placeholder="Search exercises..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-        </View>
-
-        {/* Difficulty Filter with Radio Group */}
-        <Card className="mb-4 p-4">
-          <Text variant="small" className="mb-3 uppercase tracking-wide">
-            Filter by Difficulty
-          </Text>
-          <RadioGroup
-            value={difficultyFilter}
-            onValueChange={setDifficultyFilter}
-          >
-            <View className="flex-row flex-wrap gap-4">
-              <View className="flex-row items-center gap-2">
-                <RadioGroupItem value="all" id="all" />
-                <Label htmlFor="all" className="ml-0">
-                  <Text variant="small">All</Text>
-                </Label>
-              </View>
-              <View className="flex-row items-center gap-2">
-                <RadioGroupItem value="beginner" id="beginner" />
-                <Label htmlFor="beginner" className="ml-0">
-                  <Text variant="small">Beginner</Text>
-                </Label>
-              </View>
-              <View className="flex-row items-center gap-2">
-                <RadioGroupItem value="intermediate" id="intermediate" />
-                <Label htmlFor="intermediate" className="ml-0">
-                  <Text variant="small">Intermediate</Text>
-                </Label>
-              </View>
-              <View className="flex-row items-center gap-2">
-                <RadioGroupItem value="advanced" id="advanced" />
-                <Label htmlFor="advanced" className="ml-0">
-                  <Text variant="small">Advanced</Text>
-                </Label>
-              </View>
-            </View>
-          </RadioGroup>
-        </Card>
-
-        {/* Exercise List */}
-        {filteredExercises.length === 0 ? (
-          <Card className="p-8">
-            <Text variant="muted" className="text-center">
-              No exercises found
-            </Text>
-          </Card>
-        ) : (
-          <View className="gap-4">
-            <Accordion type="single" collapsible className="gap-3">
-              {filteredExercises.map((exercise) => (
-                <ExerciseCard
-                  key={exercise.id}
-                  exercise={exercise}
-                  onSelect={setSelectedExercise}
-                />
-              ))}
-            </Accordion>
-          </View>
-        )}
-
-        {/* Exercise Detail Dialog */}
-        <Dialog
-          open={dialogOpen}
-          onOpenChange={(open) => {
-            if (!open) setSelectedExercise(null);
-          }}
-        >
-          <DialogContent className="max-w-md">
+      {/* Exercise Detail Dialog */}
+      <Dialog
+        isOpen={dialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setSelectedExercise(null);
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <Dialog.Content>
+            <Dialog.Close />
             {selectedExercise && (
               <>
-                <DialogHeader>
-                  <DialogTitle>{selectedExercise.name}</DialogTitle>
-                  <DialogDescription>
-                    {selectedExercise.groupName} •{' '}
-                    {selectedExercise.equipment.length > 0
-                      ? selectedExercise.equipment.join(', ')
-                      : 'No equipment'}
-                  </DialogDescription>
-                </DialogHeader>
+                <Dialog.Title>{selectedExercise.name}</Dialog.Title>
+                <Dialog.Description>
+                  {selectedExercise.groupName} •{' '}
+                  {selectedExercise.equipment.length > 0
+                    ? selectedExercise.equipment.join(', ')
+                    : 'No equipment'}
+                </Dialog.Description>
                 <View className="gap-4">
                   <Image
                     className="h-[200px] w-full rounded-lg"
@@ -184,11 +198,11 @@ export default function Exercises() {
                   <View className="gap-3">
                     <View className="flex-row items-center justify-between">
                       <Text variant="muted">Difficulty</Text>
-                      <Badge variant="secondary">
-                        <Text variant="small">
+                      <Chip variant="secondary" size="sm">
+                        <Chip.Label>
                           {capitalize(selectedExercise.difficulty)}
-                        </Text>
-                      </Badge>
+                        </Chip.Label>
+                      </Chip>
                     </View>
                     <Progress
                       value={getDifficultyValue(selectedExercise.difficulty)}
@@ -206,27 +220,27 @@ export default function Exercises() {
                     </View>
                   ) : null}
                   {selectedExercise.isCustom ? (
-                    <Badge variant="secondary" className="self-start">
-                      <Text variant="small">Custom Exercise</Text>
-                    </Badge>
+                    <Chip variant="secondary" className="self-start">
+                      <Chip.Label>Custom Exercise</Chip.Label>
+                    </Chip>
                   ) : null}
                 </View>
-                <DialogFooter>
+                <View className="mt-4 flex-row justify-end gap-3">
                   <Button
                     variant="outline"
                     onPress={() => setSelectedExercise(null)}
                   >
-                    <Text>Close</Text>
+                    <Button.Label>Close</Button.Label>
                   </Button>
                   <Button onPress={() => setSelectedExercise(null)}>
-                    <Text>Add to Workout</Text>
+                    <Button.Label>Add to Workout</Button.Label>
                   </Button>
-                </DialogFooter>
+                </View>
               </>
             )}
-          </DialogContent>
-        </Dialog>
-      </View>
-    </ScrollView>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
+    </>
   );
 }

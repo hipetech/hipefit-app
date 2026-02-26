@@ -1,66 +1,61 @@
-import { Platform } from 'react-native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { PortalHost } from '@rn-primitives/portal';
-import {
-  Icon,
-  Label,
-  NativeTabs,
-  VectorIcon,
-} from 'expo-router/unstable-native-tabs';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import type { CreateMenuItem } from '@/ui/tab-bar';
+import { useMemo } from 'react';
+import { Tabs } from 'expo-router';
+import { useThemeColor } from 'heroui-native';
+import { Dumbbell, ListPlus, Plus, Zap } from 'lucide-react-native';
+
+import { TAB_BAR_TOTAL_HEIGHT, TabBar } from '@/ui/tab-bar';
 
 export default function TabsLayout() {
+  const [backgroundColor] = useThemeColor(['background']);
+
+  const createMenuItems: CreateMenuItem[] = useMemo(
+    () => [
+      {
+        label: 'Start instant workout',
+        icon: Zap,
+        onPress: () => {
+          // TODO: navigate to instant workout
+        },
+      },
+      {
+        label: 'Create routine',
+        icon: ListPlus,
+        onPress: () => {
+          // TODO: navigate to create routine
+        },
+      },
+      {
+        label: 'Create exercise',
+        icon: Dumbbell,
+        onPress: () => {
+          // TODO: navigate to create exercise
+        },
+      },
+    ],
+    []
+  );
+
   return (
-    <SafeAreaProvider>
-      <NativeTabs>
-        <NativeTabs.Trigger name="index">
-          <Label>Home</Label>
-          {Platform.select({
-            ios: <Icon sf="house.fill" />,
-            android: (
-              <Icon src={<VectorIcon family={MaterialIcons} name="home" />} />
-            ),
-          })}
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="workouts">
-          <Label>Workouts</Label>
-          {Platform.select({
-            ios: <Icon sf="dumbbell.fill" />,
-            android: (
-              <Icon
-                src={
-                  <VectorIcon family={MaterialIcons} name="fitness-center" />
-                }
-              />
-            ),
-          })}
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="exercises">
-          <Label>Exercises</Label>
-          {Platform.select({
-            ios: <Icon sf="figure.run" />,
-            android: (
-              <Icon
-                src={
-                  <VectorIcon family={MaterialIcons} name="directions-run" />
-                }
-              />
-            ),
-          })}
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="settings">
-          <Label>Settings</Label>
-          {Platform.select({
-            ios: <Icon sf="gear" />,
-            android: (
-              <Icon
-                src={<VectorIcon family={MaterialIcons} name="settings" />}
-              />
-            ),
-          })}
-        </NativeTabs.Trigger>
-      </NativeTabs>
-      <PortalHost />
-    </SafeAreaProvider>
+    <Tabs
+      tabBar={(props) => (
+        <TabBar
+          {...props}
+          actionButton={{ icon: Plus, items: createMenuItems }}
+        />
+      )}
+      screenOptions={{
+        headerShown: false,
+        sceneStyle: {
+          paddingBottom: TAB_BAR_TOTAL_HEIGHT,
+          backgroundColor,
+        },
+      }}
+    >
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="workouts" options={{ title: 'Workouts' }} />
+      <Tabs.Screen name="exercises" options={{ title: 'Exercises' }} />
+      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
+    </Tabs>
   );
 }

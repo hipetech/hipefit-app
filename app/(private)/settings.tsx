@@ -1,43 +1,21 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import {
+  Avatar,
+  Button,
+  Card,
+  Dialog,
+  Input,
+  Label,
+  Select,
+  Separator,
+  Skeleton,
+  TextField,
+} from 'heroui-native';
 
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useUserStore } from '@/features/user/store/use-user-store';
 import { capitalize, getInitials } from '@/lib/format';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/ui/alert-dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/ui/avatar';
-import { Button } from '@/ui/button';
-import { Card, CardContent } from '@/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/ui/dialog';
-import { Input } from '@/ui/input';
-import { Label } from '@/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/ui/select';
-import { Separator } from '@/ui/separator';
-import { Skeleton } from '@/ui/skeleton';
 import { Text } from '@/ui/text';
 
 interface SettingsItem {
@@ -79,7 +57,7 @@ function SettingsItemList({
     <View className="gap-5">
       {sections.map((section) => (
         <View key={section.id}>
-          <Text variant="small" className="mb-2 uppercase tracking-wide">
+          <Text variant="small" className="mb-2 tracking-wide uppercase">
             {section.category}
           </Text>
           <Card className="overflow-hidden">
@@ -163,26 +141,26 @@ export default function Settings() {
           value={themeValue}
           onValueChange={(val) => {
             if (val) {
-              updateSettings({
-                theme: val.value as 'light' | 'dark' | 'system',
-              });
+              const option = val as { value: string; label: string };
+              const theme = option.value;
+              if (theme === 'light' || theme === 'dark' || theme === 'system') {
+                updateSettings({ theme });
+              }
             }
           }}
         >
-          <SelectTrigger className="mt-1 w-[120px] py-1">
-            <SelectValue placeholder="Select theme" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="system" label="System">
-              <Text>System</Text>
-            </SelectItem>
-            <SelectItem value="light" label="Light">
-              <Text>Light</Text>
-            </SelectItem>
-            <SelectItem value="dark" label="Dark">
-              <Text>Dark</Text>
-            </SelectItem>
-          </SelectContent>
+          <Select.Trigger className="mt-1 w-[120px] py-1">
+            <Select.Value placeholder="Select theme" />
+            <Select.TriggerIndicator />
+          </Select.Trigger>
+          <Select.Portal>
+            <Select.Overlay />
+            <Select.Content presentation="popover" width="trigger">
+              <Select.Item value="system" label="System" />
+              <Select.Item value="light" label="Light" />
+              <Select.Item value="dark" label="Dark" />
+            </Select.Content>
+          </Select.Portal>
         </Select>
       );
     }
@@ -191,7 +169,7 @@ export default function Settings() {
 
   if (isLoading) {
     return (
-      <ScrollView className="flex-1 bg-muted">
+      <ScrollView className="bg-background flex-1">
         <View className="p-4 pt-12">
           <View className="mb-6">
             <Card className="p-4">
@@ -215,19 +193,21 @@ export default function Settings() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-muted">
+    <ScrollView className="bg-background flex-1">
       <View className="p-4 pt-12">
         {/* Profile Header with Avatar */}
         <View className="mb-6">
           <Card className="p-4">
             <View className="flex-row items-center">
-              <Avatar className="mr-4 h-[70px] w-[70px]" alt="Profile Picture">
-                {photoURL ? <AvatarImage source={{ uri: photoURL }} /> : null}
-                <AvatarFallback>
-                  <Text className="text-2xl">
-                    {displayName ? getInitials(displayName) : '?'}
-                  </Text>
-                </AvatarFallback>
+              <Avatar
+                size="lg"
+                className="mr-4 h-[70px] w-[70px]"
+                alt="Profile Picture"
+              >
+                {photoURL ? <Avatar.Image source={{ uri: photoURL }} /> : null}
+                <Avatar.Fallback>
+                  {displayName ? getInitials(displayName) : '?'}
+                </Avatar.Fallback>
               </Avatar>
               <View className="flex-1">
                 <Text variant="h3" className="mb-1">
@@ -243,50 +223,53 @@ export default function Settings() {
                 ) : null}
               </View>
             </View>
+
+            {/* Edit Profile Dialog */}
             <Dialog
-              open={profileDialogOpen}
+              isOpen={profileDialogOpen}
               onOpenChange={setProfileDialogOpen}
             >
-              <DialogTrigger asChild>
+              <Dialog.Trigger asChild>
                 <Button
                   variant="outline"
                   className="mt-3"
                   onPress={openProfileDialog}
                 >
-                  <Text>Edit Profile</Text>
+                  <Button.Label>Edit Profile</Button.Label>
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Edit Profile</DialogTitle>
-                  <DialogDescription>
+              </Dialog.Trigger>
+              <Dialog.Portal>
+                <Dialog.Overlay />
+                <Dialog.Content>
+                  <Dialog.Close />
+                  <Dialog.Title>Edit Profile</Dialog.Title>
+                  <Dialog.Description>
                     Update your profile information
-                  </DialogDescription>
-                </DialogHeader>
-                <View className="gap-4">
-                  <View className="gap-2">
-                    <Label>
-                      <Text>Name</Text>
-                    </Label>
-                    <Input
-                      value={editName}
-                      onChangeText={setEditName}
-                      placeholder="Enter your name"
-                    />
+                  </Dialog.Description>
+                  <View className="mt-2 gap-4">
+                    <TextField>
+                      <Label>Name</Label>
+                      <Input
+                        variant="secondary"
+                        value={editName}
+                        onChangeText={setEditName}
+                        placeholder="Enter your name"
+                      />
+                    </TextField>
                   </View>
-                </View>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onPress={() => setProfileDialogOpen(false)}
-                  >
-                    <Text>Cancel</Text>
-                  </Button>
-                  <Button onPress={saveProfile}>
-                    <Text>Save</Text>
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
+                  <View className="mt-6 flex-row justify-end gap-3">
+                    <Button
+                      variant="outline"
+                      onPress={() => setProfileDialogOpen(false)}
+                    >
+                      <Button.Label>Cancel</Button.Label>
+                    </Button>
+                    <Button onPress={saveProfile}>
+                      <Button.Label>Save</Button.Label>
+                    </Button>
+                  </View>
+                </Dialog.Content>
+              </Dialog.Portal>
             </Dialog>
           </Card>
         </View>
@@ -301,11 +284,11 @@ export default function Settings() {
 
         {/* Stats Summary */}
         <View className="mb-5">
-          <Text variant="small" className="mb-2 uppercase tracking-wide">
+          <Text variant="small" className="mb-2 tracking-wide uppercase">
             Your Stats
           </Text>
           <Card className="p-4">
-            <CardContent className="flex-row items-center justify-around p-0">
+            <View className="flex-row items-center justify-around p-0">
               <View className="flex-1 items-center">
                 <Text className="mb-1 text-2xl font-bold">
                   {stats?.totalWorkouts ?? 0}
@@ -332,46 +315,51 @@ export default function Settings() {
                   Longest Streak (days)
                 </Text>
               </View>
-            </CardContent>
+            </View>
           </Card>
         </View>
 
-        {/* Logout Button with Alert Dialog */}
-        <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive" className="mb-8 mt-4">
-              <Text className="text-base font-semibold text-white">
+        {/* Logout Button with Confirmation Dialog */}
+        <Dialog isOpen={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+          <Dialog.Trigger asChild>
+            <Button variant="danger" className="mt-4 mb-8">
+              <Button.Label className="text-base font-semibold">
                 Log Out
-              </Text>
+              </Button.Label>
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
+          </Dialog.Trigger>
+          <Dialog.Portal>
+            <Dialog.Overlay />
+            <Dialog.Content isSwipeable={false}>
+              <Dialog.Title>Are you sure?</Dialog.Title>
+              <Dialog.Description>
                 You will be logged out of your account. You can sign back in
                 anytime.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>
-                <Text>Cancel</Text>
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onPress={async () => {
-                  try {
-                    await signOut();
-                    setLogoutDialogOpen(false);
-                  } catch (error) {
-                    console.error('Logout error:', error);
-                  }
-                }}
-              >
-                <Text className="text-white">Log Out</Text>
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Dialog.Description>
+              <View className="mt-4 flex-row justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onPress={() => setLogoutDialogOpen(false)}
+                >
+                  <Button.Label>Cancel</Button.Label>
+                </Button>
+                <Button
+                  variant="danger"
+                  onPress={async () => {
+                    try {
+                      await signOut();
+                      setLogoutDialogOpen(false);
+                    } catch (error) {
+                      console.error('Logout error:', error);
+                    }
+                  }}
+                >
+                  <Button.Label>Log Out</Button.Label>
+                </Button>
+              </View>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog>
       </View>
     </ScrollView>
   );
