@@ -1,14 +1,17 @@
+import type { WithId } from '@/database';
+import type { Workout } from '@/database/types';
+import { useCallback } from 'react';
 import { ScrollView, View } from 'react-native';
+import { LegendList } from '@legendapp/list';
+import { Button, Card, Chip, Separator, Skeleton } from 'heroui-native';
 
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
 import { useWorkoutStore } from '@/features/workouts/store/use-workout-store';
 import { formatDuration, formatShortDate, formatVolume } from '@/lib/format';
-import { Badge } from '@/ui/badge';
-import { Button } from '@/ui/button';
-import { Card } from '@/ui/card';
-import { Separator } from '@/ui/separator';
-import { Skeleton } from '@/ui/skeleton';
+import { TAB_BAR_TOTAL_HEIGHT } from '@/ui/tab-bar';
 import { Text } from '@/ui/text';
+
+const ItemSeparator = () => <View className="h-3" />;
 
 export default function Workouts() {
   const {
@@ -23,33 +26,48 @@ export default function Workouts() {
     (w) => w.data.status !== 'in_progress'
   );
 
-  if (isLoading) {
-    return (
-      <ScrollView className="flex-1 bg-muted">
-        <View className="pt-15 p-5">
-          <View className="mb-6 gap-2">
-            <Skeleton className="h-8 w-32" />
-            <Skeleton className="h-4 w-48" />
+  const renderWorkoutItem = useCallback(
+    ({ item: workout }: { item: WithId<Workout> }) => (
+      <Card className="p-4">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1">
+            <Text className="mb-1 text-base font-semibold">
+              {workout.data.routineName ?? 'Quick Workout'}
+            </Text>
+            <Text variant="muted" className="mb-2 text-xs">
+              {formatShortDate(workout.data.startedAt)}
+            </Text>
+            <View className="flex-row items-center gap-3">
+              <Text variant="muted" className="text-xs">
+                {formatDuration(workout.data.duration)}
+              </Text>
+              <Text variant="muted" className="text-xs">
+                {workout.data.totalExercises} exercises
+              </Text>
+              <Text variant="muted" className="text-xs">
+                {formatVolume(workout.data.totalVolume)}
+              </Text>
+            </View>
           </View>
-          <Skeleton className="mb-4 h-6 w-32" />
-          <View className="mb-6 flex-row gap-3">
-            <Skeleton className="h-[120px] w-[200px] rounded-lg" />
-            <Skeleton className="h-[120px] w-[200px] rounded-lg" />
-          </View>
-          <Skeleton className="mb-4 h-6 w-24" />
-          <View className="gap-3">
-            <Skeleton className="h-[80px] w-full rounded-lg" />
-            <Skeleton className="h-[80px] w-full rounded-lg" />
-            <Skeleton className="h-[80px] w-full rounded-lg" />
-          </View>
+          <Chip
+            variant={
+              workout.data.status === 'completed' ? 'primary' : 'secondary'
+            }
+            size="sm"
+          >
+            <Chip.Label className="text-[10px]">
+              {workout.data.status === 'completed' ? 'Completed' : 'Abandoned'}
+            </Chip.Label>
+          </Chip>
         </View>
-      </ScrollView>
-    );
-  }
+      </Card>
+    ),
+    []
+  );
 
-  return (
-    <ScrollView className="flex-1 bg-muted">
-      <View className="pt-15 p-5">
+  const ListHeader = useCallback(
+    () => (
+      <View>
         {/* Header */}
         <View className="mb-6">
           <Text variant="h1" className="mb-2">
@@ -60,7 +78,7 @@ export default function Workouts() {
 
         {/* Active Workout Banner */}
         {inProgressWorkout && (
-          <Card className="mb-6 border-2 border-primary p-4">
+          <Card className="border-accent mb-6 border-2 p-4">
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
                 <Text className="text-base font-bold">Workout in progress</Text>
@@ -70,7 +88,7 @@ export default function Workouts() {
                 </Text>
               </View>
               <Button>
-                <Text className="font-semibold text-white">Continue</Text>
+                <Button.Label>Continue</Button.Label>
               </Button>
             </View>
           </Card>
@@ -80,9 +98,9 @@ export default function Workouts() {
         <View className="mb-6">
           <View className="mb-4 flex-row items-center justify-between">
             <Text variant="h4">My Routines</Text>
-            <Badge variant="secondary">
-              <Text variant="small">{activeRoutines.length}</Text>
-            </Badge>
+            <Chip variant="secondary" size="sm">
+              <Chip.Label>{activeRoutines.length}</Chip.Label>
+            </Chip>
           </View>
           {activeRoutines.length > 0 ? (
             <ScrollView
@@ -113,7 +131,7 @@ export default function Workouts() {
                       </Text>
                     </View>
                     <Button className="mt-3" size="sm">
-                      <Text className="text-sm text-white">Start</Text>
+                      <Button.Label>Start</Button.Label>
                     </Button>
                   </Card>
                 ))}
@@ -125,7 +143,7 @@ export default function Workouts() {
                 No routines yet
               </Text>
               <Button variant="outline" className="self-center">
-                <Text>Create your first routine</Text>
+                <Button.Label>Create your first routine</Button.Label>
               </Button>
             </Card>
           )}
@@ -133,61 +151,68 @@ export default function Workouts() {
 
         <Separator className="mb-6" />
 
-        {/* Workout History */}
-        <View className="mb-8">
-          <Text variant="h4" className="mb-4">
-            History
-          </Text>
-          {completedWorkouts.length > 0 ? (
-            <View className="gap-3">
-              {completedWorkouts.map((workout) => (
-                <Card key={workout.id} className="p-4">
-                  <View className="flex-row items-start justify-between">
-                    <View className="flex-1">
-                      <Text className="mb-1 text-base font-semibold">
-                        {workout.data.routineName ?? 'Quick Workout'}
-                      </Text>
-                      <Text variant="muted" className="mb-2 text-xs">
-                        {formatShortDate(workout.data.startedAt)}
-                      </Text>
-                      <View className="flex-row items-center gap-3">
-                        <Text variant="muted" className="text-xs">
-                          {formatDuration(workout.data.duration)}
-                        </Text>
-                        <Text variant="muted" className="text-xs">
-                          {workout.data.totalExercises} exercises
-                        </Text>
-                        <Text variant="muted" className="text-xs">
-                          {formatVolume(workout.data.totalVolume)}
-                        </Text>
-                      </View>
-                    </View>
-                    <Badge
-                      variant={
-                        workout.data.status === 'completed'
-                          ? 'default'
-                          : 'secondary'
-                      }
-                    >
-                      <Text variant="small" className="text-[10px]">
-                        {workout.data.status === 'completed'
-                          ? 'Completed'
-                          : 'Abandoned'}
-                      </Text>
-                    </Badge>
-                  </View>
-                </Card>
-              ))}
-            </View>
-          ) : (
-            <Card className="p-5">
-              <Text variant="muted" className="text-center">
-                No workouts yet
-              </Text>
-            </Card>
-          )}
-        </View>
+        {/* History Title */}
+        <Text variant="h4" className="mb-4">
+          History
+        </Text>
       </View>
-    </ScrollView>
+    ),
+    [inProgressWorkout, activeRoutines]
+  );
+
+  const ListEmpty = useCallback(
+    () => (
+      <Card className="p-5">
+        <Text variant="muted" className="text-center">
+          No workouts yet
+        </Text>
+      </Card>
+    ),
+    []
+  );
+
+  if (isLoading) {
+    return (
+      <ScrollView
+        className="bg-background flex-1"
+        contentContainerStyle={{ paddingBottom: TAB_BAR_TOTAL_HEIGHT }}
+      >
+        <View className="p-5 pt-15">
+          <View className="mb-6 gap-2">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </View>
+          <Skeleton className="mb-4 h-6 w-32" />
+          <View className="mb-6 flex-row gap-3">
+            <Skeleton className="h-[120px] w-[200px] rounded-lg" />
+            <Skeleton className="h-[120px] w-[200px] rounded-lg" />
+          </View>
+          <Skeleton className="mb-4 h-6 w-24" />
+          <View className="gap-3">
+            <Skeleton className="h-[80px] w-full rounded-lg" />
+            <Skeleton className="h-[80px] w-full rounded-lg" />
+            <Skeleton className="h-[80px] w-full rounded-lg" />
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  return (
+    <LegendList
+      className="bg-background flex-1"
+      contentContainerStyle={{
+        paddingTop: 60,
+        paddingHorizontal: 20,
+        paddingBottom: TAB_BAR_TOTAL_HEIGHT,
+      }}
+      data={completedWorkouts}
+      renderItem={renderWorkoutItem}
+      keyExtractor={(item) => item.id}
+      estimatedItemSize={90}
+      ListHeaderComponent={ListHeader}
+      ListEmptyComponent={ListEmpty}
+      ItemSeparatorComponent={ItemSeparator}
+    />
   );
 }

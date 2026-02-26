@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Hipefit is a fitness tracking mobile app built with React Native, Expo (SDK 54), and Firebase. It uses file-based routing (Expo Router v6), NativeWind (Tailwind CSS for RN), and Zustand for state management.
+Hipefit is a fitness tracking mobile app built with React Native, Expo (SDK 54, bare workflow), and Firebase. It uses file-based routing (Expo Router v6), Uniwind (Tailwind CSS v4 for RN), HeroUI Native for UI components, and Zustand for state management.
 
 ## Commands
 
@@ -36,12 +36,11 @@ app/
 ├── index.tsx            # Entry redirect based on auth state
 ├── (public)/login.tsx   # Apple Sign-In (unauthenticated)
 └── (private)/           # Protected routes (requires auth)
-    ├── _layout.tsx      # Bottom tab navigation (NativeTabs)
+    ├── _layout.tsx      # Bottom tab navigation (custom TabBar)
     ├── index.tsx        # Home tab
     ├── workouts.tsx     # Workouts tab
     ├── exercises.tsx    # Exercises tab
-    ├── settings.tsx     # Settings tab
-    └── testing.tsx      # Component showcase (__DEV__ only)
+    └── settings.tsx     # Settings tab
 ```
 
 ### Feature-based organization
@@ -57,7 +56,7 @@ Screen components live in `features/`, route files in `app/` import from feature
 
 ### UI Components
 
-Shadcn-style component library in `ui/` built on `@rn-primitives` (unstyled headless primitives) styled with NativeWind. Component variants use `class-variance-authority` (CVA). Use `cn()` from `@/lib/utils` for conditional class merging.
+HeroUI Native component library (`heroui-native`) provides pre-styled, animated components (Button, Card, Chip, Dialog, Select, Accordion, Avatar, Skeleton, Separator, RadioGroup, Input, Label, TextField). Uses compound component pattern (`Card.Body`, `Button.Label`, etc.). Custom `Text` component with typography variants and `Progress` component remain in `ui/`. Use `cn()` from `@/lib/utils` for conditional class merging.
 
 ### Backend
 
@@ -71,7 +70,7 @@ Zustand stores in `features/[feature]/store/`. Auth store (`useAuthStore`) manag
 
 - **TypeScript:** Strict mode, no `any`, use interfaces for props
 - **Components:** Arrow functions, `React.FC` for typed components
-- **Styling:** NativeWind classes exclusively, `cn()` for merging
+- **Styling:** Uniwind/Tailwind CSS v4 classes exclusively, `cn()` for merging
 - **Imports:** Auto-sorted by Prettier (types → react/rn → third-party → @/ aliases → relative)
 - **Path alias:** `@/*` maps to project root
 - **Naming:** camelCase for variables/functions, PascalCase for components, lowercase hyphenated for directories
@@ -80,12 +79,16 @@ Zustand stores in `features/[feature]/store/`. Auth store (`useAuthStore`) manag
 ## Multi-environment Setup
 
 Three environments with matching Firebase configs, .env files, and EAS build profiles:
+
 - **development** → `.env.development`, Xcode scheme `Hipefit-dev`
 - **staging** → `.env.staging`, Xcode scheme `Hipefit-stage`
 - **production** → `.env.production`, default Xcode scheme `Hipefit`
 
 ## Key Config Notes
 
+- **Bare workflow:** Native iOS/Android projects are committed and managed directly (not Continuous Native Generation). Native changes go in `ios/` and `android/` directories, not `app.config.js` plugins. Per-environment Info.plist files: `Info-dev.plist`, `Info-stage.plist`, `Info-prod.plist`.
 - React Compiler and New Architecture are enabled in `app.config.js`
 - TypedRoutes enabled for Expo Router type safety
-- Tailwind config uses NativeWind preset with CSS variable-based theming (light/dark via `global.css`)
+- Uses Uniwind (Tailwind CSS v4 for RN) with HeroUI Native's built-in theming (light/dark)
+- `global.css` imports `tailwindcss`, `uniwind`, and `heroui-native/styles`
+- App wrapped with `GestureHandlerRootView` and `HeroUINativeProvider` in root layout

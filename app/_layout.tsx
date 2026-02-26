@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
-import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';
-import { useColorScheme } from 'nativewind';
+import { HeroUINativeProvider } from 'heroui-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Uniwind } from 'uniwind';
 
 import '../global.css';
 
@@ -20,8 +21,6 @@ SplashScreen.setOptions({
 export default function RootLayout() {
   const { isLoggedIn, isLoading, initialize } = useAuthStore();
   const theme = useUserStore((s) => s.profile?.settings?.theme);
-  const { setColorScheme } = useColorScheme();
-
   useFirestoreSubscriptions();
 
   useEffect(() => {
@@ -31,28 +30,32 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (theme) {
-      setColorScheme(theme);
+      Uniwind.setTheme(theme);
     }
-  }, [theme, setColorScheme]);
+  }, [theme]);
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
+      <View className="bg-background flex-1 items-center justify-center">
         {/* Loading state */}
       </View>
     );
   }
 
   return (
-    <>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(public)/login" options={{ headerShown: false }} />
-        <Stack.Protected guard={isLoggedIn}>
-          <Stack.Screen name="(private)" options={{ headerShown: false }} />
-        </Stack.Protected>
-      </Stack>
-      <PortalHost />
-    </>
+    <GestureHandlerRootView className="bg-background flex-1">
+      <HeroUINativeProvider>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="(public)/login"
+            options={{ headerShown: false }}
+          />
+          <Stack.Protected guard={isLoggedIn}>
+            <Stack.Screen name="(private)" options={{ headerShown: false }} />
+          </Stack.Protected>
+        </Stack>
+      </HeroUINativeProvider>
+    </GestureHandlerRootView>
   );
 }

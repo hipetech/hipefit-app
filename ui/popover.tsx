@@ -1,63 +1,56 @@
-import * as React from 'react';
-import { Platform, StyleSheet } from 'react-native';
-import * as PopoverPrimitive from '@rn-primitives/popover';
-import { FadeIn, FadeOut } from 'react-native-reanimated';
-import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
+import type { ComponentRef } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { forwardRef } from 'react';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { Popover as HeroPopover } from 'heroui-native';
 
-import { cn } from '@/lib/utils';
-import { NativeOnlyAnimatedView } from '@/ui/native-only-animated-view';
-import { TextClassContext } from '@/ui/text';
+type HeroContentProps = React.ComponentProps<typeof HeroPopover.Content>;
+type HeroContentRef = ComponentRef<typeof HeroPopover.Content>;
 
-const Popover = PopoverPrimitive.Root;
+const glassEnabled = isLiquidGlassAvailable();
 
-const PopoverTrigger = PopoverPrimitive.Trigger;
+const PopoverContent = forwardRef<HeroContentRef, HeroContentProps>(
+  (props, ref) => {
+    if (!glassEnabled) {
+      return <HeroPopover.Content ref={ref} {...props} />;
+    }
 
-const FullWindowOverlay =
-  Platform.OS === 'ios' ? RNFullWindowOverlay : React.Fragment;
+    const { style, children, ...rest } = props;
 
-function PopoverContent({
-  className,
-  align = 'center',
-  sideOffset = 4,
-  portalHost,
-  ...props
-}: PopoverPrimitive.ContentProps &
-  React.RefAttributes<PopoverPrimitive.ContentRef> & {
-    portalHost?: string;
-  }) {
-  return (
-    <PopoverPrimitive.Portal hostName={portalHost}>
-      <FullWindowOverlay>
-        <PopoverPrimitive.Overlay
-          style={Platform.select({ native: StyleSheet.absoluteFill })}
-        >
-          <NativeOnlyAnimatedView
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut}
-          >
-            <TextClassContext.Provider value="text-popover-foreground">
-              <PopoverPrimitive.Content
-                align={align}
-                sideOffset={sideOffset}
-                className={cn(
-                  'outline-hidden z-50 w-72 rounded-md border border-border bg-popover p-4 shadow-md shadow-black/5',
-                  Platform.select({
-                    web: cn(
-                      'origin-(--radix-popover-content-transform-origin) cursor-auto animate-in fade-in-0 zoom-in-95',
-                      props.side === 'bottom' && 'slide-in-from-top-2',
-                      props.side === 'top' && 'slide-in-from-bottom-2'
-                    ),
-                  }),
-                  className
-                )}
-                {...props}
-              />
-            </TextClassContext.Provider>
-          </NativeOnlyAnimatedView>
-        </PopoverPrimitive.Overlay>
-      </FullWindowOverlay>
-    </PopoverPrimitive.Portal>
-  );
-}
+    const glassStyle: StyleProp<ViewStyle> = [
+      { overflow: 'hidden', backgroundColor: 'transparent' },
+      style as StyleProp<ViewStyle>,
+    ];
 
-export { Popover, PopoverContent, PopoverTrigger };
+    return (
+      <HeroPopover.Content
+        ref={ref}
+        {...rest}
+        style={glassStyle as typeof style}
+      >
+        <GlassView
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
+        />
+        {children}
+      </HeroPopover.Content>
+    );
+  }
+);
+
+PopoverContent.displayName = 'Popover.Content';
+
+const Popover = Object.assign(
+  Object.create(
+    Object.getPrototypeOf(HeroPopover),
+    Object.getOwnPropertyDescriptors(HeroPopover)
+  ) as typeof HeroPopover,
+  { Content: PopoverContent }
+);
+
+export { Popover };

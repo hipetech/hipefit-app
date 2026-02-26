@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { Platform, View } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { Button } from 'heroui-native';
 
-import { Button } from '@/ui/button';
 import { Text } from '@/ui/text';
 
 import { useAuthStore } from './store/use-auth-store';
@@ -34,14 +34,14 @@ export function AuthScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
+      <View className="bg-background flex-1 items-center justify-center">
         <Text>Loading...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-background p-4">
+    <View className="bg-background flex-1 p-4">
       <View className="flex-1 items-center justify-center gap-4">
         <Text className="text-2xl font-bold">
           {isLoggedIn ? 'Logged In' : 'Not Logged In'}
@@ -51,7 +51,7 @@ export function AuthScreen() {
           <View className="w-full max-w-xs">
             {isLoggedIn ? (
               <Button onPress={handleSignOut} className="w-full">
-                <Text>Sign Out</Text>
+                <Button.Label>Sign Out</Button.Label>
               </Button>
             ) : (
               <AppleAuthentication.AppleAuthenticationButton

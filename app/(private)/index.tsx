@@ -1,4 +1,5 @@
 import { ScrollView, View } from 'react-native';
+import { Avatar, Button, Card, Chip, Skeleton } from 'heroui-native';
 
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
 import { useUserStore } from '@/features/user/store/use-user-store';
@@ -9,11 +10,7 @@ import {
   getGreeting,
   getInitials,
 } from '@/lib/format';
-import { Avatar, AvatarFallback, AvatarImage } from '@/ui/avatar';
-import { Badge } from '@/ui/badge';
-import { Button } from '@/ui/button';
-import { Card, CardContent } from '@/ui/card';
-import { Skeleton } from '@/ui/skeleton';
+import { TAB_BAR_TOTAL_HEIGHT } from '@/ui/tab-bar';
 import { Text } from '@/ui/text';
 
 export default function Home() {
@@ -30,8 +27,11 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <ScrollView className="flex-1 bg-background">
-        <View className="pt-15 p-5">
+      <ScrollView
+        className="bg-background flex-1"
+        contentContainerStyle={{ paddingBottom: TAB_BAR_TOTAL_HEIGHT }}
+      >
+        <View className="p-5 pt-15">
           <View className="mb-6 flex-row items-center justify-between">
             <View className="flex-1 gap-2">
               <Skeleton className="h-8 w-48" />
@@ -57,8 +57,8 @@ export default function Home() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-background">
-      <View className="pt-15 p-5">
+    <ScrollView className="bg-background flex-1">
+      <View className="p-5 pt-15">
         {/* Header with Avatar */}
         <View className="mb-6 flex-row items-center justify-between">
           <View className="flex-1">
@@ -67,18 +67,18 @@ export default function Home() {
             </Text>
             <Text variant="muted">Ready for your workout?</Text>
           </View>
-          <Avatar className="h-12 w-12" alt="User avatar">
-            {photoURL ? <AvatarImage source={{ uri: photoURL }} /> : null}
-            <AvatarFallback>
-              <Text>{displayName ? getInitials(displayName) : '?'}</Text>
-            </AvatarFallback>
+          <Avatar size="md" alt="User avatar">
+            {photoURL ? <Avatar.Image source={{ uri: photoURL }} /> : null}
+            <Avatar.Fallback>
+              {displayName ? getInitials(displayName) : '?'}
+            </Avatar.Fallback>
           </Avatar>
         </View>
 
         {/* Stats Cards */}
         <View className="mb-8 flex-row justify-between gap-3">
           <Card className="min-h-[100px] flex-1 justify-center">
-            <CardContent className="items-center justify-center p-4">
+            <Card.Body className="items-center justify-center p-4">
               <Text className="mb-1 text-2xl font-bold">
                 {stats?.totalWorkouts ?? 0}
               </Text>
@@ -88,10 +88,10 @@ export default function Home() {
               <Text variant="muted" className="mt-0.5 text-[10px]">
                 total
               </Text>
-            </CardContent>
+            </Card.Body>
           </Card>
           <Card className="min-h-[100px] flex-1 justify-center">
-            <CardContent className="items-center justify-center p-4">
+            <Card.Body className="items-center justify-center p-4">
               <Text className="mb-1 text-2xl font-bold">
                 {stats?.currentStreak ?? 0}
               </Text>
@@ -101,10 +101,10 @@ export default function Home() {
               <Text variant="muted" className="mt-0.5 text-[10px]">
                 days
               </Text>
-            </CardContent>
+            </Card.Body>
           </Card>
           <Card className="min-h-[100px] flex-1 justify-center">
-            <CardContent className="items-center justify-center p-4">
+            <Card.Body className="items-center justify-center p-4">
               <Text className="mb-1 text-2xl font-bold">
                 {stats?.longestStreak ?? 0}
               </Text>
@@ -114,7 +114,7 @@ export default function Home() {
               <Text variant="muted" className="mt-0.5 text-[10px]">
                 days
               </Text>
-            </CardContent>
+            </Card.Body>
           </Card>
         </View>
 
@@ -147,9 +147,7 @@ export default function Home() {
                   ) : null}
                 </View>
                 <Button className="self-start">
-                  <Text className="text-sm font-semibold text-white">
-                    Start Workout
-                  </Text>
+                  <Button.Label>Start Workout</Button.Label>
                 </Button>
               </View>
             </Card>
@@ -159,7 +157,7 @@ export default function Home() {
                 No routines yet
               </Text>
               <Button variant="outline" className="self-center">
-                <Text>Create your first routine</Text>
+                <Button.Label>Create your first routine</Button.Label>
               </Button>
             </Card>
           )}
@@ -191,19 +189,20 @@ export default function Home() {
                         </Text>
                       </View>
                     </View>
-                    <Badge
+                    <Chip
                       variant={
                         workout.data.status === 'completed'
-                          ? 'default'
+                          ? 'primary'
                           : 'secondary'
                       }
+                      size="sm"
                     >
-                      <Text variant="small" className="text-[10px]">
+                      <Chip.Label className="text-[10px]">
                         {workout.data.status === 'completed'
                           ? 'Completed'
                           : 'Abandoned'}
-                      </Text>
-                    </Badge>
+                      </Chip.Label>
+                    </Chip>
                   </View>
                 </Card>
               ))}

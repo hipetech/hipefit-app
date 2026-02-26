@@ -1,41 +1,43 @@
 import type { MergedExercise } from '@/features/exercises/store/use-exercise-store';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Button, Chip, Separator } from 'heroui-native';
+import { ChevronDown } from 'lucide-react-native';
+import Animated, {
+  FadeIn,
+  FadeOut,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { EXERCISE_PLACEHOLDER_IMAGE } from '@/lib/constants';
 import { capitalize, getDifficultyValue } from '@/lib/format';
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/ui/accordion';
-import { Badge } from '@/ui/badge';
-import { Button } from '@/ui/button';
-import { CardContent } from '@/ui/card';
 import { Image } from '@/ui/Image';
 import { Progress } from '@/ui/progress';
-import { Separator } from '@/ui/separator';
 import { Text } from '@/ui/text';
 
 interface ExerciseCardProps {
   exercise: MergedExercise;
   onSelect: (exercise: MergedExercise) => void;
+  isExpanded: boolean;
+  onToggle: () => void;
 }
 
 export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   exercise,
   onSelect,
+  isExpanded,
+  onToggle,
 }) => {
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: withTiming(isExpanded ? '180deg' : '0deg', { duration: 200 }) },
+    ],
+  }));
+
   return (
-    <AccordionItem
-      value={`exercise-${exercise.id}`}
-      className="rounded-2xl border-0 bg-card px-4 py-2 shadow-sm"
-    >
-      <AccordionTrigger className="px-0">
-        <Button
-          variant="ghost"
-          className="h-auto flex-1 flex-row overflow-hidden rounded-2xl bg-transparent p-0 shadow-none"
-          onPress={() => onSelect(exercise)}
-        >
+    <View className="bg-surface rounded-2xl border-0 px-4 py-2 shadow-sm">
+      <Pressable onPress={onToggle} className="flex-row items-center py-2">
+        <View className="flex-1 flex-row overflow-hidden rounded-2xl">
           <Image
             className="h-[140px] w-[120px]"
             source={{
@@ -44,16 +46,16 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             contentFit="cover"
             transition={200}
           />
-          <CardContent className="flex-1 px-3 py-2">
+          <View className="flex-1 px-3 py-2">
             <View className="mb-2 flex-row items-start justify-between">
               <Text variant="h4" className="mr-2 flex-1">
                 {exercise.name}
               </Text>
-              <Badge variant="secondary">
-                <Text variant="small" className="text-[10px]">
+              <Chip variant="secondary" size="sm">
+                <Chip.Label className="text-[10px]">
                   {capitalize(exercise.difficulty)}
-                </Text>
-              </Badge>
+                </Chip.Label>
+              </Chip>
             </View>
             <View className="w-full gap-2">
               <View className="flex-row items-center justify-between">
@@ -84,34 +86,43 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               </View>
               <Progress value={getDifficultyValue(exercise.difficulty)} />
             </View>
-          </CardContent>
-        </Button>
-      </AccordionTrigger>
-      <AccordionContent className="px-4 pb-4">
-        <Separator className="mb-4" />
-        <View className="gap-3">
-          <View className="gap-2">
-            <Text variant="h4" className="text-sm">
-              Description
-            </Text>
-            <Text variant="muted" className="text-sm">
-              {exercise.description || 'No description available.'}
-            </Text>
-          </View>
-          <View className="flex-row gap-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onPress={() => onSelect(exercise)}
-            >
-              <Text>View Details</Text>
-            </Button>
-            <Button className="flex-1">
-              <Text>Add to Workout</Text>
-            </Button>
           </View>
         </View>
-      </AccordionContent>
-    </AccordionItem>
+        <Animated.View style={chevronStyle} className="ml-2">
+          <ChevronDown size={16} className="text-muted" />
+        </Animated.View>
+      </Pressable>
+      {isExpanded && (
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(150)}
+          className="px-4 pb-4"
+        >
+          <Separator className="mb-4" />
+          <View className="gap-3">
+            <View className="gap-2">
+              <Text variant="h4" className="text-sm">
+                Description
+              </Text>
+              <Text variant="muted" className="text-sm">
+                {exercise.description || 'No description available.'}
+              </Text>
+            </View>
+            <View className="flex-row gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onPress={() => onSelect(exercise)}
+              >
+                <Button.Label>View Details</Button.Label>
+              </Button>
+              <Button className="flex-1">
+                <Button.Label>Add to Workout</Button.Label>
+              </Button>
+            </View>
+          </View>
+        </Animated.View>
+      )}
+    </View>
   );
 };
