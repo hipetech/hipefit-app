@@ -3,8 +3,7 @@ module.exports = {
   slug: 'hipefit-app',
   version: '1.0.0',
   scheme: 'hipefitapp',
-  newArchEnabled: true,
-  plugins: ['expo-router'],
+  plugins: ['expo-router', 'expo-font', 'expo-image', 'expo-web-browser'],
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
