@@ -21,6 +21,7 @@ import { EXERCISE_PLACEHOLDER_IMAGE } from '@/lib/constants';
 import { capitalize, getDifficultyValue } from '@/lib/format';
 import { Image } from '@/ui/Image';
 import { Progress } from '@/ui/progress';
+import { TAB_BAR_TOTAL_HEIGHT } from '@/ui/tab-bar';
 import { Text } from '@/ui/text';
 
 const ItemSeparator = () => <View className="h-3" />;
@@ -126,7 +127,10 @@ export default function Exercises() {
 
   if (isLoading) {
     return (
-      <ScrollView className="bg-background flex-1">
+      <ScrollView
+        className="bg-background flex-1"
+        contentContainerStyle={{ paddingBottom: TAB_BAR_TOTAL_HEIGHT }}
+      >
         <View className="p-5 pt-15">
           <View className="mb-6 gap-2">
             <Skeleton className="h-8 w-32" />
@@ -147,11 +151,11 @@ export default function Exercises() {
   return (
     <>
       <LegendList
-        style={{ flex: 1 }}
+        className="bg-background flex-1"
         contentContainerStyle={{
           paddingTop: 60,
           paddingHorizontal: 20,
-          paddingBottom: 32,
+          paddingBottom: TAB_BAR_TOTAL_HEIGHT,
         }}
         data={filteredExercises}
         renderItem={renderExerciseItem}

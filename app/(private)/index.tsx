@@ -10,6 +10,7 @@ import {
   getGreeting,
   getInitials,
 } from '@/lib/format';
+import { TAB_BAR_TOTAL_HEIGHT } from '@/ui/tab-bar';
 import { Text } from '@/ui/text';
 
 export default function Home() {
@@ -26,7 +27,10 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <ScrollView className="bg-background flex-1">
+      <ScrollView
+        className="bg-background flex-1"
+        contentContainerStyle={{ paddingBottom: TAB_BAR_TOTAL_HEIGHT }}
+      >
         <View className="p-5 pt-15">
           <View className="mb-6 flex-row items-center justify-between">
             <View className="flex-1 gap-2">

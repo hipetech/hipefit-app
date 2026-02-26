@@ -2,8 +2,9 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import type { LucideIcon } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import * as Haptics from 'expo-haptics';
-import { Button, Popover, useThemeColor } from 'heroui-native';
+import { Button, useThemeColor } from 'heroui-native';
 import { Dumbbell, Home, ListChecks, User } from 'lucide-react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -13,6 +14,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
+
+import { Popover } from '@/ui/popover';
 
 export const TAB_BAR_HEIGHT = 60;
 export const TAB_BAR_TOTAL_HEIGHT = TAB_BAR_HEIGHT + 32;
@@ -50,11 +53,12 @@ export function TabBar({
   navigation,
   actionButton,
 }: TabBarProps) {
+  const glassEnabled = isLiquidGlassAvailable();
   const insets = useSafeAreaInsets();
-  const [accentColor, accentFg, mutedColor, defaultColor] = useThemeColor([
+  const [accentColor, accentFg, foregroundColor, defaultColor] = useThemeColor([
     'accent',
     'accent-foreground',
-    'muted',
+    'foreground',
     'default',
   ]);
 
@@ -181,9 +185,25 @@ export function TabBar({
       <GestureDetector gesture={panGesture}>
         <Animated.View
           className="flex-1 flex-row items-center rounded-full shadow-lg"
-          style={{ backgroundColor: defaultColor, height: TAB_BAR_HEIGHT }}
+          style={{
+            backgroundColor: glassEnabled ? 'transparent' : defaultColor,
+            height: TAB_BAR_HEIGHT,
+            overflow: 'hidden',
+          }}
           onLayout={handlePillLayout}
         >
+          {glassEnabled && (
+            <GlassView
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            />
+          )}
+
           {/* Sliding indicator */}
           <Animated.View
             style={[
@@ -208,7 +228,7 @@ export function TabBar({
               title={descriptors[route.key]?.options.title ?? route.name}
               navigation={navigation}
               activeColor={accentFg}
-              inactiveColor={mutedColor}
+              inactiveColor={foregroundColor}
             />
           ))}
         </Animated.View>
@@ -259,7 +279,11 @@ export function TabBar({
                     item.onPress();
                   }}
                 >
-                  <item.icon size={20} color={mutedColor} strokeWidth={2} />
+                  <item.icon
+                    size={20}
+                    color={foregroundColor}
+                    strokeWidth={2}
+                  />
                   <Button.Label>{item.label}</Button.Label>
                 </Button>
               ))}
@@ -296,11 +320,11 @@ function TabBarItem({
 }: TabBarItemProps) {
   const IconComponent = TAB_ICONS[routeName];
   const scale = useSharedValue(isFocused ? 1.15 : 1);
-  const opacity = useSharedValue(isFocused ? 1 : 0.5);
+  const opacity = useSharedValue(isFocused ? 1 : 0.6);
 
   useEffect(() => {
     scale.value = withSpring(isFocused ? 1.15 : 1, SPRING_CONFIG);
-    opacity.value = withSpring(isFocused ? 1 : 0.5, SPRING_CONFIG);
+    opacity.value = withSpring(isFocused ? 1 : 0.6, SPRING_CONFIG);
   }, [isFocused, scale, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -328,7 +352,7 @@ function TabBarItem({
 
   return (
     <Pressable
-      className="flex-1 items-center justify-center"
+      className="flex-1 items-center justify-center gap-1"
       style={{ height: TAB_BAR_HEIGHT }}
       onPress={handlePress}
       onLongPress={handleLongPress}

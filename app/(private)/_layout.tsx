@@ -1,14 +1,11 @@
 import type { CreateMenuItem } from '@/ui/tab-bar';
 import { useMemo } from 'react';
 import { Tabs } from 'expo-router';
-import { useThemeColor } from 'heroui-native';
 import { Dumbbell, ListPlus, Plus, Zap } from 'lucide-react-native';
 
-import { TAB_BAR_TOTAL_HEIGHT, TabBar } from '@/ui/tab-bar';
+import { TabBar } from '@/ui/tab-bar';
 
 export default function TabsLayout() {
-  const [backgroundColor] = useThemeColor(['background']);
-
   const createMenuItems: CreateMenuItem[] = useMemo(
     () => [
       {
@@ -46,10 +43,7 @@ export default function TabsLayout() {
       )}
       screenOptions={{
         headerShown: false,
-        sceneStyle: {
-          paddingBottom: TAB_BAR_TOTAL_HEIGHT,
-          backgroundColor,
-        },
+        sceneStyle: { backgroundColor: 'transparent' },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />

@@ -16,6 +16,7 @@ import {
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useUserStore } from '@/features/user/store/use-user-store';
 import { capitalize, getInitials } from '@/lib/format';
+import { TAB_BAR_TOTAL_HEIGHT } from '@/ui/tab-bar';
 import { Text } from '@/ui/text';
 
 interface SettingsItem {
@@ -193,7 +194,10 @@ export default function Settings() {
   }
 
   return (
-    <ScrollView className="bg-background flex-1">
+    <ScrollView
+      className="bg-background flex-1"
+      contentContainerStyle={{ paddingBottom: TAB_BAR_TOTAL_HEIGHT }}
+    >
       <View className="p-4 pt-12">
         {/* Profile Header with Avatar */}
         <View className="mb-6">

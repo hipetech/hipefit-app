@@ -43,7 +43,7 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView className="bg-background flex-1">
       <HeroUINativeProvider>
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Hipefit is a fitness tracking mobile app built with React Native, Expo (SDK 54), and Firebase. It uses file-based routing (Expo Router v6), Uniwind (Tailwind CSS v4 for RN), HeroUI Native for UI components, and Zustand for state management.
+Hipefit is a fitness tracking mobile app built with React Native, Expo (SDK 54, bare workflow), and Firebase. It uses file-based routing (Expo Router v6), Uniwind (Tailwind CSS v4 for RN), HeroUI Native for UI components, and Zustand for state management.
 
 ## Commands
 
@@ -86,6 +86,7 @@ Three environments with matching Firebase configs, .env files, and EAS build pro
 
 ## Key Config Notes
 
+- **Bare workflow:** Native iOS/Android projects are committed and managed directly (not Continuous Native Generation). Native changes go in `ios/` and `android/` directories, not `app.config.js` plugins. Per-environment Info.plist files: `Info-dev.plist`, `Info-stage.plist`, `Info-prod.plist`.
 - React Compiler and New Architecture are enabled in `app.config.js`
 - TypedRoutes enabled for Expo Router type safety
 - Uses Uniwind (Tailwind CSS v4 for RN) with HeroUI Native's built-in theming (light/dark)
