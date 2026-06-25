@@ -1,0 +1,99 @@
+# GitHub Copilot ignore file - Excludes unnecessary files from Copilot context indexing
+
+## Dependencies & Package Management
+node_modules/
+bun.lockb
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+## Build Outputs & Generated Files
+dist/
+build/
+.next/
+web-build/
+.expo/
+*.tsbuildinfo
+.metro-health-check*
+
+## Native Build Artifacts
+android/build/
+android/.gradle/
+android/local.properties
+ios/Pods/
+ios/Podfile.lock
+ios/.xcode.env.local
+*.xcarchive
+*.ipa
+*.apk
+DerivedData/
+
+## IDE & Editor Files
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+*~
+.vscode/launch.json
+.vscode/tasks.json
+
+## Environment & Secrets
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+.env.development
+.prebuild-env
+*.pem
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.jks
+
+## Firebase & Credentials
+firebase-adminsdk-*.json
+service-account*.json
+*-firebase-adminsdk-*.json
+*.serviceAccountKey.json
+
+## Logs & Temporary Files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bun-error.log
+*.log
+.DS_Store
+Thumbs.db
+
+## OS-Specific
+.AppleDouble
+.LSOverride
+.DS_Store
+.env.local
+
+## Build Tracking
+.prebuild-env
+*.orig.*
+
+## Large Directories Not Needed for Code Context
+node_modules/
+android/
+ios/
+.expo/
+
+## Session & Cache Files
+.expo/devices.json
+.expo/settings.json
+*.cache
+.cache/
+
+## Testing & Coverage
+coverage/
+.nyc_output/
+*.lcov
+
+## Generated Files
+expo-env.d.ts
