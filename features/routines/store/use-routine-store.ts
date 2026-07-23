@@ -1,5 +1,5 @@
 import type { Routine, WithId } from '@/database';
-import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import type { QueryDocumentSnapshot } from '@react-native-firebase/firestore';
 import { onSnapshot } from '@react-native-firebase/firestore';
 import { create } from 'zustand';
 
@@ -23,7 +23,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
       routinesRef(uid),
       (snap) => {
         const routines: WithId<Routine>[] = snap.docs.map(
-          (d: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+          (d: QueryDocumentSnapshot) => ({
             id: d.id,
             data: d.data() as Routine,
           })

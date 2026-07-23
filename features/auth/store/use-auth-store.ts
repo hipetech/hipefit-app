@@ -1,8 +1,8 @@
 import type { UserProfile } from '@/database';
+import type { User } from '@react-native-firebase/auth';
 import {
-  AppleAuthProvider,
-  FirebaseAuthTypes,
   getAuth,
+  OAuthProvider,
   onAuthStateChanged,
   signInWithCredential,
   signOut,
@@ -20,8 +20,6 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { create } from 'zustand';
 
 import { globalGroupsRef, userRef } from '@/database';
-
-type User = FirebaseAuthTypes.User;
 
 interface AuthState {
   user: User | null;
@@ -177,10 +175,10 @@ export const useAuthStore = create<AuthState>((set) => {
         lastName: credential.fullName?.familyName ?? null,
       };
 
-      const appleCredential = AppleAuthProvider.credential(
-        credential.identityToken,
-        undefined
-      );
+      const provider = new OAuthProvider('apple.com');
+      const appleCredential = provider.credential({
+        idToken: credential.identityToken,
+      });
 
       const { user } = await signInWithCredential(getAuth(), appleCredential);
       await ensureUserProfile(user, appleName);

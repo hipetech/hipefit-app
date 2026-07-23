@@ -52,3 +52,6 @@ app-example
 scripts/service-account*.json
 scripts/service-account.*.json
 scripts/*-firebase-adminsdk-*.json
+
+# Agent tmp files
+/qa-artifacts

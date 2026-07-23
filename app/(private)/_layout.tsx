@@ -1,6 +1,6 @@
 import type { CreateMenuItem } from '@/ui/tab-bar';
 import { useMemo } from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs } from 'expo-router/js-tabs';
 import { Dumbbell, ListPlus, Plus, Zap } from 'lucide-react-native';
 
 import { TabBar } from '@/ui/tab-bar';

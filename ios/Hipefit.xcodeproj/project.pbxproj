@@ -9,15 +9,15 @@
 /* Begin PBXBuildFile section */
 		0F8A7418B33D003280706B65 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 905BCC1172EEBDAD9FAF1012 /* ExpoModulesProvider.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		13FC4452C764128A995CCB8E /* libPods-common-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D79AE3117E663BFDC087681B /* libPods-common-Hipefit.a */; };
 		1B1AA514C7C197C579B92F37 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
 		1B8A94E3FF08E86998F7B521 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
 		2D561A4F08654A56B1C2A5A7 /* ios-icon-prod.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0549E74ED9654FCAAD7B3EE7 /* ios-icon-prod.icon */; };
 		39D771EFD2F8AE0E0D507E16 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FB262B935DC286B8311381A /* ExpoModulesProvider.swift */; };
 		58358EC3653918278EEDC6B2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */; };
-		6689B69EA7615743AE4CC05F /* libPods-common-Hipefit-stage.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FAD205390D7C8EE9E402466C /* libPods-common-Hipefit-stage.a */; };
-		97763C55EE172D518E664908 /* libPods-common-Hipefit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DAAF879F8F4207518EC77962 /* libPods-common-Hipefit.a */; };
+		90ABA8E1492F70827565C784 /* libPods-common-Hipefit-stage.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1D660BB2224A268B3405EE /* libPods-common-Hipefit-stage.a */; };
+		90FBD2CFD5DE9273C634B518 /* libPods-common-Hipefit-dev.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 60ECBF316EDDBBDDD44AF805 /* libPods-common-Hipefit-dev.a */; };
 		AB3927F364A70CA5E49EFD36 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E47A786BF09585529C3792 /* ExpoModulesProvider.swift */; };
-		B0A7808D7B61DF66D7AB8E06 /* libPods-common-Hipefit-dev.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ABE3918005FAAC691522FD2D /* libPods-common-Hipefit-dev.a */; };
 		B90846132EE0EE73009CCAE6 /* GoogleService-Info-prod.plist in Resources */ = {isa = PBXBuildFile; fileRef = B90846122EE0EE73009CCAE6 /* GoogleService-Info-prod.plist */; };
 		B90846142EE0EE73009CCAE6 /* GoogleService-Info-prod.plist in Resources */ = {isa = PBXBuildFile; fileRef = B90846122EE0EE73009CCAE6 /* GoogleService-Info-prod.plist */; };
 		B90846152EE0EE73009CCAE6 /* GoogleService-Info-prod.plist in Resources */ = {isa = PBXBuildFile; fileRef = B90846122EE0EE73009CCAE6 /* GoogleService-Info-prod.plist */; };
@@ -117,20 +117,19 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		00487F8B4080BCC550E52741 /* Pods-common-Hipefit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit.debug.xcconfig"; path = "Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit.debug.xcconfig"; sourceTree = "<group>"; };
 		0549E74ED9654FCAAD7B3EE7 /* ios-icon-prod.icon */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.iconcomposer.icon; name = "ios-icon-prod.icon"; path = "Hipefit/ios-icon-prod.icon"; sourceTree = "<group>"; };
+		07ECF0BDFDAF8CF327451F6B /* Pods-common-Hipefit-dev.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit-dev.debug.xcconfig"; path = "Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev.debug.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Hipefit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hipefit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Hipefit/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info-prod.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Info-prod.plist"; path = "Hipefit/Info-prod.plist"; sourceTree = "<group>"; };
-		4BD5C9E048E1DEE2AD838AB6 /* Pods-common-Hipefit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit.release.xcconfig"; path = "Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit.release.xcconfig"; sourceTree = "<group>"; };
+		47A5FCA09379BAF98B0B97AA /* Pods-common-Hipefit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit.debug.xcconfig"; path = "Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit.debug.xcconfig"; sourceTree = "<group>"; };
+		4C1D660BB2224A268B3405EE /* libPods-common-Hipefit-stage.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-common-Hipefit-stage.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4FB262B935DC286B8311381A /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-common-Hipefit-stage/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		63EC8F56E4A9887C51C945C3 /* Pods-common-Hipefit-dev.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit-dev.release.xcconfig"; path = "Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev.release.xcconfig"; sourceTree = "<group>"; };
-		67B85458839FDC65A3163913 /* Pods-common-Hipefit-stage.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit-stage.release.xcconfig"; path = "Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage.release.xcconfig"; sourceTree = "<group>"; };
+		60ECBF316EDDBBDDD44AF805 /* libPods-common-Hipefit-dev.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-common-Hipefit-dev.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		73E47A786BF09585529C3792 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-common-Hipefit/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		77CE6C3F3CDA47BFEC2A9139 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Hipefit/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		7DA528C7927362C939C28F5C /* Pods-common-Hipefit-stage.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit-stage.debug.xcconfig"; path = "Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage.debug.xcconfig"; sourceTree = "<group>"; };
 		905BCC1172EEBDAD9FAF1012 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-common-Hipefit-dev/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		ABE3918005FAAC691522FD2D /* libPods-common-Hipefit-dev.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-common-Hipefit-dev.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		932E1C4BE3C04C7D750BF780 /* Pods-common-Hipefit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit.release.xcconfig"; path = "Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit.release.xcconfig"; sourceTree = "<group>"; };
 		B90846122EE0EE73009CCAE6 /* GoogleService-Info-prod.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-prod.plist"; sourceTree = "<group>"; };
 		B91792AE2EDCCA8F005ABE0C /* ios-icon-stage.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "ios-icon-stage.icon"; sourceTree = "<group>"; };
 		B91792B22EDCCAD4005ABE0C /* ios-icon-dev.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "ios-icon-dev.icon"; sourceTree = "<group>"; };
@@ -147,12 +146,13 @@
 		B9F2AA252EDB9DBC00FA37C1 /* Info-dev.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Info-dev.plist"; path = "Hipefit/Info-dev.plist"; sourceTree = "<group>"; };
 		B9F2AA292EDB9E0900FA37C1 /* SplashScreenStage.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreenStage.storyboard; path = Hipefit/SplashScreenStage.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		DAAF879F8F4207518EC77962 /* libPods-common-Hipefit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-common-Hipefit.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		E85B35A182F676E7D90B60C0 /* Pods-common-Hipefit-dev.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit-dev.debug.xcconfig"; path = "Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev.debug.xcconfig"; sourceTree = "<group>"; };
+		C7B401ACC5B5F5D8F09B3B3F /* Pods-common-Hipefit-stage.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit-stage.debug.xcconfig"; path = "Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage.debug.xcconfig"; sourceTree = "<group>"; };
+		D79AE3117E663BFDC087681B /* libPods-common-Hipefit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-common-Hipefit.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DF8B34ACA942B81433FB7FFE /* Pods-common-Hipefit-stage.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit-stage.release.xcconfig"; path = "Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Hipefit/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Hipefit-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Hipefit-Bridging-Header.h"; path = "Hipefit/Hipefit-Bridging-Header.h"; sourceTree = "<group>"; };
-		FAD205390D7C8EE9E402466C /* libPods-common-Hipefit-stage.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-common-Hipefit-stage.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F2DADEF72692817533A13F92 /* Pods-common-Hipefit-dev.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-common-Hipefit-dev.release.xcconfig"; path = "Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -174,7 +174,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				97763C55EE172D518E664908 /* libPods-common-Hipefit.a in Frameworks */,
+				13FC4452C764128A995CCB8E /* libPods-common-Hipefit.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -203,7 +203,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6689B69EA7615743AE4CC05F /* libPods-common-Hipefit-stage.a in Frameworks */,
+				90ABA8E1492F70827565C784 /* libPods-common-Hipefit-stage.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -211,7 +211,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B0A7808D7B61DF66D7AB8E06 /* libPods-common-Hipefit-dev.a in Frameworks */,
+				90FBD2CFD5DE9273C634B518 /* libPods-common-Hipefit-dev.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,12 +245,12 @@
 		20A7FCD9014871D369EF5FF2 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				00487F8B4080BCC550E52741 /* Pods-common-Hipefit.debug.xcconfig */,
-				4BD5C9E048E1DEE2AD838AB6 /* Pods-common-Hipefit.release.xcconfig */,
-				E85B35A182F676E7D90B60C0 /* Pods-common-Hipefit-dev.debug.xcconfig */,
-				63EC8F56E4A9887C51C945C3 /* Pods-common-Hipefit-dev.release.xcconfig */,
-				7DA528C7927362C939C28F5C /* Pods-common-Hipefit-stage.debug.xcconfig */,
-				67B85458839FDC65A3163913 /* Pods-common-Hipefit-stage.release.xcconfig */,
+				47A5FCA09379BAF98B0B97AA /* Pods-common-Hipefit.debug.xcconfig */,
+				932E1C4BE3C04C7D750BF780 /* Pods-common-Hipefit.release.xcconfig */,
+				07ECF0BDFDAF8CF327451F6B /* Pods-common-Hipefit-dev.debug.xcconfig */,
+				F2DADEF72692817533A13F92 /* Pods-common-Hipefit-dev.release.xcconfig */,
+				C7B401ACC5B5F5D8F09B3B3F /* Pods-common-Hipefit-stage.debug.xcconfig */,
+				DF8B34ACA942B81433FB7FFE /* Pods-common-Hipefit-stage.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -259,9 +259,9 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				DAAF879F8F4207518EC77962 /* libPods-common-Hipefit.a */,
-				ABE3918005FAAC691522FD2D /* libPods-common-Hipefit-dev.a */,
-				FAD205390D7C8EE9E402466C /* libPods-common-Hipefit-stage.a */,
+				D79AE3117E663BFDC087681B /* libPods-common-Hipefit.a */,
+				60ECBF316EDDBBDDD44AF805 /* libPods-common-Hipefit-dev.a */,
+				4C1D660BB2224A268B3405EE /* libPods-common-Hipefit-stage.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -352,15 +352,15 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Hipefit" */;
 			buildPhases = (
-				00ABFA85375D6103EB37AA11 /* [CP] Check Pods Manifest.lock */,
+				DBC5E5DF9D57082946A23E64 /* [CP] Check Pods Manifest.lock */,
 				02A0FD39E75307605C91114C /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				B91792C52EDCCDAE005ABE0C /* Embed Watch Content */,
-				244D3F05F4CA0B4F1CC67D5D /* [CP] Embed Pods Frameworks */,
-				5BB42A6CC37DFE26DFF3768F /* [CP] Copy Pods Resources */,
+				E36605A215D5DBECD5ED8193 /* [CP] Embed Pods Frameworks */,
+				19BC89A65EF9D5F961C03CDE /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -436,15 +436,15 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B9F2A9F72EDB983500FA37C1 /* Build configuration list for PBXNativeTarget "Hipefit-stage" */;
 			buildPhases = (
-				88600878696248CF75175743 /* [CP] Check Pods Manifest.lock */,
+				22594C9D16B8BBAF6ED710BD /* [CP] Check Pods Manifest.lock */,
 				B9F2A9E82EDB983500FA37C1 /* [Expo] Configure project */,
 				B9F2A9E92EDB983500FA37C1 /* Sources */,
 				B9F2A9EC2EDB983500FA37C1 /* Frameworks */,
 				B9F2A9EE2EDB983500FA37C1 /* Resources */,
 				B9F2A9F42EDB983500FA37C1 /* Bundle React Native code and images */,
 				B91792DE2EDCCEE3005ABE0C /* Embed Watch Content */,
-				F7732CA1AEFD813EE91CD329 /* [CP] Embed Pods Frameworks */,
-				CBA19F3B74AC7D3C5990126E /* [CP] Copy Pods Resources */,
+				209A29A972357F51F91FA9B1 /* [CP] Embed Pods Frameworks */,
+				F725B76BA0DECB9C90B8C2E4 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -460,15 +460,15 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B9F2AA0D2EDB983800FA37C1 /* Build configuration list for PBXNativeTarget "Hipefit-dev" */;
 			buildPhases = (
-				FB5A0645419F90853C135E35 /* [CP] Check Pods Manifest.lock */,
+				CE1858918AAF91D9057580FB /* [CP] Check Pods Manifest.lock */,
 				B9F2A9FE2EDB983800FA37C1 /* [Expo] Configure project */,
 				B9F2A9FF2EDB983800FA37C1 /* Sources */,
 				B9F2AA022EDB983800FA37C1 /* Frameworks */,
 				B9F2AA042EDB983800FA37C1 /* Resources */,
 				B9F2AA0A2EDB983800FA37C1 /* Bundle React Native code and images */,
 				B91792E22EDCCEFC005ABE0C /* Embed Watch Content */,
-				70F8AFC5127953506FC51BB6 /* [CP] Embed Pods Frameworks */,
-				06665C0A3A85A9FF8AA2BCA1 /* [CP] Copy Pods Resources */,
+				BBB175994F7686D64A2AB1D0 /* [CP] Embed Pods Frameworks */,
+				7D209163D790B6713C8485AD /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -601,28 +601,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		00ABFA85375D6103EB37AA11 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-common-Hipefit-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
 		00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -664,41 +642,7 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-common-Hipefit/expo-configure-project.sh\"\n";
 		};
-		06665C0A3A85A9FF8AA2BCA1 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		244D3F05F4CA0B4F1CC67D5D /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		5BB42A6CC37DFE26DFF3768F /* [CP] Copy Pods Resources */ = {
+		19BC89A65EF9D5F961C03CDE /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -715,24 +659,24 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		70F8AFC5127953506FC51BB6 /* [CP] Embed Pods Frameworks */ = {
+		209A29A972357F51F91FA9B1 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		88600878696248CF75175743 /* [CP] Check Pods Manifest.lock */ = {
+		22594C9D16B8BBAF6ED710BD /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -752,6 +696,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7D209163D790B6713C8485AD /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		B9F2A9E82EDB983500FA37C1 /* [Expo] Configure project */ = {
@@ -836,41 +797,24 @@
 			shellPath = /bin/sh;
 			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
-		CBA19F3B74AC7D3C5990126E /* [CP] Copy Pods Resources */ = {
+		BBB175994F7686D64A2AB1D0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		F7732CA1AEFD813EE91CD329 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-dev/Pods-common-Hipefit-dev-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		FB5A0645419F90853C135E35 /* [CP] Check Pods Manifest.lock */ = {
+		CE1858918AAF91D9057580FB /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -890,6 +834,62 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		DBC5E5DF9D57082946A23E64 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-common-Hipefit-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E36605A215D5DBECD5ED8193 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit/Pods-common-Hipefit-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F725B76BA0DECB9C90B8C2E4 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-common-Hipefit-stage/Pods-common-Hipefit-stage-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -966,7 +966,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 00487F8B4080BCC550E52741 /* Pods-common-Hipefit.debug.xcconfig */;
+			baseConfigurationReference = 47A5FCA09379BAF98B0B97AA /* Pods-common-Hipefit.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-prod";
 				CLANG_ENABLE_MODULES = YES;
@@ -979,11 +979,12 @@
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = "Hipefit/Info-prod.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 13.4;
 				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -1003,7 +1004,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4BD5C9E048E1DEE2AD838AB6 /* Pods-common-Hipefit.release.xcconfig */;
+			baseConfigurationReference = 932E1C4BE3C04C7D750BF780 /* Pods-common-Hipefit.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-prod";
 				CLANG_ENABLE_MODULES = YES;
@@ -1011,11 +1012,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = BL898J4D3L;
 				INFOPLIST_FILE = "Hipefit/Info-prod.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 13.4;
 				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -1093,7 +1095,7 @@
 					"${PODS_ROOT}/React-graphics",
 					"${PODS_ROOT}/React-graphics/react/renderer/graphics/platform/ios",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -1101,8 +1103,15 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "$(inherited)";
-				OTHER_CPLUSPLUSFLAGS = "$(inherited)";
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
+				);
+				PODFILE_DIR = "$(SRCROOT)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -1165,15 +1174,22 @@
 					"${PODS_ROOT}/React-graphics",
 					"${PODS_ROOT}/React-graphics/react/renderer/graphics/platform/ios",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_CFLAGS = "$(inherited)";
-				OTHER_CPLUSPLUSFLAGS = "$(inherited)";
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
+				);
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-DRCT_REMOVE_LEGACY_ARCH=1",
+				);
+				PODFILE_DIR = "$(SRCROOT)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
@@ -1481,7 +1497,7 @@
 		};
 		B9F2A9F82EDB983500FA37C1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7DA528C7927362C939C28F5C /* Pods-common-Hipefit-stage.debug.xcconfig */;
+			baseConfigurationReference = C7B401ACC5B5F5D8F09B3B3F /* Pods-common-Hipefit-stage.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-stage";
 				CLANG_ENABLE_MODULES = YES;
@@ -1494,11 +1510,12 @@
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = "Hipefit/Info-stage.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 13.4;
 				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -1518,7 +1535,7 @@
 		};
 		B9F2A9F92EDB983500FA37C1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 67B85458839FDC65A3163913 /* Pods-common-Hipefit-stage.release.xcconfig */;
+			baseConfigurationReference = DF8B34ACA942B81433FB7FFE /* Pods-common-Hipefit-stage.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-stage";
 				CLANG_ENABLE_MODULES = YES;
@@ -1526,11 +1543,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = BL898J4D3L;
 				INFOPLIST_FILE = "Hipefit/Info-stage.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 13.4;
 				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -1549,7 +1567,7 @@
 		};
 		B9F2AA0E2EDB983800FA37C1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E85B35A182F676E7D90B60C0 /* Pods-common-Hipefit-dev.debug.xcconfig */;
+			baseConfigurationReference = 07ECF0BDFDAF8CF327451F6B /* Pods-common-Hipefit-dev.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-dev";
 				CLANG_ENABLE_MODULES = YES;
@@ -1562,11 +1580,12 @@
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = "Hipefit/Info-dev.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 13.4;
 				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -1586,7 +1605,7 @@
 		};
 		B9F2AA0F2EDB983800FA37C1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 63EC8F56E4A9887C51C945C3 /* Pods-common-Hipefit-dev.release.xcconfig */;
+			baseConfigurationReference = F2DADEF72692817533A13F92 /* Pods-common-Hipefit-dev.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "ios-icon-dev";
 				CLANG_ENABLE_MODULES = YES;
@@ -1594,11 +1613,12 @@
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = BL898J4D3L;
 				INFOPLIST_FILE = "Hipefit/Info-dev.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 13.4;
 				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",

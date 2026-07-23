@@ -1,6 +1,6 @@
-import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import type { Timestamp } from '@react-native-firebase/firestore';
 
-export type Timestamp = FirebaseFirestoreTypes.Timestamp;
+export type { Timestamp };
 
 // ─── Shared Type Aliases ────────────────────────────────────────────────────
 

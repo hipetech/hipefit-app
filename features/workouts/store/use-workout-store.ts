@@ -1,5 +1,5 @@
 import type { WithId, Workout } from '@/database';
-import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import type { QueryDocumentSnapshot } from '@react-native-firebase/firestore';
 import { onSnapshot, orderBy, query } from '@react-native-firebase/firestore';
 import { create } from 'zustand';
 
@@ -28,7 +28,7 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
       q,
       (snap) => {
         const workouts: WithId<Workout>[] = snap.docs.map(
-          (d: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+          (d: QueryDocumentSnapshot) => ({
             id: d.id,
             data: d.data() as Workout,
           })

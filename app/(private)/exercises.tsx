@@ -1,7 +1,7 @@
 import type { MergedExercise } from '@/features/exercises/store/use-exercise-store';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { LegendList } from '@legendapp/list';
+import { LegendList } from '@legendapp/list/react-native';
 import {
   Button,
   Card,
@@ -45,9 +45,22 @@ export default function Exercises() {
     return matchesSearch && matchesDifficulty;
   });
 
-  useEffect(() => {
+  // Collapse any expanded card when the visible list changes
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
     setExpandedId(null);
-  }, [searchQuery, difficultyFilter]);
+  }, []);
+
+  const handleDifficultyChange = useCallback(
+    (value: string) => {
+      // RadioGroup fires on every tap, including re-taps of the active value.
+      // Bail early so re-tapping the current filter leaves the card expanded.
+      if (value === difficultyFilter) return;
+      setDifficultyFilter(value);
+      setExpandedId(null);
+    },
+    [difficultyFilter]
+  );
 
   const renderExerciseItem = useCallback(
     ({ item: exercise }: { item: MergedExercise }) => (
@@ -61,57 +74,6 @@ export default function Exercises() {
       />
     ),
     [expandedId]
-  );
-
-  const ListHeader = useCallback(
-    () => (
-      <View>
-        <View className="mb-6">
-          <Text variant="h1" className="mb-2">
-            Exercises
-          </Text>
-          <Text variant="muted">Build your exercise library</Text>
-        </View>
-
-        {/* Search Input */}
-        <View className="mb-4">
-          <TextField>
-            <View className="relative">
-              <View className="absolute top-3 left-3 z-10">
-                <Search size={20} className="text-muted" />
-              </View>
-              <Input
-                className="pl-10"
-                placeholder="Search exercises..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
-          </TextField>
-        </View>
-
-        {/* Difficulty Filter with Radio Group */}
-        <Card className="mb-4 p-4">
-          <Text variant="small" className="mb-3 tracking-wide uppercase">
-            Filter by Difficulty
-          </Text>
-          <RadioGroup
-            value={difficultyFilter}
-            onValueChange={setDifficultyFilter}
-          >
-            <View className="flex-row flex-wrap gap-4">
-              <RadioGroup.Item value="all">All</RadioGroup.Item>
-              <RadioGroup.Item value="beginner">Beginner</RadioGroup.Item>
-              <RadioGroup.Item value="intermediate">
-                Intermediate
-              </RadioGroup.Item>
-              <RadioGroup.Item value="advanced">Advanced</RadioGroup.Item>
-            </View>
-          </RadioGroup>
-        </Card>
-      </View>
-    ),
-    [searchQuery, difficultyFilter]
   );
 
   const ListEmpty = useCallback(
@@ -150,23 +112,73 @@ export default function Exercises() {
 
   return (
     <>
-      <LegendList
-        className="bg-background flex-1"
-        contentContainerStyle={{
-          paddingTop: 60,
-          paddingHorizontal: 20,
-          paddingBottom: TAB_BAR_TOTAL_HEIGHT,
-        }}
-        data={filteredExercises}
-        renderItem={renderExerciseItem}
-        keyExtractor={(item) => item.id}
-        estimatedItemSize={180}
-        ListHeaderComponent={ListHeader}
-        ListEmptyComponent={ListEmpty}
-        ItemSeparatorComponent={ItemSeparator}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-      />
+      <View className="bg-background flex-1">
+        {/* Fixed header: title, search, and difficulty filter stay pinned */}
+        <View className="px-5 pt-15">
+          <View className="mb-6">
+            <Text variant="h1" className="mb-2">
+              Exercises
+            </Text>
+            <Text variant="muted">Build your exercise library</Text>
+          </View>
+
+          {/* Search Input */}
+          <View className="mb-4">
+            <TextField>
+              <View className="relative">
+                <View className="absolute top-3 left-3 z-10">
+                  <Search size={20} className="text-muted" />
+                </View>
+                <Input
+                  className="pl-10"
+                  placeholder="Search exercises..."
+                  value={searchQuery}
+                  onChangeText={handleSearchChange}
+                />
+              </View>
+            </TextField>
+          </View>
+
+          {/* Difficulty Filter with Radio Group */}
+          <Card className="mb-4 p-4">
+            <Text variant="small" className="mb-3 tracking-wide uppercase">
+              Filter by Difficulty
+            </Text>
+            <RadioGroup
+              value={difficultyFilter}
+              onValueChange={handleDifficultyChange}
+            >
+              <View className="flex-row flex-wrap gap-4">
+                <RadioGroup.Item value="all">All</RadioGroup.Item>
+                <RadioGroup.Item value="beginner">Beginner</RadioGroup.Item>
+                <RadioGroup.Item value="intermediate">
+                  Intermediate
+                </RadioGroup.Item>
+                <RadioGroup.Item value="advanced">Advanced</RadioGroup.Item>
+              </View>
+            </RadioGroup>
+          </Card>
+        </View>
+
+        <LegendList
+          className="flex-1"
+          contentContainerStyle={{
+            paddingTop: 0,
+            paddingHorizontal: 20,
+            paddingBottom: TAB_BAR_TOTAL_HEIGHT,
+          }}
+          data={filteredExercises}
+          renderItem={renderExerciseItem}
+          keyExtractor={(item) => item.id}
+          estimatedItemSize={180}
+          extraData={expandedId}
+          maintainVisibleContentPosition={false}
+          ListEmptyComponent={ListEmpty}
+          ItemSeparatorComponent={ItemSeparator}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        />
+      </View>
 
       {/* Exercise Detail Dialog */}
       <Dialog

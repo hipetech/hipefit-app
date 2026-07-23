@@ -7,7 +7,7 @@ import type {
   UserExerciseGroup,
   WithId,
 } from '@/database';
-import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import type { QueryDocumentSnapshot } from '@react-native-firebase/firestore';
 import { onSnapshot } from '@react-native-firebase/firestore';
 import { create } from 'zustand';
 
@@ -154,12 +154,10 @@ export const useExerciseStore = create<ExerciseState>((set) => {
       const unsub1 = onSnapshot(
         exercisesRef(),
         (snap) => {
-          raw.globalExercises = snap.docs.map(
-            (d: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
-              id: d.id,
-              data: d.data() as Exercise,
-            })
-          );
+          raw.globalExercises = snap.docs.map((d: QueryDocumentSnapshot) => ({
+            id: d.id,
+            data: d.data() as Exercise,
+          }));
           raw.firedListeners.add('global');
           recompute();
         },
@@ -172,7 +170,7 @@ export const useExerciseStore = create<ExerciseState>((set) => {
         userOverridesRef(uid),
         (snap) => {
           raw.overrides = new Map(
-            snap.docs.map((d: FirebaseFirestoreTypes.QueryDocumentSnapshot) => [
+            snap.docs.map((d: QueryDocumentSnapshot) => [
               d.id,
               d.data() as ExerciseOverride,
             ])
@@ -188,12 +186,10 @@ export const useExerciseStore = create<ExerciseState>((set) => {
       const unsub3 = onSnapshot(
         customExercisesRef(uid),
         (snap) => {
-          raw.customExercises = snap.docs.map(
-            (d: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
-              id: d.id,
-              data: d.data() as CustomExercise,
-            })
-          );
+          raw.customExercises = snap.docs.map((d: QueryDocumentSnapshot) => ({
+            id: d.id,
+            data: d.data() as CustomExercise,
+          }));
           raw.firedListeners.add('custom');
           recompute();
         },
@@ -206,7 +202,7 @@ export const useExerciseStore = create<ExerciseState>((set) => {
         userGroupsRef(uid),
         (snap) => {
           raw.userGroups = new Map(
-            snap.docs.map((d: FirebaseFirestoreTypes.QueryDocumentSnapshot) => [
+            snap.docs.map((d: QueryDocumentSnapshot) => [
               d.id,
               d.data() as UserExerciseGroup,
             ])

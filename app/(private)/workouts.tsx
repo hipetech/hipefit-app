@@ -2,7 +2,7 @@ import type { WithId } from '@/database';
 import type { Workout } from '@/database/types';
 import { useCallback } from 'react';
 import { ScrollView, View } from 'react-native';
-import { LegendList } from '@legendapp/list';
+import { LegendList } from '@legendapp/list/react-native';
 import { Button, Card, Chip, Separator, Skeleton } from 'heroui-native';
 
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
