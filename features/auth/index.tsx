@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import { Platform, View } from 'react-native';
+import { Button, Host } from '@expo/ui';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { Button } from 'heroui-native';
 
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
+import { BRAND_SEED, colors } from '@/theme/colors';
 import { Text } from '@/ui/text';
 
 import { useAuthStore } from './store/use-auth-store';
@@ -10,6 +12,7 @@ import { useAuthStore } from './store/use-auth-store';
 export function AuthScreen() {
   const { isLoading, isLoggedIn, initialize, signInWithApple, signOut } =
     useAuthStore();
+  const colorScheme = useAppColorScheme();
 
   useEffect(() => {
     const cleanup = initialize();
@@ -34,26 +37,52 @@ export function AuthScreen() {
 
   if (isLoading) {
     return (
-      <View className="bg-background flex-1 items-center justify-center">
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.systemBackground,
+        }}
+      >
         <Text>Loading...</Text>
       </View>
     );
   }
 
   return (
-    <View className="bg-background flex-1 p-4">
-      <View className="flex-1 items-center justify-center gap-4">
-        <Text className="text-2xl font-bold">
+    <View
+      style={{
+        flex: 1,
+        padding: 16,
+        backgroundColor: colors.systemBackground,
+      }}
+    >
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 16,
+        }}
+      >
+        <Text style={{ fontSize: 24, fontWeight: 'bold' }}>
           {isLoggedIn ? 'Logged In' : 'Not Logged In'}
         </Text>
 
-        {Platform.OS === 'ios' && (
-          <View className="w-full max-w-xs">
-            {isLoggedIn ? (
-              <Button onPress={handleSignOut} className="w-full">
-                <Button.Label>Sign Out</Button.Label>
+        {Platform.OS === 'ios' &&
+          (isLoggedIn ? (
+            <Host
+              matchContents
+              seedColor={BRAND_SEED}
+              colorScheme={colorScheme}
+            >
+              <Button variant="filled" onPress={handleSignOut}>
+                Sign Out
               </Button>
-            ) : (
+            </Host>
+          ) : (
+            <View style={{ width: '100%', maxWidth: 320 }}>
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={
                   AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
@@ -68,9 +97,8 @@ export function AuthScreen() {
                 }}
                 onPress={handleSignIn}
               />
-            )}
-          </View>
-        )}
+            </View>
+          ))}
       </View>
     </View>
   );

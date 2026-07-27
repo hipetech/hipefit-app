@@ -30,7 +30,6 @@
     "@react-native-firebase/auth": "25.1.0",
     "@react-native-firebase/crashlytics": "25.1.0",
     "@react-native-firebase/firestore": "25.1.0",
-    "clsx": "^2.1.1",
     "expo": "^57.0.0",
     "expo-apple-authentication": "~57.0.1",
     "expo-constants": "~57.0.7",
@@ -45,7 +44,6 @@
     "expo-symbols": "~57.0.1",
     "expo-system-ui": "~57.0.1",
     "expo-web-browser": "~57.0.2",
-    "heroui-native": "^1.0.6",
     "lucide-react-native": "^1.26.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -57,9 +55,6 @@
     "react-native-svg": "15.15.4",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.10.0",
-    "tailwind-merge": "^3.6.0",
-    "tailwind-variants": "^3.2.2",
-    "uniwind": "^1.10.0",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
@@ -76,8 +71,6 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.9.6",
-    "prettier-plugin-tailwindcss": "^0.8.1",
-    "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3"
   },
   "lint-staged": {

@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents (Claude Code, OpenAI Codex, GitH
 
 ## Project Overview
 
-Hipefit is a fitness tracking mobile app built with React Native, Expo (SDK 54, bare workflow), and Firebase. It uses file-based routing (Expo Router v6), Uniwind (Tailwind CSS v4 for RN), HeroUI Native for UI components, and Zustand for state management.
+Hipefit is a fitness tracking mobile app built with React Native, Expo (SDK 57, bare workflow), and Firebase. It uses file-based routing (Expo Router v6), `@expo/ui` (real SwiftUI on iOS / Jetpack Compose on Android) for native UI, and Zustand for state management. iOS-first: the UI is optimized for SwiftUI; Android renders universal/RN fallbacks.
 
 ## Commands
 
@@ -36,7 +36,7 @@ app/
 ├── index.tsx            # Entry redirect based on auth state
 ├── (public)/login.tsx   # Apple Sign-In (unauthenticated)
 └── (private)/           # Protected routes (requires auth)
-    ├── _layout.tsx      # Bottom tab navigation (custom TabBar)
+    ├── _layout.tsx      # Bottom tab navigation (Expo Router NativeTabs)
     ├── index.tsx        # Home tab
     ├── workouts.tsx     # Workouts tab
     ├── exercises.tsx    # Exercises tab
@@ -56,7 +56,13 @@ Screen components live in `features/`, route files in `app/` import from feature
 
 ### UI Components
 
-HeroUI Native component library (`heroui-native`) provides pre-styled, animated components (Button, Card, Chip, Dialog, Select, Accordion, Avatar, Skeleton, Separator, RadioGroup, Input, Label, TextField). Uses compound component pattern (`Card.Body`, `Button.Label`, etc.). Custom `Text` component with typography variants and `Progress` component remain in `ui/`. Use `cn()` from `@/lib/utils` for conditional class merging.
+UI is built with **`@expo/ui`** — real SwiftUI on iOS (and Jetpack Compose on Android) rendered from React. Key rules:
+
+- **`Host` per island, never nested.** Import `Host` only from `@expo/ui` root. Every native subtree lives inside one `Host` (pass `seedColor={BRAND_SEED}` + `colorScheme={useAppColorScheme()}`). No flexbox inside a `Host` — use `@expo/ui/swift-ui` `VStack`/`HStack`/`Spacer` + the `modifiers={[…]}` prop.
+- **Platform isolation.** Any file importing `@expo/ui/swift-ui` must be split `<name>.ios.tsx` + `<name>.android.tsx` (the Android variant must NOT use a `Host` — bare RN primitives can't nest inside a Compose `Host`). Never place `.ios/.android` splits under `app/` — keep them in `ui/` and `features/`.
+- **Reusable native primitives** in `ui/` (each `.d.ts` + `.ios.tsx` + `.android.tsx`, imported from the bare path e.g. `@/ui/card`): `Card`, `Chip`, `Separator`, `Avatar`, `Skeleton`. Plain-RN primitives (usable in or out of a `Host`): `Text` (typography variants), `Progress`, `Image` (expo-image).
+- **Theming:** `@/theme/colors` (semantic `PlatformColor`s + `brand`/`BRAND_SEED`); the user's theme is applied app-wide via `Appearance.setColorScheme` in `app/_layout.tsx` (driven by `useAppColorScheme`). Inline styles only — no CSS/className.
+- Long lists stay on `@legendapp/list` (`LegendList`); each row is its own `Host` island.
 
 ### Backend
 
@@ -70,7 +76,7 @@ Zustand stores in `features/[feature]/store/`. Auth store (`useAuthStore`) manag
 
 - **TypeScript:** Strict mode, no `any`, use interfaces for props
 - **Components:** Arrow functions, `React.FC` for typed components
-- **Styling:** Uniwind/Tailwind CSS v4 classes exclusively, `cn()` for merging
+- **Styling:** Native `@expo/ui` components + inline styles from `@/theme/colors`; no Tailwind/className/CSS
 - **Imports:** Auto-sorted by Prettier (types → react/rn → third-party → @/ aliases → relative)
 - **Path alias:** `@/*` maps to project root
 - **Naming:** camelCase for variables/functions, PascalCase for components, lowercase hyphenated for directories
@@ -89,9 +95,25 @@ Three environments with matching Firebase configs, .env files, and EAS build pro
 - **Bare workflow:** Native iOS/Android projects are committed and managed directly (not Continuous Native Generation). Native changes go in `ios/` and `android/` directories, not `app.config.js` plugins. Per-environment Info.plist files: `Info-dev.plist`, `Info-stage.plist`, `Info-prod.plist`.
 - React Compiler and New Architecture are enabled in `app.config.js`
 - TypedRoutes enabled for Expo Router type safety
-- Uses Uniwind (Tailwind CSS v4 for RN) with HeroUI Native's built-in theming (light/dark)
-- `global.css` imports `tailwindcss`, `uniwind`, and `heroui-native/styles`
-- App wrapped with `GestureHandlerRootView` and `HeroUINativeProvider` in root layout
+- Native theming via OS semantic colors (`@/theme/colors`) + `Host.seedColor`/`colorScheme`; light/dark applied through `Appearance.setColorScheme`
+- Root layout wraps with `GestureHandlerRootView`; no CSS/styling provider (Metro has no `global.css`/uniwind config)
+
+## Design references
+
+Figma file **HipeFit** — file key `bXRKY3ueO3Bg31zmuSvxX2`
+<https://www.figma.com/design/bXRKY3ueO3Bg31zmuSvxX2/HipeFit>
+
+Single page `🔍 Analysis` (`33:320`) holding **competitor research, not a design system** — three sections of iPhone screenshots (393×892, captured Feb 2026):
+
+| Section    | Node     | Flows captured                                                                                     |
+| ---------- | -------- | -------------------------------------------------------------------------------------------------- |
+| Hevy       | `47:122` | Welcome, Onboarding, Workout (empty), New Routine, Workout, Log Workout, Workout Settings, Profile |
+| Strong     | `48:172` | Welcome, Workout, New Workout Template, History, Exercises, Profile                                |
+| GYM Keeper | `48:211` | Welcome, Drawer, Workout, Exercises, New Program, Settings                                         |
+
+Every screen is a raster image fill, so `get_design_context` returns no layer tree and design-to-code does not apply. Use `get_screenshot` to view them as visual/UX reference, then build the equivalent with `@expo/ui` per the [UI Components](#ui-components) rules. There are no Figma components, variables, or styles to sync — `@/theme/colors` remains the only token source.
+
+Access requires the Figma MCP server (`figma` plugin) to be authenticated; the OAuth token is stored per-user outside the repo, so each agent/machine authenticates once via `/mcp`.
 
 ## Cross-agent setup
 

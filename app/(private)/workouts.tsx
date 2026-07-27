@@ -1,17 +1,23 @@
 import type { WithId } from '@/database';
 import type { Workout } from '@/database/types';
 import { useCallback } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
-import { Button, Card, Chip, Separator, Skeleton } from 'heroui-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
+import { ActiveWorkoutBanner } from '@/features/workouts/active-workout-banner';
+import { ChipBadge } from '@/features/workouts/chip-badge';
+import { EmptyCard } from '@/features/workouts/empty-card';
+import { RoutineCard } from '@/features/workouts/routine-card';
 import { useWorkoutStore } from '@/features/workouts/store/use-workout-store';
-import { formatDuration, formatShortDate, formatVolume } from '@/lib/format';
-import { TAB_BAR_TOTAL_HEIGHT } from '@/ui/tab-bar';
+import { WorkoutHistoryCard } from '@/features/workouts/workout-history-card';
+import { WorkoutsSkeleton } from '@/features/workouts/workouts-skeleton';
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
+import { colors } from '@/theme/colors';
 import { Text } from '@/ui/text';
 
-const ItemSeparator = () => <View className="h-3" />;
+const ItemSeparator = () => <View style={{ height: 12 }} />;
 
 export default function Workouts() {
   const {
@@ -21,6 +27,11 @@ export default function Workouts() {
   } = useWorkoutStore();
   const { activeRoutines, isLoading: routinesLoading } = useRoutineStore();
 
+  const colorScheme = useAppColorScheme();
+  const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const contentWidth = windowWidth - 40;
+
   const isLoading = workoutsLoading || routinesLoading;
   const completedWorkouts = workouts.filter(
     (w) => w.data.status !== 'in_progress'
@@ -28,49 +39,21 @@ export default function Workouts() {
 
   const renderWorkoutItem = useCallback(
     ({ item: workout }: { item: WithId<Workout> }) => (
-      <Card className="p-4">
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1">
-            <Text className="mb-1 text-base font-semibold">
-              {workout.data.routineName ?? 'Quick Workout'}
-            </Text>
-            <Text variant="muted" className="mb-2 text-xs">
-              {formatShortDate(workout.data.startedAt)}
-            </Text>
-            <View className="flex-row items-center gap-3">
-              <Text variant="muted" className="text-xs">
-                {formatDuration(workout.data.duration)}
-              </Text>
-              <Text variant="muted" className="text-xs">
-                {workout.data.totalExercises} exercises
-              </Text>
-              <Text variant="muted" className="text-xs">
-                {formatVolume(workout.data.totalVolume)}
-              </Text>
-            </View>
-          </View>
-          <Chip
-            variant={
-              workout.data.status === 'completed' ? 'primary' : 'secondary'
-            }
-            size="sm"
-          >
-            <Chip.Label className="text-[10px]">
-              {workout.data.status === 'completed' ? 'Completed' : 'Abandoned'}
-            </Chip.Label>
-          </Chip>
-        </View>
-      </Card>
+      <WorkoutHistoryCard
+        workout={workout}
+        width={contentWidth}
+        colorScheme={colorScheme}
+      />
     ),
-    []
+    [contentWidth, colorScheme]
   );
 
   const ListHeader = useCallback(
     () => (
       <View>
         {/* Header */}
-        <View className="mb-6">
-          <Text variant="h1" className="mb-2">
+        <View style={{ marginBottom: 24 }}>
+          <Text variant="h1" style={{ marginBottom: 8, textAlign: 'left' }}>
             Workouts
           </Text>
           <Text variant="muted">Track your progress</Text>
@@ -78,133 +61,108 @@ export default function Workouts() {
 
         {/* Active Workout Banner */}
         {inProgressWorkout && (
-          <Card className="border-accent mb-6 border-2 p-4">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1">
-                <Text className="text-base font-bold">Workout in progress</Text>
-                <Text variant="muted" className="text-sm">
-                  {inProgressWorkout.data.routineName ?? 'Quick Workout'} •{' '}
-                  {inProgressWorkout.data.totalExercises} exercises
-                </Text>
-              </View>
-              <Button>
-                <Button.Label>Continue</Button.Label>
-              </Button>
-            </View>
-          </Card>
+          <View style={{ marginBottom: 24 }}>
+            <ActiveWorkoutBanner
+              workout={inProgressWorkout}
+              width={contentWidth}
+              colorScheme={colorScheme}
+            />
+          </View>
         )}
 
         {/* Routines Section */}
-        <View className="mb-6">
-          <View className="mb-4 flex-row items-center justify-between">
+        <View style={{ marginBottom: 24 }}>
+          <View
+            style={{
+              marginBottom: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
             <Text variant="h4">My Routines</Text>
-            <Chip variant="secondary" size="sm">
-              <Chip.Label>{activeRoutines.length}</Chip.Label>
-            </Chip>
+            <ChipBadge
+              label={String(activeRoutines.length)}
+              colorScheme={colorScheme}
+            />
           </View>
           {activeRoutines.length > 0 ? (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              className="mb-2"
+              style={{ marginBottom: 8 }}
             >
-              <View className="flex-row gap-3">
+              <View style={{ flexDirection: 'row', gap: 12 }}>
                 {activeRoutines.map((routine) => (
-                  <Card key={routine.id} className="w-[200px] p-4">
-                    <Text
-                      className="mb-2 text-base font-bold"
-                      numberOfLines={1}
-                    >
-                      {routine.data.name}
-                    </Text>
-                    <View className="gap-1">
-                      <Text variant="muted" className="text-xs">
-                        {routine.data.exercises.length} exercises
-                      </Text>
-                      {routine.data.estimatedDuration ? (
-                        <Text variant="muted" className="text-xs">
-                          ~{routine.data.estimatedDuration} min
-                        </Text>
-                      ) : null}
-                      <Text variant="muted" className="text-xs">
-                        Performed {routine.data.timesPerformed} times
-                      </Text>
-                    </View>
-                    <Button className="mt-3" size="sm">
-                      <Button.Label>Start</Button.Label>
-                    </Button>
-                  </Card>
+                  <RoutineCard
+                    key={routine.id}
+                    routine={routine}
+                    colorScheme={colorScheme}
+                  />
                 ))}
               </View>
             </ScrollView>
           ) : (
-            <Card className="p-5">
-              <Text variant="muted" className="mb-3 text-center">
-                No routines yet
-              </Text>
-              <Button variant="outline" className="self-center">
-                <Button.Label>Create your first routine</Button.Label>
-              </Button>
-            </Card>
+            <EmptyCard
+              message="No routines yet"
+              actionLabel="Create your first routine"
+              width={contentWidth}
+              colorScheme={colorScheme}
+            />
           )}
         </View>
 
-        <Separator className="mb-6" />
+        {/* Divider */}
+        <View
+          style={{
+            height: 1,
+            backgroundColor: colors.separator,
+            marginBottom: 24,
+          }}
+        />
 
         {/* History Title */}
-        <Text variant="h4" className="mb-4">
+        <Text variant="h4" style={{ marginBottom: 16 }}>
           History
         </Text>
       </View>
     ),
-    [inProgressWorkout, activeRoutines]
+    [inProgressWorkout, activeRoutines, contentWidth, colorScheme]
   );
 
   const ListEmpty = useCallback(
     () => (
-      <Card className="p-5">
-        <Text variant="muted" className="text-center">
-          No workouts yet
-        </Text>
-      </Card>
+      <EmptyCard
+        message="No workouts yet"
+        width={contentWidth}
+        colorScheme={colorScheme}
+      />
     ),
-    []
+    [contentWidth, colorScheme]
   );
 
   if (isLoading) {
     return (
       <ScrollView
-        className="bg-background flex-1"
-        contentContainerStyle={{ paddingBottom: TAB_BAR_TOTAL_HEIGHT }}
+        style={{ flex: 1, backgroundColor: colors.systemBackground }}
+        contentContainerStyle={{
+          paddingTop: 60,
+          paddingHorizontal: 20,
+          paddingBottom: insets.bottom + 80,
+        }}
       >
-        <View className="p-5 pt-15">
-          <View className="mb-6 gap-2">
-            <Skeleton className="h-8 w-32" />
-            <Skeleton className="h-4 w-48" />
-          </View>
-          <Skeleton className="mb-4 h-6 w-32" />
-          <View className="mb-6 flex-row gap-3">
-            <Skeleton className="h-[120px] w-[200px] rounded-lg" />
-            <Skeleton className="h-[120px] w-[200px] rounded-lg" />
-          </View>
-          <Skeleton className="mb-4 h-6 w-24" />
-          <View className="gap-3">
-            <Skeleton className="h-[80px] w-full rounded-lg" />
-            <Skeleton className="h-[80px] w-full rounded-lg" />
-            <Skeleton className="h-[80px] w-full rounded-lg" />
-          </View>
-        </View>
+        <WorkoutsSkeleton width={contentWidth} colorScheme={colorScheme} />
       </ScrollView>
     );
   }
 
   return (
     <LegendList
-      className="bg-background flex-1"
+      style={{ flex: 1, backgroundColor: colors.systemBackground }}
       contentContainerStyle={{
         paddingTop: 60,
         paddingHorizontal: 20,
-        paddingBottom: TAB_BAR_TOTAL_HEIGHT,
+        paddingBottom: insets.bottom + 80,
       }}
       data={completedWorkouts}
       renderItem={renderWorkoutItem}

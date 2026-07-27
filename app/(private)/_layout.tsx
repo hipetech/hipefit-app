@@ -1,55 +1,38 @@
-import type { CreateMenuItem } from '@/ui/tab-bar';
-import { useMemo } from 'react';
-import { Tabs } from 'expo-router/js-tabs';
-import { Dumbbell, ListPlus, Plus, Zap } from 'lucide-react-native';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
-import { TabBar } from '@/ui/tab-bar';
+import { colors } from '@/theme/colors';
 
 export default function TabsLayout() {
-  const createMenuItems: CreateMenuItem[] = useMemo(
-    () => [
-      {
-        label: 'Start instant workout',
-        icon: Zap,
-        onPress: () => {
-          // TODO: navigate to instant workout
-        },
-      },
-      {
-        label: 'Create routine',
-        icon: ListPlus,
-        onPress: () => {
-          // TODO: navigate to create routine
-        },
-      },
-      {
-        label: 'Create exercise',
-        icon: Dumbbell,
-        onPress: () => {
-          // TODO: navigate to create exercise
-        },
-      },
-    ],
-    []
-  );
-
   return (
-    <Tabs
-      tabBar={(props) => (
-        <TabBar
-          {...props}
-          actionButton={{ icon: Plus, items: createMenuItems }}
+    <NativeTabs tintColor={colors.brand}>
+      <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'house', selected: 'house.fill' }}
+          md="home"
         />
-      )}
-      screenOptions={{
-        headerShown: false,
-        sceneStyle: { backgroundColor: 'transparent' },
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="workouts" options={{ title: 'Workouts' }} />
-      <Tabs.Screen name="exercises" options={{ title: 'Exercises' }} />
-      <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
-    </Tabs>
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="workouts">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'dumbbell', selected: 'dumbbell.fill' }}
+          md="fitness_center"
+        />
+        <NativeTabs.Trigger.Label>Workouts</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="exercises">
+        <NativeTabs.Trigger.Icon sf="checklist" md="checklist" />
+        <NativeTabs.Trigger.Label>Exercises</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="settings">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'gearshape', selected: 'gearshape.fill' }}
+          md="settings"
+        />
+        <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }

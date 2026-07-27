@@ -1,28 +1,35 @@
+import type { SFSymbol } from 'sf-symbols-typescript';
 import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, useWindowDimensions } from 'react-native';
 import {
-  Avatar,
+  BottomSheet,
   Button,
-  Card,
-  Dialog,
-  Input,
-  Label,
-  Select,
-  Separator,
-  Skeleton,
-  TextField,
-} from 'heroui-native';
+  Column,
+  FieldGroup,
+  Host,
+  Icon,
+  ListItem,
+  Picker,
+  Row,
+  TextInput,
+  Text as UIText,
+} from '@expo/ui';
 
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useUserStore } from '@/features/user/store/use-user-store';
-import { capitalize, getInitials } from '@/lib/format';
-import { TAB_BAR_TOTAL_HEIGHT } from '@/ui/tab-bar';
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
+import { BRAND_SEED, colors } from '@/theme/colors';
+import { Avatar } from '@/ui/avatar';
+import { Card } from '@/ui/card';
+import { Separator } from '@/ui/separator';
+import { Skeleton } from '@/ui/skeleton';
 import { Text } from '@/ui/text';
 
 interface SettingsItem {
   id: string;
   label: string;
-  icon: string;
+  /** Leading SF Symbol shown at the start of the row (iOS). */
+  icon: SFSymbol;
   hasArrow: boolean;
 }
 
@@ -40,80 +47,39 @@ const appSections: SettingsSection[] = [
       {
         id: 'theme',
         label: 'Theme',
-        icon: '🎨',
+        icon: 'paintpalette',
         hasArrow: true,
       },
     ],
   },
 ];
 
-function SettingsItemList({
-  sections,
-  renderExtra,
-}: {
-  sections: SettingsSection[];
-  renderExtra?: (itemId: string) => React.ReactNode;
-}) {
-  return (
-    <View className="gap-5">
-      {sections.map((section) => (
-        <View key={section.id}>
-          <Text variant="small" className="mb-2 tracking-wide uppercase">
-            {section.category}
-          </Text>
-          <Card className="overflow-hidden">
-            {section.items.map((item, index) => {
-              const extra = renderExtra?.(item.id);
-              return (
-                <View key={item.id}>
-                  <Pressable
-                    className="w-full flex-row items-start justify-between p-3"
-                    disabled={!item.hasArrow}
-                  >
-                    <View className="flex-1 flex-row items-start">
-                      <View className="mr-4 h-10 w-10 items-center justify-center">
-                        <Text className="text-2xl">{item.icon}</Text>
-                      </View>
-                      <View className="flex-1">
-                        <Text className="mb-0.5 text-base font-medium">
-                          {item.label}
-                        </Text>
-                        {extra}
-                      </View>
-                    </View>
-                    {item.hasArrow && !extra && (
-                      <View className="items-center justify-center">
-                        <Text className="text-2xl font-light text-gray-500">
-                          ›
-                        </Text>
-                      </View>
-                    )}
-                  </Pressable>
-                  {index !== section.items.length - 1 && (
-                    <Separator className="mx-3" />
-                  )}
-                </View>
-              );
-            })}
-          </Card>
-        </View>
-      ))}
-    </View>
-  );
-}
+// Universal `Text`'s `textStyle.color` only accepts `string`, so the semantic
+// `OpaqueColorValue` tokens are cast; they still resolve to the native semantic
+// color at runtime (see `@/theme/colors`).
+const LABEL = colors.label as string;
+const SECONDARY = colors.secondaryLabel as string;
+const DANGER = colors.systemRed as string;
 
 export default function Settings() {
   const { signOut } = useAuthStore();
   const { profile, isLoading, updateSettings, updateProfile } = useUserStore();
+  const scheme = useAppColorScheme();
+  const { width } = useWindowDimensions();
+
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [editName, setEditName] = useState('');
 
+  // Screen has 16pt horizontal padding; a Card adds its default 16pt inset.
+  const contentWidth = width - 32;
+  const statColWidth = Math.floor((contentWidth - 32 - 2) / 3);
+
   const displayName = profile?.displayName ?? '';
   const email = profile?.email ?? '';
   const photoURL = profile?.photoURL ?? null;
-  const settings = profile?.settings;
   const stats = profile?.stats;
+  const themeValue: string = profile?.settings?.theme ?? 'system';
   const memberSince = profile?.createdAt
     ? profile.createdAt.toDate().getFullYear()
     : '';
@@ -128,41 +94,35 @@ export default function Settings() {
     setProfileDialogOpen(false);
   };
 
-  const themeValue = settings
-    ? {
-        value: settings.theme,
-        label: capitalize(settings.theme),
-      }
-    : { value: 'system', label: 'System' };
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setLogoutDialogOpen(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
-  const renderAppExtra = (itemId: string): React.ReactNode => {
-    if (itemId === 'theme') {
+  const renderTrailing = (item: SettingsItem) => {
+    if (item.id === 'theme') {
       return (
-        <Select
-          value={themeValue}
-          onValueChange={(val) => {
-            if (val) {
-              const option = val as { value: string; label: string };
-              const theme = option.value;
-              if (theme === 'light' || theme === 'dark' || theme === 'system') {
-                updateSettings({ theme });
-              }
+        <Picker
+          selectedValue={themeValue}
+          onValueChange={(value) => {
+            if (value === 'light' || value === 'dark' || value === 'system') {
+              updateSettings({ theme: value });
             }
           }}
         >
-          <Select.Trigger className="mt-1 w-[120px] py-1">
-            <Select.Value placeholder="Select theme" />
-            <Select.TriggerIndicator />
-          </Select.Trigger>
-          <Select.Portal>
-            <Select.Overlay />
-            <Select.Content presentation="popover" width="trigger">
-              <Select.Item value="system" label="System" />
-              <Select.Item value="light" label="Light" />
-              <Select.Item value="dark" label="Dark" />
-            </Select.Content>
-          </Select.Portal>
-        </Select>
+          <Picker.Item label="System" value="system" />
+          <Picker.Item label="Light" value="light" />
+          <Picker.Item label="Dark" value="dark" />
+        </Picker>
+      );
+    }
+    if (item.hasArrow && process.env.EXPO_OS === 'ios') {
+      return (
+        <Icon name="chevron.right" size={16} color={colors.tertiaryLabel} />
       );
     }
     return null;
@@ -170,201 +130,254 @@ export default function Settings() {
 
   if (isLoading) {
     return (
-      <ScrollView className="bg-background flex-1">
-        <View className="p-4 pt-12">
-          <View className="mb-6">
-            <Card className="p-4">
-              <View className="flex-row items-center">
-                <Skeleton className="mr-4 h-[70px] w-[70px] rounded-full" />
-                <View className="flex-1 gap-2">
-                  <Skeleton className="h-6 w-40" />
-                  <Skeleton className="h-4 w-52" />
-                  <Skeleton className="h-4 w-32" />
-                </View>
-              </View>
-            </Card>
-          </View>
-          <View className="gap-4">
-            <Skeleton className="h-40 w-full rounded-lg" />
-            <Skeleton className="h-40 w-full rounded-lg" />
-          </View>
-        </View>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        style={{ flex: 1, backgroundColor: colors.systemBackground }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 24 }}
+      >
+        <Host matchContents seedColor={BRAND_SEED} colorScheme={scheme}>
+          <Card>
+            <Row spacing={16} alignment="center">
+              <Skeleton width={70} height={70} radius={9999} />
+              <Column spacing={8}>
+                <Skeleton width={160} height={22} />
+                <Skeleton width={200} height={14} />
+                <Skeleton width={120} height={14} />
+              </Column>
+            </Row>
+          </Card>
+        </Host>
+        <Host matchContents seedColor={BRAND_SEED} colorScheme={scheme}>
+          <Card>
+            <Skeleton width={contentWidth - 32} height={120} />
+          </Card>
+        </Host>
       </ScrollView>
     );
   }
 
   return (
     <ScrollView
-      className="bg-background flex-1"
-      contentContainerStyle={{ paddingBottom: TAB_BAR_TOTAL_HEIGHT }}
+      contentInsetAdjustmentBehavior="automatic"
+      style={{ flex: 1, backgroundColor: colors.systemBackground }}
+      contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 24 }}
     >
-      <View className="p-4 pt-12">
-        {/* Profile Header with Avatar */}
-        <View className="mb-6">
-          <Card className="p-4">
-            <View className="flex-row items-center">
-              <Avatar
-                size="lg"
-                className="mr-4 h-[70px] w-[70px]"
-                alt="Profile Picture"
+      {/* Profile header */}
+      <Host matchContents seedColor={BRAND_SEED} colorScheme={scheme}>
+        <Card>
+          <Row spacing={16} alignment="center">
+            <Avatar
+              source={photoURL}
+              fallback={displayName || 'User'}
+              size={70}
+            />
+            <Column spacing={2}>
+              <UIText
+                textStyle={{ fontSize: 22, fontWeight: '700', color: LABEL }}
               >
-                {photoURL ? <Avatar.Image source={{ uri: photoURL }} /> : null}
-                <Avatar.Fallback>
-                  {displayName ? getInitials(displayName) : '?'}
-                </Avatar.Fallback>
-              </Avatar>
-              <View className="flex-1">
-                <Text variant="h3" className="mb-1">
-                  {displayName || 'User'}
-                </Text>
-                <Text variant="muted" className="mb-1 text-xs">
-                  {email || 'No email'}
-                </Text>
-                {memberSince ? (
-                  <Text variant="muted" className="text-xs">
-                    Member since {memberSince}
-                  </Text>
-                ) : null}
-              </View>
-            </View>
-
-            {/* Edit Profile Dialog */}
-            <Dialog
-              isOpen={profileDialogOpen}
-              onOpenChange={setProfileDialogOpen}
-            >
-              <Dialog.Trigger asChild>
-                <Button
-                  variant="outline"
-                  className="mt-3"
-                  onPress={openProfileDialog}
-                >
-                  <Button.Label>Edit Profile</Button.Label>
-                </Button>
-              </Dialog.Trigger>
-              <Dialog.Portal>
-                <Dialog.Overlay />
-                <Dialog.Content>
-                  <Dialog.Close />
-                  <Dialog.Title>Edit Profile</Dialog.Title>
-                  <Dialog.Description>
-                    Update your profile information
-                  </Dialog.Description>
-                  <View className="mt-2 gap-4">
-                    <TextField>
-                      <Label>Name</Label>
-                      <Input
-                        variant="secondary"
-                        value={editName}
-                        onChangeText={setEditName}
-                        placeholder="Enter your name"
-                      />
-                    </TextField>
-                  </View>
-                  <View className="mt-6 flex-row justify-end gap-3">
-                    <Button
-                      variant="outline"
-                      onPress={() => setProfileDialogOpen(false)}
-                    >
-                      <Button.Label>Cancel</Button.Label>
-                    </Button>
-                    <Button onPress={saveProfile}>
-                      <Button.Label>Save</Button.Label>
-                    </Button>
-                  </View>
-                </Dialog.Content>
-              </Dialog.Portal>
-            </Dialog>
-          </Card>
-        </View>
-
-        {/* Settings */}
-        <View className="mb-6">
-          <SettingsItemList
-            sections={appSections}
-            renderExtra={renderAppExtra}
+                {displayName || 'User'}
+              </UIText>
+              <UIText textStyle={{ fontSize: 13, color: SECONDARY }}>
+                {email || 'No email'}
+              </UIText>
+              {memberSince ? (
+                <UIText textStyle={{ fontSize: 13, color: SECONDARY }}>
+                  {`Member since ${memberSince}`}
+                </UIText>
+              ) : null}
+            </Column>
+          </Row>
+          <Button
+            variant="outlined"
+            label="Edit Profile"
+            onPress={openProfileDialog}
           />
-        </View>
+        </Card>
+      </Host>
 
-        {/* Stats Summary */}
-        <View className="mb-5">
-          <Text variant="small" className="mb-2 tracking-wide uppercase">
-            Your Stats
-          </Text>
-          <Card className="p-4">
-            <View className="flex-row items-center justify-around p-0">
-              <View className="flex-1 items-center">
-                <Text className="mb-1 text-2xl font-bold">
-                  {stats?.totalWorkouts ?? 0}
-                </Text>
-                <Text variant="muted" className="text-center text-xs">
-                  Total Workouts
-                </Text>
-              </View>
-              <Separator orientation="vertical" className="h-10" />
-              <View className="flex-1 items-center">
-                <Text className="mb-1 text-2xl font-bold">
-                  {stats?.currentStreak ?? 0}
-                </Text>
-                <Text variant="muted" className="text-center text-xs">
-                  Current Streak (days)
-                </Text>
-              </View>
-              <Separator orientation="vertical" className="h-10" />
-              <View className="flex-1 items-center">
-                <Text className="mb-1 text-2xl font-bold">
-                  {stats?.longestStreak ?? 0}
-                </Text>
-                <Text variant="muted" className="text-center text-xs">
-                  Longest Streak (days)
-                </Text>
-              </View>
-            </View>
-          </Card>
-        </View>
+      {/* Settings sections */}
+      <Host matchContents seedColor={BRAND_SEED} colorScheme={scheme}>
+        <FieldGroup>
+          {appSections.map((section) => (
+            <FieldGroup.Section key={section.id} title={section.category}>
+              {section.items.map((item) => (
+                <ListItem key={item.id}>
+                  {process.env.EXPO_OS === 'ios' ? (
+                    <ListItem.Leading>
+                      <Icon name={item.icon} size={22} color={colors.brand} />
+                    </ListItem.Leading>
+                  ) : null}
+                  {item.label}
+                  <ListItem.Trailing>{renderTrailing(item)}</ListItem.Trailing>
+                </ListItem>
+              ))}
+            </FieldGroup.Section>
+          ))}
+        </FieldGroup>
+      </Host>
 
-        {/* Logout Button with Confirmation Dialog */}
-        <Dialog isOpen={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
-          <Dialog.Trigger asChild>
-            <Button variant="danger" className="mt-4 mb-8">
-              <Button.Label className="text-base font-semibold">
+      {/* Stats summary */}
+      <Text
+        variant="small"
+        style={{
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+          marginBottom: -8,
+          color: colors.secondaryLabel,
+        }}
+      >
+        Your Stats
+      </Text>
+      <Host matchContents seedColor={BRAND_SEED} colorScheme={scheme}>
+        <Card>
+          <Row spacing={0} alignment="center">
+            <Column
+              alignment="center"
+              spacing={4}
+              style={{ width: statColWidth }}
+            >
+              <UIText
+                textStyle={{ fontSize: 24, fontWeight: '700', color: LABEL }}
+              >
+                {String(stats?.totalWorkouts ?? 0)}
+              </UIText>
+              <UIText
+                numberOfLines={2}
+                textStyle={{
+                  fontSize: 12,
+                  textAlign: 'center',
+                  color: SECONDARY,
+                }}
+              >
+                Total Workouts
+              </UIText>
+            </Column>
+            <Separator orientation="vertical" length={40} />
+            <Column
+              alignment="center"
+              spacing={4}
+              style={{ width: statColWidth }}
+            >
+              <UIText
+                textStyle={{ fontSize: 24, fontWeight: '700', color: LABEL }}
+              >
+                {String(stats?.currentStreak ?? 0)}
+              </UIText>
+              <UIText
+                numberOfLines={2}
+                textStyle={{
+                  fontSize: 12,
+                  textAlign: 'center',
+                  color: SECONDARY,
+                }}
+              >
+                Current Streak (days)
+              </UIText>
+            </Column>
+            <Separator orientation="vertical" length={40} />
+            <Column
+              alignment="center"
+              spacing={4}
+              style={{ width: statColWidth }}
+            >
+              <UIText
+                textStyle={{ fontSize: 24, fontWeight: '700', color: LABEL }}
+              >
+                {String(stats?.longestStreak ?? 0)}
+              </UIText>
+              <UIText
+                numberOfLines={2}
+                textStyle={{
+                  fontSize: 12,
+                  textAlign: 'center',
+                  color: SECONDARY,
+                }}
+              >
+                Longest Streak (days)
+              </UIText>
+            </Column>
+          </Row>
+        </Card>
+      </Host>
+
+      {/* Logout */}
+      <Host matchContents seedColor={BRAND_SEED} colorScheme={scheme}>
+        <Button
+          variant="outlined"
+          style={{ width: contentWidth }}
+          onPress={() => setLogoutDialogOpen(true)}
+        >
+          <UIText
+            textStyle={{ fontSize: 16, fontWeight: '600', color: DANGER }}
+          >
+            Log Out
+          </UIText>
+        </Button>
+      </Host>
+
+      {/* Edit Profile sheet — `BottomSheet` provides its own Host internally,
+          so it must not be wrapped in another `Host`. */}
+      <BottomSheet
+        isPresented={profileDialogOpen}
+        onDismiss={() => setProfileDialogOpen(false)}
+      >
+        <Column spacing={16} style={{ padding: 20 }}>
+          <UIText textStyle={{ fontSize: 20, fontWeight: '700', color: LABEL }}>
+            Edit Profile
+          </UIText>
+          <UIText textStyle={{ fontSize: 14, color: SECONDARY }}>
+            Update your profile information
+          </UIText>
+          <Column spacing={6}>
+            <UIText textStyle={{ fontSize: 13, color: SECONDARY }}>Name</UIText>
+            <TextInput
+              // Remount on each open so `defaultValue` re-seeds from the current name.
+              key={profileDialogOpen ? 'edit-name-open' : 'edit-name-closed'}
+              defaultValue={editName}
+              onChangeText={setEditName}
+              placeholder="Enter your name"
+            />
+          </Column>
+          <Row spacing={12} alignment="center">
+            <Button
+              variant="text"
+              label="Cancel"
+              onPress={() => setProfileDialogOpen(false)}
+            />
+            <Button variant="filled" label="Save" onPress={saveProfile} />
+          </Row>
+        </Column>
+      </BottomSheet>
+
+      {/* Logout confirmation sheet — see note above re: nested Host. */}
+      <BottomSheet
+        isPresented={logoutDialogOpen}
+        onDismiss={() => setLogoutDialogOpen(false)}
+      >
+        <Column spacing={16} style={{ padding: 20 }}>
+          <UIText textStyle={{ fontSize: 20, fontWeight: '700', color: LABEL }}>
+            Are you sure?
+          </UIText>
+          <UIText textStyle={{ fontSize: 14, color: SECONDARY }}>
+            You will be logged out of your account. You can sign back in
+            anytime.
+          </UIText>
+          <Row spacing={12} alignment="center">
+            <Button
+              variant="text"
+              label="Cancel"
+              onPress={() => setLogoutDialogOpen(false)}
+            />
+            <Button variant="outlined" onPress={handleLogout}>
+              <UIText
+                textStyle={{ fontSize: 16, fontWeight: '600', color: DANGER }}
+              >
                 Log Out
-              </Button.Label>
+              </UIText>
             </Button>
-          </Dialog.Trigger>
-          <Dialog.Portal>
-            <Dialog.Overlay />
-            <Dialog.Content isSwipeable={false}>
-              <Dialog.Title>Are you sure?</Dialog.Title>
-              <Dialog.Description>
-                You will be logged out of your account. You can sign back in
-                anytime.
-              </Dialog.Description>
-              <View className="mt-4 flex-row justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onPress={() => setLogoutDialogOpen(false)}
-                >
-                  <Button.Label>Cancel</Button.Label>
-                </Button>
-                <Button
-                  variant="danger"
-                  onPress={async () => {
-                    try {
-                      await signOut();
-                      setLogoutDialogOpen(false);
-                    } catch (error) {
-                      console.error('Logout error:', error);
-                    }
-                  }}
-                >
-                  <Button.Label>Log Out</Button.Label>
-                </Button>
-              </View>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog>
-      </View>
+          </Row>
+        </Column>
+      </BottomSheet>
     </ScrollView>
   );
 }

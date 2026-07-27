@@ -1,42 +1,87 @@
-import type { Role } from 'react-native';
+import type { Role, TextStyle } from 'react-native';
 import * as React from 'react';
 import { Platform, Text as RNText } from 'react-native';
 
-import { cn } from '@/lib/utils';
+import { colors } from '@/theme/colors';
 
-const baseClass = cn(
-  'text-foreground text-base',
-  Platform.select({ web: 'select-text' })
-);
+const baseStyle: TextStyle = {
+  color: colors.label,
+  fontSize: 16,
+};
 
-const variantClasses = {
-  default: '',
-  h1: cn(
-    'text-center text-4xl font-extrabold tracking-tight',
-    Platform.select({ web: 'scroll-m-20 text-balance' })
-  ),
-  h2: cn(
-    'border-border border-b pb-2 text-3xl font-semibold tracking-tight',
-    Platform.select({ web: 'scroll-m-20 first:mt-0' })
-  ),
-  h3: cn(
-    'text-2xl font-semibold tracking-tight',
-    Platform.select({ web: 'scroll-m-20' })
-  ),
-  h4: cn(
-    'text-xl font-semibold tracking-tight',
-    Platform.select({ web: 'scroll-m-20' })
-  ),
-  p: 'mt-3 leading-7 sm:mt-6',
-  blockquote: 'mt-4 border-l-2 pl-3 italic sm:mt-6 sm:pl-6',
-  code: 'bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold',
-  lead: 'text-muted text-xl',
-  large: 'text-lg font-semibold',
-  small: 'text-sm font-medium leading-none',
-  muted: 'text-muted text-sm',
-} as const;
+const variantStyles = {
+  default: {},
+  h1: {
+    fontSize: 36,
+    lineHeight: 40,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    textAlign: 'center',
+  },
+  h2: {
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderColor: colors.separator,
+  },
+  h3: {
+    fontSize: 24,
+    lineHeight: 32,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+  },
+  h4: {
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  p: {
+    fontSize: 16,
+    lineHeight: 28,
+    marginTop: 12,
+  },
+  blockquote: {
+    fontSize: 16,
+    fontStyle: 'italic',
+    marginTop: 16,
+    paddingLeft: 12,
+    borderLeftWidth: 2,
+    borderColor: colors.separator,
+  },
+  code: {
+    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
+    fontSize: 14,
+    fontWeight: '600',
+    backgroundColor: colors.secondarySystemBackground,
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+  },
+  lead: {
+    fontSize: 20,
+    lineHeight: 28,
+    color: colors.secondaryLabel,
+  },
+  large: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  small: {
+    fontSize: 14,
+    lineHeight: 14,
+    fontWeight: '500',
+  },
+  muted: {
+    fontSize: 14,
+    color: colors.secondaryLabel,
+  },
+} as const satisfies Record<string, TextStyle>;
 
-type TextVariant = keyof typeof variantClasses;
+type TextVariant = keyof typeof variantStyles;
 
 const ROLE: Partial<Record<TextVariant, Role>> = {
   h1: 'heading',
@@ -54,8 +99,14 @@ const ARIA_LEVEL: Partial<Record<TextVariant, string>> = {
   h4: '4',
 };
 
+/**
+ * App text primitive. Plain RN `Text` styled from `@/theme/colors` semantic
+ * tokens with typography `variant`s (previously Tailwind classes). Usable
+ * anywhere in the RN tree; inside an `@expo/ui` swift-ui `Host` use swift-ui
+ * `Text` instead.
+ */
 function Text({
-  className,
+  style,
   variant = 'default',
   ...props
 }: React.ComponentProps<typeof RNText> &
@@ -64,7 +115,7 @@ function Text({
   }) {
   return (
     <RNText
-      className={cn(baseClass, variantClasses[variant], className)}
+      style={[baseStyle, variantStyles[variant], style]}
       role={variant ? ROLE[variant] : undefined}
       aria-level={variant ? ARIA_LEVEL[variant] : undefined}
       {...props}
