@@ -134,6 +134,17 @@ export const useAuthStore = create<AuthState>((set) => {
   let unsubscribe: (() => void) | null = null;
 
   const initialize = () => {
+    // Idempotent by design. Four components call this (app/_layout, app/index,
+    // (public)/login, and AuthScreen — and login renders AuthScreen, so that
+    // route calls it twice). The listener is app-lifetime, so only the first
+    // call installs it; later callers get a no-op teardown.
+    //
+    // Without this guard every call overwrote the shared `unsubscribe` slot:
+    // the previous listener leaked for the process lifetime, and a component's
+    // cleanup tore down whichever listener happened to be in the slot rather
+    // than the one it created.
+    if (unsubscribe) return () => {};
+
     const auth = getAuth();
     unsubscribe = onAuthStateChanged(auth, (user) => {
       set({
@@ -182,8 +193,13 @@ export const useAuthStore = create<AuthState>((set) => {
 
       const { user } = await signInWithCredential(getAuth(), appleCredential);
       await ensureUserProfile(user, appleName);
-    } catch (error: any) {
-      if (error.code === 'ERR_REQUEST_CANCELED') {
+    } catch (error) {
+      const code =
+        typeof error === 'object' && error !== null && 'code' in error
+          ? (error as { code?: unknown }).code
+          : undefined;
+
+      if (code === 'ERR_REQUEST_CANCELED') {
         console.log('User canceled Apple Sign-In');
       } else {
         console.error('Apple Sign-In Error:', error);

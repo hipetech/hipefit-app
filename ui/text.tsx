@@ -1,113 +1,90 @@
-import type { Role, TextStyle } from 'react-native';
+import type { TextStyle } from 'react-native';
 import * as React from 'react';
-import { Platform, Text as RNText } from 'react-native';
+import { Text as RNText } from 'react-native';
 
 import { colors } from '@/theme/colors';
 
 const baseStyle: TextStyle = {
   color: colors.label,
-  fontSize: 16,
 };
 
+/**
+ * Apple's 11 text styles, 1:1. The names match the `textStyle` union of
+ * `@expo/ui/swift-ui`'s `font()` modifier, so an RN `Text` and a SwiftUI `Text`
+ * inside a `Host` are described with one vocabulary.
+ *
+ * The numbers are the metrics at the *default* Dynamic Type size (Large). RN
+ * multiplies `fontSize` — and, on iOS, `lineHeight` with it
+ * (`RCTTextAttributes.mm:141`) — by the user's Dynamic Type multiplier whenever
+ * `allowFontScaling` is true, which is the default. Never set
+ * `allowFontScaling={false}`: that opts the app out of accessibility text
+ * sizing.
+ *
+ * Typography only. No variant sets `textAlign`, `margin*`, `padding*` or
+ * borders — that is layout, and belongs at the call site via `style`. Colour
+ * beyond the `label` base (e.g. `colors.secondaryLabel` for secondary text)
+ * likewise comes from the call site.
+ */
 const variantStyles = {
-  default: {},
-  h1: {
-    fontSize: 36,
-    lineHeight: 40,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    textAlign: 'center',
-  },
-  h2: {
-    fontSize: 30,
-    lineHeight: 36,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderColor: colors.separator,
-  },
-  h3: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-  },
-  h4: {
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  p: {
-    fontSize: 16,
-    lineHeight: 28,
-    marginTop: 12,
-  },
-  blockquote: {
-    fontSize: 16,
-    fontStyle: 'italic',
-    marginTop: 16,
-    paddingLeft: 12,
-    borderLeftWidth: 2,
-    borderColor: colors.separator,
-  },
-  code: {
-    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
-    fontSize: 14,
-    fontWeight: '600',
-    backgroundColor: colors.secondarySystemBackground,
-    borderRadius: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 3,
-  },
-  lead: {
-    fontSize: 20,
-    lineHeight: 28,
-    color: colors.secondaryLabel,
-  },
-  large: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  small: {
-    fontSize: 14,
-    lineHeight: 14,
-    fontWeight: '500',
-  },
-  muted: {
-    fontSize: 14,
-    color: colors.secondaryLabel,
-  },
+  largeTitle: { fontSize: 34, lineHeight: 41, fontWeight: '400' },
+  title: { fontSize: 28, lineHeight: 34, fontWeight: '400' },
+  title2: { fontSize: 22, lineHeight: 28, fontWeight: '400' },
+  title3: { fontSize: 20, lineHeight: 25, fontWeight: '400' },
+  headline: { fontSize: 17, lineHeight: 22, fontWeight: '600' },
+  body: { fontSize: 17, lineHeight: 22, fontWeight: '400' },
+  callout: { fontSize: 16, lineHeight: 21, fontWeight: '400' },
+  subheadline: { fontSize: 15, lineHeight: 20, fontWeight: '400' },
+  footnote: { fontSize: 13, lineHeight: 18, fontWeight: '400' },
+  caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' },
+  caption2: { fontSize: 11, lineHeight: 13, fontWeight: '400' },
 } as const satisfies Record<string, TextStyle>;
 
 type TextVariant = keyof typeof variantStyles;
 
-const ROLE: Partial<Record<TextVariant, Role>> = {
-  h1: 'heading',
-  h2: 'heading',
-  h3: 'heading',
-  h4: 'heading',
-  blockquote: Platform.select({ web: 'blockquote' as Role }),
-  code: Platform.select({ web: 'code' as Role }),
-};
-
-const ARIA_LEVEL: Partial<Record<TextVariant, string>> = {
-  h1: '1',
-  h2: '2',
-  h3: '3',
-  h4: '4',
+/**
+ * The iOS Dynamic Type *ramp* each variant scales along.
+ *
+ * Without this, RN falls back to a single flat `fontSizeMultiplier` applied
+ * uniformly to every size. Apple's ramps are not uniform — at accessibility
+ * sizes `body` grows proportionally much more than `largeTitle` does — so a
+ * flat multiplier over-scales the big styles and under-scales the small ones.
+ * Passing the ramp makes RN resolve the multiplier through `UIFontMetrics` for
+ * that specific style instead (`RCTTextAttributes.mm:244-248`), which is the
+ * same curve SwiftUI's `font({ textStyle })` follows. That keeps RN text and
+ * SwiftUI text in a `Host` scaling together rather than drifting apart.
+ *
+ * Keeping an explicit `fontSize` alongside the ramp is intentional: RN uses it
+ * as the base for `-scaledValueForValue:` and notes it "reduces rounding
+ * errors" (`:246-247`) versus letting the ramp supply its own base size.
+ *
+ * UIKit's names differ from SwiftUI's for two entries — `title1`/`caption1`
+ * here are SwiftUI's `title`/`caption`.
+ */
+const variantRamp: Record<
+  TextVariant,
+  NonNullable<React.ComponentProps<typeof RNText>['dynamicTypeRamp']>
+> = {
+  largeTitle: 'largeTitle',
+  title: 'title1',
+  title2: 'title2',
+  title3: 'title3',
+  headline: 'headline',
+  body: 'body',
+  callout: 'callout',
+  subheadline: 'subheadline',
+  footnote: 'footnote',
+  caption: 'caption1',
+  caption2: 'caption2',
 };
 
 /**
- * App text primitive. Plain RN `Text` styled from `@/theme/colors` semantic
- * tokens with typography `variant`s (previously Tailwind classes). Usable
- * anywhere in the RN tree; inside an `@expo/ui` swift-ui `Host` use swift-ui
- * `Text` instead.
+ * App text primitive. Plain RN `Text` coloured from `@/theme/colors` semantic
+ * tokens and sized by an Apple `variant`. Usable anywhere in the RN tree;
+ * inside an `@expo/ui` swift-ui `Host` use swift-ui `Text` instead.
  */
 function Text({
   style,
-  variant = 'default',
+  variant = 'body',
   ...props
 }: React.ComponentProps<typeof RNText> &
   React.RefAttributes<RNText> & {
@@ -116,11 +93,11 @@ function Text({
   return (
     <RNText
       style={[baseStyle, variantStyles[variant], style]}
-      role={variant ? ROLE[variant] : undefined}
-      aria-level={variant ? ARIA_LEVEL[variant] : undefined}
+      dynamicTypeRamp={variantRamp[variant]}
       {...props}
     />
   );
 }
 
 export { Text };
+export type { TextVariant };

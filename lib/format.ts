@@ -19,6 +19,22 @@ export const getInitials = (name: string): string => {
 export const capitalize = (s: string): string =>
   s.charAt(0).toUpperCase() + s.slice(1);
 
+/**
+ * Turn a raw camelCase key into a human-readable label: `fullBody` →
+ * `Full Body`, `core` → `Core`. Needed wherever a document falls back to its
+ * own key for display — an exercise whose group has no user document yet
+ * resolves `groupName` to the seed `groupKey` — so the UI never renders a raw
+ * enum value. Values that are already spaced pass through with each word
+ * capitalized, so a user-authored group name survives unchanged.
+ */
+export const humanizeKey = (value: string): string =>
+  value
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(capitalize)
+    .join(' ');
+
 export const formatDuration = (seconds: number | null): string => {
   if (!seconds) return '--';
   const mins = Math.round(seconds / 60);

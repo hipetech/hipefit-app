@@ -4,7 +4,7 @@ import { Button, Host } from '@expo/ui';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
-import { BRAND_SEED, colors } from '@/theme/colors';
+import { colors } from '@/theme/colors';
 import { Text } from '@/ui/text';
 
 import { useAuthStore } from './store/use-auth-store';
@@ -66,17 +66,15 @@ export function AuthScreen() {
           gap: 16,
         }}
       >
-        <Text style={{ fontSize: 24, fontWeight: 'bold' }}>
+        {/* Mirrors SwiftUI `.font(.title2).bold()`: the variant supplies the
+            Apple metrics, the weight is the emphasis modifier on top. */}
+        <Text variant="title2" style={{ fontWeight: '700' }}>
           {isLoggedIn ? 'Logged In' : 'Not Logged In'}
         </Text>
 
         {Platform.OS === 'ios' &&
           (isLoggedIn ? (
-            <Host
-              matchContents
-              seedColor={BRAND_SEED}
-              colorScheme={colorScheme}
-            >
+            <Host matchContents colorScheme={colorScheme}>
               <Button variant="filled" onPress={handleSignOut}>
                 Sign Out
               </Button>

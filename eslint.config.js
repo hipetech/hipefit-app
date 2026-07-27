@@ -51,6 +51,10 @@ module.exports = defineConfig([
     },
   },
   {
-    ignores: ['dist/*', 'build/*', '.expo/*', 'node_modules/*'],
+    // `.agents/**` holds vendored upstream agent skills (see skills-lock.json).
+    // It is not app source: linting it reports third-party problems we cannot
+    // fix, and the husky pre-commit hook (`lint:fix`) would silently rewrite
+    // those vendored files on every commit.
+    ignores: ['dist/*', 'build/*', '.expo/*', 'node_modules/*', '.agents/**'],
   },
 ]);

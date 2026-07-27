@@ -17,7 +17,7 @@ export default function Login() {
   }
 
   if (isLoggedIn) {
-    return <Redirect href="/(private)" />;
+    return <Redirect href="/(private)/(home)" />;
   }
 
   return <AuthScreen />;

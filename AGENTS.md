@@ -4,7 +4,9 @@ This file provides guidance to AI coding agents (Claude Code, OpenAI Codex, GitH
 
 ## Project Overview
 
-Hipefit is a fitness tracking mobile app built with React Native, Expo (SDK 57, bare workflow), and Firebase. It uses file-based routing (Expo Router v6), `@expo/ui` (real SwiftUI on iOS / Jetpack Compose on Android) for native UI, and Zustand for state management. iOS-first: the UI is optimized for SwiftUI; Android renders universal/RN fallbacks.
+Hipefit is a fitness tracking **iOS** app built with React Native, Expo (SDK 57, bare workflow), and Firebase. It uses file-based routing (Expo Router v6), `@expo/ui` (real SwiftUI) for native UI, and Zustand for state management.
+
+**iOS-only, deliberately.** The `android/` project, all `.android.tsx` fallbacks and the `bun run android` script were removed: the fallbacks had drifted badly (stale typography, none of the haptics or motion work, no route into edit-profile) and were scaffolding that compiled rather than a working Android app. Reviving Android means regenerating a bare native project — a deliberate decision, not a per-component one.
 
 ## Commands
 
@@ -30,18 +32,36 @@ Note: Husky pre-commit hook runs `bun run lint:fix` automatically.
 
 ### Routing (Expo Router - file-based)
 
+Each tab is a folder with its own `<Stack />`, not a flat route file:
+
 ```
 app/
-├── _layout.tsx          # Root layout: auth guard via Stack.Protected
-├── index.tsx            # Entry redirect based on auth state
-├── (public)/login.tsx   # Apple Sign-In (unauthenticated)
-└── (private)/           # Protected routes (requires auth)
-    ├── _layout.tsx      # Bottom tab navigation (Expo Router NativeTabs)
-    ├── index.tsx        # Home tab
-    ├── workouts.tsx     # Workouts tab
-    ├── exercises.tsx    # Exercises tab
-    └── settings.tsx     # Settings tab
+├── _layout.tsx              # Root layout: auth guard via Stack.Protected
+├── index.tsx                # Entry redirect based on auth state
+├── (public)/login.tsx       # Apple Sign-In (unauthenticated)
+└── (private)/               # Protected routes (requires auth)
+    ├── _layout.tsx          # Bottom tab navigation (Expo Router NativeTabs)
+    ├── (home)/              # Home tab — the group keeps its path at "/"
+    │   ├── _layout.tsx
+    │   └── index.tsx
+    ├── workouts/
+    │   ├── _layout.tsx
+    │   └── index.tsx
+    ├── exercises/           # Route file also owns the LegendList + filter state
+    │   ├── _layout.tsx
+    │   └── index.tsx
+    └── settings/
+        ├── _layout.tsx      # Only layout with explicit <Stack.Screen> decls
+        ├── index.tsx
+        └── edit-profile.tsx # The one route-based sheet (formSheet, detents)
 ```
+
+Conventions that surprise people:
+
+- **Home's path is `/`, not `/home`** — it's the group `(home)`. `NativeTabs.Trigger name="(home)"` must keep the parentheses.
+- **Screen chrome lives in the screen, not the layout.** `<Stack.Screen.Title>`, `<Stack.Toolbar>` and `<Stack.SearchBar>` are declared in each `index.tsx`; three of the four tab `_layout.tsx` files are bare `<Stack />`.
+- **`Stack.Toolbar.*` children must be literal JSX** — a `.map()` or a wrapper component will not render.
+- Route files stay thin (title + a `features/` island). Exercises is the current exception.
 
 ### Feature-based organization
 
@@ -56,13 +76,17 @@ Screen components live in `features/`, route files in `app/` import from feature
 
 ### UI Components
 
-UI is built with **`@expo/ui`** — real SwiftUI on iOS (and Jetpack Compose on Android) rendered from React. Key rules:
+UI is built with **`@expo/ui`** — real SwiftUI, rendered from React. Key rules:
 
-- **`Host` per island, never nested.** Import `Host` only from `@expo/ui` root. Every native subtree lives inside one `Host` (pass `seedColor={BRAND_SEED}` + `colorScheme={useAppColorScheme()}`). No flexbox inside a `Host` — use `@expo/ui/swift-ui` `VStack`/`HStack`/`Spacer` + the `modifiers={[…]}` prop.
-- **Platform isolation.** Any file importing `@expo/ui/swift-ui` must be split `<name>.ios.tsx` + `<name>.android.tsx` (the Android variant must NOT use a `Host` — bare RN primitives can't nest inside a Compose `Host`). Never place `.ios/.android` splits under `app/` — keep them in `ui/` and `features/`.
-- **Reusable native primitives** in `ui/` (each `.d.ts` + `.ios.tsx` + `.android.tsx`, imported from the bare path e.g. `@/ui/card`): `Card`, `Chip`, `Separator`, `Avatar`, `Skeleton`. Plain-RN primitives (usable in or out of a `Host`): `Text` (typography variants), `Progress`, `Image` (expo-image).
-- **Theming:** `@/theme/colors` (semantic `PlatformColor`s + `brand`/`BRAND_SEED`); the user's theme is applied app-wide via `Appearance.setColorScheme` in `app/_layout.tsx` (driven by `useAppColorScheme`). Inline styles only — no CSS/className.
-- Long lists stay on `@legendapp/list` (`LegendList`); each row is its own `Host` island.
+- **`Host` per island, never nested.** Import `Host` only from `@expo/ui` root. Every native subtree lives inside one `Host` (pass `colorScheme={useAppColorScheme()}`). **Never pass `seedColor`** — leaving it unset makes SwiftUI use the system accent, which is the intended look; see `theme/colors.ts:12-16`. No flexbox inside a `Host` — use `@expo/ui/swift-ui` `VStack`/`HStack`/`Spacer` + the `modifiers={[…]}` prop. Remote images inside a `Host` go through `RNHostView` + expo-image, never a second `Host`.
+- **One file per component — no platform splits.** The app is iOS-only: the `android/` project and every `.android.tsx` fallback were deleted, and with them the `<name>.d.ts` + `<name>.ios.tsx` + `<name>.android.tsx` triple. That pattern existed solely because Metro needed something to resolve on Android and TypeScript can't type a platform-split import; neither applies now. Write a plain `<name>.tsx` that imports `@expo/ui/swift-ui` directly and declares its own exported `Props` interface. **Do not reintroduce `.ios.tsx` / `.android.tsx` suffixes** — if Android is ever revived, that is a deliberate project-wide decision, not something to reinstate one component at a time.
+- **Reusable native primitives** in `ui/` (imported from the bare path e.g. `@/ui/card`): `Card`, `Chip`, `Separator`, `Avatar`. Plain-RN primitives (usable in or out of a `Host`): `Text` (Apple text-style variants — see Typography below), `Progress`, `Image` (expo-image).
+- **Theming:** `@/theme/colors` is the only token source — semantic `PlatformColor`s via `Platform.select`, no hardcoded hex outside that file and no brand accent (the purple `brand`/`BRAND_SEED` pair was removed). The user's theme is applied app-wide via `Appearance.setColorScheme` in `app/_layout.tsx` (driven by `useAppColorScheme`, which reads `profile.settings.theme` from Firestore). Inline styles only — no CSS/className.
+- **Typography — one vocabulary across both trees.** `ui/text.tsx` exposes Apple's 11 text styles under exactly the names in the `textStyle` union of `@expo/ui`'s `font()` modifier (`largeTitle · title · title2 · title3 · headline · body · callout · subheadline · footnote · caption · caption2`), so an RN `Text` and a SwiftUI `Text` are described identically. Always `font({ textStyle })`, never `font({ size })` — the latter is frozen and ignores Dynamic Type. The one sanctioned exception is `ui/avatar.tsx` (initials sized relative to a fixed-pixel circle); it carries a comment explaining why. Variants are typography only — `textAlign`, margins and borders belong at the call site. Counters that update in place use `monospacedDigit()` (SwiftUI) / `fontVariant: ['tabular-nums']` (RN) so digits stop jittering.
+- **Grouped screens are SwiftUI `List` + `Section` + `listStyle('insetGrouped')`** inside one `Host` — this is the default idiom for Home, Workouts and Settings. Note `List` is _not_ virtualized: every row is a live JSX node, so it suits bounded content only. Exercises is the deliberate exception — an unbounded catalogue, so it keeps `@legendapp/list` (`LegendList`) with each row as its own `Host` island and reproduces the grouped look by hand from the **measured** constants in `features/exercises/row-metrics.ts`. Those values track what SwiftUI actually draws (the real corner radius is ~22pt on iOS 26, not the widely-quoted 10pt) — re-measure them, don't re-derive them.
+- Beware: `title` on a `Section` silently wins over a custom `header` slot whenever it is non-empty, and `badge()` on a `Section` renders a stray count. Use one or the other, and prefer `header` when you need control.
+- **Feedback and motion.** Haptics go through `@/lib/haptics` (intent names — `hapticSelection` / `hapticImpact` / `hapticSuccess`), never raw `expo-haptics`: the wrapper is iOS-gated and fire-and-forget so a failed haptic can't reject into the interaction. `@expo/ui` has **no** `sensoryFeedback` modifier, so feedback fires from JS in the event callback. Only on meaningful state change — not on re-selecting an already-selected value, not on `disabled`/redacted placeholder rows, and never on a failure path. `Switch`, `Picker` and `DateTimePicker` have built-in haptics; adding more double-fires.
+- **Motion is native, not Reanimated.** Reanimated cannot reach inside a `Host` to animate SwiftUI content, so it is not the tool for the `List`-based screens. Changing numbers use `contentTransition('numericText')` + `animation(...)`, applied _outermost_ (after `font`/`monospacedDigit`) — `contentTransition` alone never runs without an `animation` transaction to drive it. Animate only values that actually mutate in place; a logged workout's duration is immutable and gains nothing. Keep durations ≤300ms. **SwiftUI does not honour Reduce Motion for you** (`AnimationModifier` in `@expo/ui/ios/Modifiers/ViewModifierRegistry.swift` passes straight through to `.animation(_:value:)`), so gate on `@/hooks/use-reduce-motion` and drop the modifiers rather than animating to zero duration.
 
 ### Backend
 
@@ -80,7 +104,7 @@ Zustand stores in `features/[feature]/store/`. Auth store (`useAuthStore`) manag
 - **Imports:** Auto-sorted by Prettier (types → react/rn → third-party → @/ aliases → relative)
 - **Path alias:** `@/*` maps to project root
 - **Naming:** camelCase for variables/functions, PascalCase for components, lowercase hyphenated for directories
-- **Platform:** Use `Platform.select()` for iOS/Android differences (SF Symbols on iOS, MaterialIcons on Android)
+- **Platform:** iOS-only — no `.ios`/`.android` file splits, and no Android branches in new code. `Platform.select()` survives inside `@/theme/colors` only, to give each token a `default` web fallback.
 
 ## Multi-environment Setup
 
@@ -92,10 +116,10 @@ Three environments with matching Firebase configs, .env files, and EAS build pro
 
 ## Key Config Notes
 
-- **Bare workflow:** Native iOS/Android projects are committed and managed directly (not Continuous Native Generation). Native changes go in `ios/` and `android/` directories, not `app.config.js` plugins. Per-environment Info.plist files: `Info-dev.plist`, `Info-stage.plist`, `Info-prod.plist`.
+- **Bare workflow:** The native `ios/` project is committed and managed directly (not Continuous Native Generation). Native changes go in `ios/`, not `app.config.js` plugins. Adding or removing a dependency with native code means running `pod install --project-directory=ios` and committing the `Podfile.lock` change alongside it. Per-environment Info.plist files: `Info-dev.plist`, `Info-stage.plist`, `Info-prod.plist`.
 - React Compiler and New Architecture are enabled in `app.config.js`
 - TypedRoutes enabled for Expo Router type safety
-- Native theming via OS semantic colors (`@/theme/colors`) + `Host.seedColor`/`colorScheme`; light/dark applied through `Appearance.setColorScheme`
+- Native theming via OS semantic colors (`@/theme/colors`) + `Host.colorScheme` (never `seedColor`); light/dark applied through `Appearance.setColorScheme`
 - Root layout wraps with `GestureHandlerRootView`; no CSS/styling provider (Metro has no `global.css`/uniwind config)
 
 ## Design references

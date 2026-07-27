@@ -1,6 +1,11 @@
 import { useEffect } from 'react';
-import { Appearance, View } from 'react-native';
+import { Appearance, useColorScheme, View } from 'react-native';
 import { Stack } from 'expo-router';
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from 'expo-router/react-navigation';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -18,6 +23,9 @@ SplashScreen.setOptions({
 export default function RootLayout() {
   const { isLoggedIn, isLoading, initialize } = useAuthStore();
   const scheme = useAppColorScheme();
+  // Reflects whatever `Appearance.setColorScheme` resolved to below, so the
+  // navigation chrome (large titles, toolbars) matches the rest of the app.
+  const activeScheme = useColorScheme();
   useFirestoreSubscriptions();
 
   useEffect(() => {
@@ -49,14 +57,19 @@ export default function RootLayout() {
     <GestureHandlerRootView
       style={{ flex: 1, backgroundColor: colors.systemBackground }}
     >
-      <StatusBar style="auto" />
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(public)/login" options={{ headerShown: false }} />
-        <Stack.Protected guard={isLoggedIn}>
-          <Stack.Screen name="(private)" options={{ headerShown: false }} />
-        </Stack.Protected>
-      </Stack>
+      <ThemeProvider value={activeScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <StatusBar style="auto" />
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="(public)/login"
+            options={{ headerShown: false }}
+          />
+          <Stack.Protected guard={isLoggedIn}>
+            <Stack.Screen name="(private)" options={{ headerShown: false }} />
+          </Stack.Protected>
+        </Stack>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

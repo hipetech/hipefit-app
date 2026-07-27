@@ -16,7 +16,7 @@ export default function Index() {
   }
 
   if (isLoggedIn) {
-    return <Redirect href="/(private)" />;
+    return <Redirect href="/(private)/(home)" />;
   }
 
   return <Redirect href="/(public)/login" />;

@@ -4,85 +4,138 @@ import { Color } from 'expo-router';
 /**
  * Semantic color tokens for the app.
  *
- * On iOS these resolve to UIKit semantic colors (`Color.ios.*`) and on Android
- * to Material 3 dynamic colors (`Color.android.dynamic.*`) — both auto-adapt to
- * light/dark mode on-device. The `default` hex is the web/SSR fallback only.
+ * These resolve to UIKit semantic colors (`Color.ios.*`), which auto-adapt to
+ * light/dark mode and accessibility settings on-device. The `default` hex is
+ * the web/SSR fallback only — the app is iOS-only, so `Platform.select` is kept
+ * purely to supply that fallback, and there is no Android branch.
  *
- * The app is dark-first (purple/lavender brand, hue 290), so the web fallbacks
- * for surfaces/labels use the dark palette ported from the old `global.css`.
- *
- * Note (Android + React Compiler): call `useColorScheme()` inside any component
- * that renders these so it re-renders when the system theme flips.
+ * There is deliberately no brand color. The app adopts the platform's own accent
+ * so it reads as a native Apple app: an unset `Host.seedColor` makes SwiftUI use
+ * the system accent, which is what we want. Use `accent` only where an explicit
+ * color *value* is unavoidable (RN tint props) — never to pin a `seedColor`.
  */
 export const colors = {
   /** Primary text. */
   label: Platform.select({
     ios: Color.ios.label,
-    android: Color.android.dynamic.onSurface,
-    default: '#ffffff',
+    default: '#000000',
   })!,
   /** Secondary / supporting text. */
   secondaryLabel: Platform.select({
     ios: Color.ios.secondaryLabel,
-    android: Color.android.dynamic.onSurfaceVariant,
-    default: 'rgba(235, 235, 245, 0.6)',
+    default: 'rgba(60, 60, 67, 0.6)',
   })!,
   /** Tertiary / muted text (placeholders, captions). */
   tertiaryLabel: Platform.select({
     ios: Color.ios.tertiaryLabel,
-    android: Color.android.dynamic.outline,
-    default: 'rgba(235, 235, 245, 0.3)',
+    default: 'rgba(60, 60, 67, 0.3)',
   })!,
+  /** Quaternary text — the faintest readable tier. */
+  quaternaryLabel: Platform.select({
+    ios: Color.ios.quaternaryLabel,
+    default: 'rgba(60, 60, 67, 0.18)',
+  })!,
+  /** Placeholder text inside inputs. */
+  placeholderText: Platform.select({
+    ios: Color.ios.placeholderText,
+    default: 'rgba(60, 60, 67, 0.3)',
+  })!,
+
   /** Hairline divider color. */
   separator: Platform.select({
     ios: Color.ios.separator,
-    android: Color.android.dynamic.outlineVariant,
-    // oklch(0.38 0.012 290) — dark separator from global.css
-    default: '#424148',
+    default: 'rgba(60, 60, 67, 0.29)',
   })!,
-  /** App background. */
+  /** Opaque divider, for use where translucency would bleed. */
+  opaqueSeparator: Platform.select({
+    ios: Color.ios.opaqueSeparator,
+    default: '#c6c6c8',
+  })!,
+
+  /** App background (ungrouped screens). */
   systemBackground: Platform.select({
     ios: Color.ios.systemBackground,
-    android: Color.android.dynamic.surface,
-    // oklch(0.13 0.02 290) — dark background from global.css
-    default: '#07060f',
+    default: '#ffffff',
   })!,
-  /** Raised surface (cards, rows). */
+  /** Raised surface on an ungrouped background. */
   secondarySystemBackground: Platform.select({
     ios: Color.ios.secondarySystemBackground,
-    android: Color.android.dynamic.surfaceContainer,
-    // oklch(0.20 0.018 290) — dark surface from global.css
-    default: '#16151e',
+    default: '#f2f2f7',
   })!,
-  /** Further raised surface (nested / secondary surfaces). */
+  /** Further raised surface on an ungrouped background. */
   tertiarySystemBackground: Platform.select({
     ios: Color.ios.tertiarySystemBackground,
-    android: Color.android.dynamic.surfaceContainerHigh,
-    // oklch(0.25 0.015 290) — dark surface-secondary from global.css
-    default: '#212028',
+    default: '#ffffff',
   })!,
+
+  /**
+   * Page background for grouped-list screens. This — not
+   * `systemBackground` — is the correct backdrop behind `insetGrouped` rows.
+   */
+  systemGroupedBackground: Platform.select({
+    ios: Color.ios.systemGroupedBackground,
+    default: '#f2f2f7',
+  })!,
+  /** Row/card surface on a grouped background. */
+  secondarySystemGroupedBackground: Platform.select({
+    ios: Color.ios.secondarySystemGroupedBackground,
+    default: '#ffffff',
+  })!,
+  /** Nested surface on a grouped background. */
+  tertiarySystemGroupedBackground: Platform.select({
+    ios: Color.ios.tertiarySystemGroupedBackground,
+    default: '#f2f2f7',
+  })!,
+
+  /** Fill for controls sitting on a background — e.g. an avatar placeholder. */
+  systemFill: Platform.select({
+    ios: Color.ios.systemFill,
+    default: 'rgba(120, 120, 128, 0.2)',
+  })!,
+  /** Secondary control fill. */
+  secondarySystemFill: Platform.select({
+    ios: Color.ios.secondarySystemFill,
+    default: 'rgba(120, 120, 128, 0.16)',
+  })!,
+  /** Tertiary control fill — track colors, inactive segments. */
+  tertiarySystemFill: Platform.select({
+    ios: Color.ios.tertiarySystemFill,
+    default: 'rgba(118, 118, 128, 0.12)',
+  })!,
+
+  /**
+   * Platform accent. iOS resolves to the system blue (or the user's chosen
+   * accent); Android to the Material You primary. Prefer leaving native controls
+   * untinted — reach for this only where a color value is required.
+   */
+  accent: Platform.select({
+    ios: Color.ios.systemBlue,
+    default: '#007aff',
+  })!,
+  /** Content color on top of `accent`. */
+  onAccent: Platform.select({
+    ios: Color.ios.lightText,
+    default: '#ffffff',
+  })!,
+
   /** Destructive / error. */
   systemRed: Platform.select({
     ios: Color.ios.systemRed,
-    android: Color.android.dynamic.error,
-    default: '#ff453a',
+    default: '#ff3b30',
   })!,
-  /**
-   * Brand accent (purple/lavender, hue 290).
-   *
-   * Converted from the old `global.css` oklch brand tokens (OKLCH → sRGB):
-   *   light `oklch(0.66 0.165 290)` → #937DEF
-   *   dark  `oklch(0.72 0.155 290)` → #A491FE
-   * We use the light value as the single representative brand literal; SwiftUI's
-   * seed-color / vibrancy handling adapts it well enough across appearances.
-   */
-  brand: '#937DEF',
-  /** Foreground/content color on top of `brand` (was `--accent-foreground: white`). */
-  brandForeground: '#ffffff',
+  /** Success / completed status. */
+  systemGreen: Platform.select({
+    ios: Color.ios.systemGreen,
+    default: '#34c759',
+  })!,
+  /** In-progress / warning status. */
+  systemOrange: Platform.select({
+    ios: Color.ios.systemOrange,
+    default: '#ff9500',
+  })!,
+  /** Neutral gray, for de-emphasised glyphs. */
+  systemGray: Platform.select({
+    ios: Color.ios.systemGray,
+    default: '#8e8e93',
+  })!,
 } as const;
-
-/**
- * The brand seed color, for use as `Host.seedColor`. Drives SwiftUI's derived
- * tints/accents across the app. Same value as `colors.brand`.
- */
-export const BRAND_SEED = colors.brand;

@@ -25,6 +25,7 @@ export function Progress({ value = 0, style, indicatorStyle }: ProgressProps) {
           width: '100%',
           overflow: 'hidden',
           borderRadius: 9999,
+          borderCurve: 'continuous',
           backgroundColor: colors.tertiarySystemBackground,
         },
         style,
@@ -35,6 +36,7 @@ export function Progress({ value = 0, style, indicatorStyle }: ProgressProps) {
           {
             height: '100%',
             borderRadius: 9999,
+            borderCurve: 'continuous',
             backgroundColor: colors.label,
             width: `${Math.min(100, Math.max(0, value))}%`,
           },

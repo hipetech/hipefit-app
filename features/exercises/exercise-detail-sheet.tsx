@@ -1,0 +1,186 @@
+import type { MergedExercise } from '@/features/exercises/store/use-exercise-store';
+import { useWindowDimensions } from 'react-native';
+import { Host } from '@expo/ui';
+import {
+  BottomSheet,
+  Button,
+  Group,
+  HStack,
+  ProgressView,
+  RNHostView,
+  Spacer,
+  Text,
+  VStack,
+} from '@expo/ui/swift-ui';
+import {
+  buttonStyle,
+  disabled,
+  fixedSize,
+  font,
+  foregroundStyle,
+  frame,
+  padding,
+  presentationDragIndicator,
+} from '@expo/ui/swift-ui/modifiers';
+
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
+import { EXERCISE_PLACEHOLDER_IMAGE } from '@/lib/constants';
+import { capitalize, getDifficultyValue, humanizeKey } from '@/lib/format';
+import { colors } from '@/theme/colors';
+import { Chip } from '@/ui/chip';
+import { Image } from '@/ui/Image';
+import { Separator } from '@/ui/separator';
+
+export interface ExerciseDetailSheetProps {
+  /** Exercise to show, or `null` when nothing is selected. */
+  exercise: MergedExercise | null;
+  /** Whether the sheet is presented. */
+  isPresented: boolean;
+  /** Dismiss the sheet (Close button, swipe-down, or overlay tap). */
+  onClose: () => void;
+  /** "Add to Workout" action (currently just dismisses). */
+  onAdd: () => void;
+}
+
+/**
+ * Exercise detail sheet — a SwiftUI `BottomSheet` in its own `Host` island
+ * (a self-presenting overlay). Replaces the heroui `Dialog`. The remote artwork
+ * is the one piece SwiftUI can't render natively, so it is embedded via
+ * `RNHostView` (expo-image); everything else is native SwiftUI.
+ */
+export const ExerciseDetailSheet = ({
+  exercise,
+  isPresented,
+  onClose,
+  onAdd,
+}: ExerciseDetailSheetProps) => {
+  const colorScheme = useAppColorScheme();
+  const { width } = useWindowDimensions();
+  const imageWidth = width - 32;
+
+  return (
+    <Host
+      style={{ position: 'absolute' }}
+      pointerEvents="none"
+      colorScheme={colorScheme}
+    >
+      <BottomSheet
+        isPresented={isPresented}
+        onIsPresentedChange={(presented) => {
+          if (!presented) onClose();
+        }}
+        fitToContents
+      >
+        <Group
+          modifiers={[
+            padding({ leading: 16, trailing: 16, top: 8, bottom: 24 }),
+            presentationDragIndicator('visible'),
+          ]}
+        >
+          {exercise ? (
+            <VStack alignment="leading" spacing={16}>
+              <VStack alignment="leading" spacing={4}>
+                <Text
+                  modifiers={[font({ textStyle: 'title2', weight: 'bold' })]}
+                >
+                  {exercise.name}
+                </Text>
+                <Text
+                  modifiers={[
+                    font({ textStyle: 'footnote' }),
+                    foregroundStyle(colors.secondaryLabel),
+                  ]}
+                >
+                  {`${humanizeKey(exercise.groupName)} • ${
+                    exercise.equipment.length > 0
+                      ? exercise.equipment.join(', ')
+                      : 'No equipment'
+                  }`}
+                </Text>
+              </VStack>
+
+              <RNHostView matchContents>
+                <Image
+                  source={{
+                    uri: exercise.imageURL ?? EXERCISE_PLACEHOLDER_IMAGE,
+                  }}
+                  style={{
+                    width: imageWidth,
+                    height: 200,
+                    // No `borderCurve` here: expo-image's `ImageStyle` has no
+                    // such key (it lives on `ViewStyle`), so setting it fails
+                    // tsc.
+                    borderRadius: 10,
+                  }}
+                  contentFit="cover"
+                  transition={200}
+                />
+              </RNHostView>
+
+              <Separator />
+
+              <HStack>
+                <Text modifiers={[foregroundStyle(colors.secondaryLabel)]}>
+                  Difficulty
+                </Text>
+                <Spacer />
+                <Chip label={capitalize(exercise.difficulty)} />
+              </HStack>
+              <ProgressView
+                value={getDifficultyValue(exercise.difficulty) / 100}
+              />
+
+              {exercise.description ? (
+                <VStack alignment="leading" spacing={8}>
+                  <Text modifiers={[font({ textStyle: 'headline' })]}>
+                    Description
+                  </Text>
+                  <Text
+                    modifiers={[
+                      foregroundStyle(colors.secondaryLabel),
+                      // Let the description wrap to its natural height instead
+                      // of being compressed to a single truncated line.
+                      fixedSize({ horizontal: false, vertical: true }),
+                    ]}
+                  >
+                    {exercise.description}
+                  </Text>
+                </VStack>
+              ) : null}
+
+              {exercise.isCustom ? <Chip label="Custom Exercise" /> : null}
+
+              <HStack spacing={12}>
+                <Button
+                  label="Close"
+                  onPress={onClose}
+                  modifiers={[
+                    buttonStyle('bordered'),
+                    frame({ maxWidth: Infinity }),
+                  ]}
+                />
+                {/* Disabled until a workout player exists. `onAdd` currently only
+                  dismisses the sheet, and dismissal is the normal success
+                  affordance — leaving this enabled reads as a successful add.
+                  Re-enable by dropping `disabled(true)` once it can really add. */}
+                <Button
+                  label="Add to Workout"
+                  onPress={onAdd}
+                  modifiers={[
+                    buttonStyle('borderedProminent'),
+                    frame({ maxWidth: Infinity }),
+                    disabled(true),
+                  ]}
+                />
+              </HStack>
+            </VStack>
+          ) : (
+            <VStack>
+              <Text> </Text>
+            </VStack>
+          )}
+        </Group>
+      </BottomSheet>
+    </Host>
+  );
+};
