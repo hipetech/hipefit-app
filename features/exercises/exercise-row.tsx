@@ -1,7 +1,7 @@
 import type { ExerciseType } from '@/database';
 import type { MergedExercise } from '@/features/exercises/store/use-exercise-store';
 import type { SFSymbol } from 'sf-symbols-typescript';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Host } from '@expo/ui';
 import {
   Button,
@@ -15,11 +15,9 @@ import {
 import {
   accessibilityIdentifier,
   accessibilityLabel,
-  buttonStyle,
   disabled,
   fixedSize,
   font,
-  foregroundStyle,
   frame,
   lineLimit,
   padding,
@@ -29,6 +27,7 @@ import {
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { capitalize, humanizeKey } from '@/lib/format';
 import { colors } from '@/theme/colors';
+import { mods } from '@/theme/modifiers';
 
 import { GROUPED_ROW_RADIUS, ROW_GLYPH_SIZE } from './row-metrics';
 
@@ -38,6 +37,87 @@ const typeSymbol: Record<ExerciseType, SFSymbol> = {
   cardio: 'figure.run',
   bodyweight: 'figure.strengthtraining.functional',
 };
+
+/**
+ * Stretch to the full row width and left-align — the shape the text column and
+ * each of its lines share, so a short name still fills its line and the
+ * disclosure chevron stays pinned to the trailing edge.
+ *
+ * Not the same shape as `mods.secondaryActionButton`'s
+ * `frame({ maxWidth: Infinity })`, which has no `alignment`. Never merge them.
+ */
+const FILL_LEADING = frame({ maxWidth: Infinity, alignment: 'leading' });
+
+/**
+ * The loading row. `disabled(true)` accompanies the redaction so a placeholder
+ * cannot be tapped while it shimmers.
+ */
+const PLACEHOLDER_MODIFIERS = [redacted('placeholder'), disabled(true)];
+
+/** Leading type glyph, in a fixed frame so every row's text starts flush. */
+const GLYPH_MODIFIERS = [
+  font({ textStyle: 'body' }),
+  frame({ width: ROW_GLYPH_SIZE, alignment: 'center' }),
+];
+
+/** The name + subtitle column, filling the width beside the glyph. */
+const TITLE_COLUMN_MODIFIERS = [FILL_LEADING];
+
+/** Exercise name. */
+const NAME_MODIFIERS = [...mods.bodyLabel, FILL_LEADING];
+
+/** Muscle group • difficulty line under the name. */
+const SUBTITLE_MODIFIERS = [...mods.footnoteSecondaryOneLine, FILL_LEADING];
+
+/** The disclosure's revealed content, spaced off the label above it. */
+const EXPANDED_CONTENT_MODIFIERS = [padding({ top: 10, bottom: 4 })];
+
+/**
+ * Exercise description. The `fixedSize` lets it wrap to its natural height
+ * instead of being compressed to a single truncated line.
+ */
+const DESCRIPTION_MODIFIERS = [
+  ...mods.footnoteSecondary,
+  fixedSize({ horizontal: false, vertical: true }),
+  FILL_LEADING,
+];
+
+/** The equipment list itself — primary content, kept to one line. */
+const EQUIPMENT_VALUE_MODIFIERS = [...mods.footnoteLabel, lineLimit(1)];
+
+const styles = StyleSheet.create({
+  /**
+   * The hand-rolled `insetGrouped` cell surface.
+   *
+   * `borderCurve: 'continuous'` is load-bearing: `GROUPED_ROW_RADIUS` was
+   * measured against SwiftUI's squircle, not a circular arc, so dropping it
+   * changes the corner shape at the same radius.
+   *
+   * `paddingHorizontal: 16` is a documented input to
+   * `GROUPED_SEPARATOR_INSET` (16 + `ROW_GLYPH_SIZE` 22 + the label `HStack`'s
+   * spacing 12 = 50). Nothing type-checks that relationship, and
+   * `row-metrics.ts` records its values as measured rather than derived — so if
+   * this padding changes, re-measure the inset, don't recompute it.
+   *
+   * The four corner radii are deliberately absent: `roundedTop` /
+   * `roundedBottom` layer them on for the first and last row, and a list with a
+   * single row gets both.
+   */
+  row: {
+    backgroundColor: colors.secondarySystemGroupedBackground,
+    borderCurve: 'continuous',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  roundedTop: {
+    borderTopLeftRadius: GROUPED_ROW_RADIUS,
+    borderTopRightRadius: GROUPED_ROW_RADIUS,
+  },
+  roundedBottom: {
+    borderBottomLeftRadius: GROUPED_ROW_RADIUS,
+    borderBottomRightRadius: GROUPED_ROW_RADIUS,
+  },
+});
 
 export interface ExerciseRowProps {
   /** Exercise rendered by this row. */
@@ -96,16 +176,11 @@ export const ExerciseRow = ({
 
   return (
     <View
-      style={{
-        backgroundColor: colors.secondarySystemGroupedBackground,
-        borderCurve: 'continuous',
-        borderTopLeftRadius: isFirst ? GROUPED_ROW_RADIUS : 0,
-        borderTopRightRadius: isFirst ? GROUPED_ROW_RADIUS : 0,
-        borderBottomLeftRadius: isLast ? GROUPED_ROW_RADIUS : 0,
-        borderBottomRightRadius: isLast ? GROUPED_ROW_RADIUS : 0,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-      }}
+      style={[
+        styles.row,
+        isFirst && styles.roundedTop,
+        isLast && styles.roundedBottom,
+      ]}
     >
       <Host matchContents={{ vertical: true }} colorScheme={colorScheme}>
         <DisclosureGroup
@@ -113,7 +188,7 @@ export const ExerciseRow = ({
           onIsExpandedChange={onToggle}
           modifiers={
             isPlaceholder
-              ? [redacted('placeholder'), disabled(true)]
+              ? PLACEHOLDER_MODIFIERS
               : [
                   accessibilityLabel(
                     `${exercise.name}, ${isExpanded ? 'expanded' : 'collapsed'}`
@@ -127,35 +202,15 @@ export const ExerciseRow = ({
               <Image
                 systemName={typeSymbol[exercise.type]}
                 color={colors.secondaryLabel}
-                modifiers={[
-                  font({ textStyle: 'body' }),
-                  frame({ width: ROW_GLYPH_SIZE, alignment: 'center' }),
-                ]}
+                modifiers={GLYPH_MODIFIERS}
               />
               <VStack
                 alignment="leading"
                 spacing={2}
-                modifiers={[
-                  frame({ maxWidth: Infinity, alignment: 'leading' }),
-                ]}
+                modifiers={TITLE_COLUMN_MODIFIERS}
               >
-                <Text
-                  modifiers={[
-                    font({ textStyle: 'body' }),
-                    foregroundStyle(colors.label),
-                    frame({ maxWidth: Infinity, alignment: 'leading' }),
-                  ]}
-                >
-                  {exercise.name}
-                </Text>
-                <Text
-                  modifiers={[
-                    font({ textStyle: 'footnote' }),
-                    foregroundStyle(colors.secondaryLabel),
-                    lineLimit(1),
-                    frame({ maxWidth: Infinity, alignment: 'leading' }),
-                  ]}
-                >
+                <Text modifiers={NAME_MODIFIERS}>{exercise.name}</Text>
+                <Text modifiers={SUBTITLE_MODIFIERS}>
                   {`${humanizeKey(exercise.groupName)} • ${capitalize(
                     exercise.difficulty
                   )}`}
@@ -167,40 +222,16 @@ export const ExerciseRow = ({
           <VStack
             alignment="leading"
             spacing={12}
-            modifiers={[padding({ top: 10, bottom: 4 })]}
+            modifiers={EXPANDED_CONTENT_MODIFIERS}
           >
-            <Text
-              modifiers={[
-                font({ textStyle: 'footnote' }),
-                foregroundStyle(colors.secondaryLabel),
-                // Let the description wrap to its natural height instead of
-                // being compressed to a single truncated line.
-                fixedSize({ horizontal: false, vertical: true }),
-                frame({ maxWidth: Infinity, alignment: 'leading' }),
-              ]}
-            >
+            <Text modifiers={DESCRIPTION_MODIFIERS}>
               {exercise.description || 'No description available.'}
             </Text>
 
             <HStack>
-              <Text
-                modifiers={[
-                  font({ textStyle: 'footnote' }),
-                  foregroundStyle(colors.secondaryLabel),
-                ]}
-              >
-                Equipment
-              </Text>
+              <Text modifiers={mods.footnoteSecondary}>Equipment</Text>
               <Spacer />
-              <Text
-                modifiers={[
-                  font({ textStyle: 'footnote' }),
-                  foregroundStyle(colors.label),
-                  lineLimit(1),
-                ]}
-              >
-                {equipment}
-              </Text>
+              <Text modifiers={EQUIPMENT_VALUE_MODIFIERS}>{equipment}</Text>
             </HStack>
 
             <HStack spacing={8}>
@@ -208,27 +239,18 @@ export const ExerciseRow = ({
                 label="View Details"
                 onPress={() => onSelect(exercise)}
                 modifiers={[
-                  buttonStyle('bordered'),
-                  frame({ maxWidth: Infinity }),
+                  ...mods.secondaryActionButton,
                   // The row's own accessibilityLabel combines its children, so
                   // both buttons otherwise announce as "<name>, expanded" and are
                   // only tellable apart by position. Give each a stable selector.
                   accessibilityIdentifier(`exercise-details-${exercise.id}`),
                 ]}
               />
-              {/*
-                Adding an exercise to a workout is not built yet, so the button
-                carries no `onPress`. `disabled(true)` makes that legible — the
-                system greys it out and it stops taking taps — instead of
-                rendering a fully prominent button that silently does nothing.
-                Drop the modifier when the action lands.
-              */}
+              {/* Carries no `onPress` — see `mods.primaryActionButtonDisabled`. */}
               <Button
                 label="Add to Workout"
                 modifiers={[
-                  buttonStyle('borderedProminent'),
-                  frame({ maxWidth: Infinity }),
-                  disabled(true),
+                  ...mods.primaryActionButtonDisabled,
                   accessibilityIdentifier(`exercise-add-${exercise.id}`),
                 ]}
               />

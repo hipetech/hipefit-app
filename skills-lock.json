@@ -55,11 +55,6 @@
       "skillPath": "plugins/expo/skills/expo-upgrade/SKILL.md",
       "computedHash": "a1f5d3a380aea7f266cac154380cc403df8b8e05ce0e0ef419146a79b1ee2a64"
     },
-    "heroui-native": {
-      "source": "heroui-inc/heroui",
-      "sourceType": "github",
-      "computedHash": "e92d38f7d624847f666ff8ea3e545d708551e8ed65f043ac6fd4a19bb3964767"
-    },
     "upgrading-expo": {
       "source": "expo/skills",
       "sourceType": "github",

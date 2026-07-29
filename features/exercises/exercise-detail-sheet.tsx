@@ -1,5 +1,5 @@
 import type { MergedExercise } from '@/features/exercises/store/use-exercise-store';
-import { useWindowDimensions } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 import { Host } from '@expo/ui';
 import {
   BottomSheet,
@@ -13,12 +13,9 @@ import {
   VStack,
 } from '@expo/ui/swift-ui';
 import {
-  buttonStyle,
-  disabled,
   fixedSize,
   font,
   foregroundStyle,
-  frame,
   padding,
   presentationDragIndicator,
 } from '@expo/ui/swift-ui/modifiers';
@@ -27,9 +24,41 @@ import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { EXERCISE_PLACEHOLDER_IMAGE } from '@/lib/constants';
 import { capitalize, getDifficultyValue, humanizeKey } from '@/lib/format';
 import { colors } from '@/theme/colors';
+import { mods } from '@/theme/modifiers';
 import { Chip } from '@/ui/chip';
 import { Image } from '@/ui/Image';
 import { Separator } from '@/ui/separator';
+
+/** The sheet's content inset, plus the grabber that says it can be dragged. */
+const SHEET_CONTENT_MODIFIERS = [
+  padding({ leading: 16, trailing: 16, top: 8, bottom: 24 }),
+  presentationDragIndicator('visible'),
+];
+
+/**
+ * Exercise description. The `fixedSize` lets it wrap to its natural height
+ * instead of being compressed to a single truncated line.
+ */
+const DESCRIPTION_MODIFIERS = [
+  foregroundStyle(colors.secondaryLabel),
+  fixedSize({ horizontal: false, vertical: true }),
+];
+
+const styles = StyleSheet.create({
+  /**
+   * The `Host` is a self-presenting overlay: the `BottomSheet` inside it draws
+   * itself, so the host view must take no space in the layout.
+   */
+  host: { position: 'absolute' },
+  /**
+   * No `borderCurve` here: expo-image's `ImageStyle` has no such key (it lives
+   * on `ViewStyle`), so setting it fails tsc.
+   */
+  artwork: {
+    height: 200,
+    borderRadius: 10,
+  },
+});
 
 export interface ExerciseDetailSheetProps {
   /** Exercise to show, or `null` when nothing is selected. */
@@ -59,11 +88,7 @@ export const ExerciseDetailSheet = ({
   const imageWidth = width - 32;
 
   return (
-    <Host
-      style={{ position: 'absolute' }}
-      pointerEvents="none"
-      colorScheme={colorScheme}
-    >
+    <Host style={styles.host} pointerEvents="none" colorScheme={colorScheme}>
       <BottomSheet
         isPresented={isPresented}
         onIsPresentedChange={(presented) => {
@@ -71,12 +96,7 @@ export const ExerciseDetailSheet = ({
         }}
         fitToContents
       >
-        <Group
-          modifiers={[
-            padding({ leading: 16, trailing: 16, top: 8, bottom: 24 }),
-            presentationDragIndicator('visible'),
-          ]}
-        >
+        <Group modifiers={SHEET_CONTENT_MODIFIERS}>
           {exercise ? (
             <VStack alignment="leading" spacing={16}>
               <VStack alignment="leading" spacing={4}>
@@ -85,12 +105,7 @@ export const ExerciseDetailSheet = ({
                 >
                   {exercise.name}
                 </Text>
-                <Text
-                  modifiers={[
-                    font({ textStyle: 'footnote' }),
-                    foregroundStyle(colors.secondaryLabel),
-                  ]}
-                >
+                <Text modifiers={mods.footnoteSecondary}>
                   {`${humanizeKey(exercise.groupName)} • ${
                     exercise.equipment.length > 0
                       ? exercise.equipment.join(', ')
@@ -104,14 +119,7 @@ export const ExerciseDetailSheet = ({
                   source={{
                     uri: exercise.imageURL ?? EXERCISE_PLACEHOLDER_IMAGE,
                   }}
-                  style={{
-                    width: imageWidth,
-                    height: 200,
-                    // No `borderCurve` here: expo-image's `ImageStyle` has no
-                    // such key (it lives on `ViewStyle`), so setting it fails
-                    // tsc.
-                    borderRadius: 10,
-                  }}
+                  style={[styles.artwork, { width: imageWidth }]}
                   contentFit="cover"
                   transition={200}
                 />
@@ -135,14 +143,7 @@ export const ExerciseDetailSheet = ({
                   <Text modifiers={[font({ textStyle: 'headline' })]}>
                     Description
                   </Text>
-                  <Text
-                    modifiers={[
-                      foregroundStyle(colors.secondaryLabel),
-                      // Let the description wrap to its natural height instead
-                      // of being compressed to a single truncated line.
-                      fixedSize({ horizontal: false, vertical: true }),
-                    ]}
-                  >
+                  <Text modifiers={DESCRIPTION_MODIFIERS}>
                     {exercise.description}
                   </Text>
                 </VStack>
@@ -154,23 +155,16 @@ export const ExerciseDetailSheet = ({
                 <Button
                   label="Close"
                   onPress={onClose}
-                  modifiers={[
-                    buttonStyle('bordered'),
-                    frame({ maxWidth: Infinity }),
-                  ]}
+                  modifiers={mods.secondaryActionButton}
                 />
                 {/* Disabled until a workout player exists. `onAdd` currently only
                   dismisses the sheet, and dismissal is the normal success
                   affordance — leaving this enabled reads as a successful add.
-                  Re-enable by dropping `disabled(true)` once it can really add. */}
+                  See `mods.primaryActionButtonDisabled`. */}
                 <Button
                   label="Add to Workout"
                   onPress={onAdd}
-                  modifiers={[
-                    buttonStyle('borderedProminent'),
-                    frame({ maxWidth: Infinity }),
-                    disabled(true),
-                  ]}
+                  modifiers={mods.primaryActionButtonDisabled}
                 />
               </HStack>
             </VStack>

@@ -17,8 +17,10 @@ import {
   GROUPED_SEPARATOR_INSET,
 } from '@/features/exercises/row-metrics';
 import { useExerciseStore } from '@/features/exercises/store/use-exercise-store';
+import { FLOATING_ACTION_BUTTON_CONTENT_INSET } from '@/features/floating-action-button/floating-action-button-metrics';
 import { hapticImpact, hapticSelection } from '@/lib/haptics';
 import { colors } from '@/theme/colors';
+import { layout } from '@/theme/styles';
 
 type DifficultyFilterValue = Difficulty | 'all';
 
@@ -43,23 +45,37 @@ const PLACEHOLDER_EXERCISES: MergedExercise[] = Array.from(
   })
 );
 
+const styles = StyleSheet.create({
+  /** Row surface the hairline is painted on, inset past the leading glyph. */
+  separatorRow: {
+    backgroundColor: colors.secondarySystemGroupedBackground,
+    paddingLeft: GROUPED_SEPARATOR_INSET,
+  },
+  /** The hairline itself — `hairlineWidth` stays symbolic, never frozen to a number. */
+  separatorLine: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.separator,
+  },
+  /**
+   * `paddingBottom` clears the floating create button.
+   * `contentInsetAdjustmentBehavior` only accounts for the tab bar, which the
+   * button sits above, so without this the last row scrolls under it and loses
+   * its trailing hit area.
+   */
+  listContent: {
+    paddingHorizontal: GROUPED_SECTION_MARGIN,
+    paddingTop: 8,
+    paddingBottom: FLOATING_ACTION_BUTTON_CONTENT_INSET,
+  },
+});
+
 /**
  * Hairline between rows, inset past the leading glyph and painted on the row
  * surface so the flat list reads as one continuous `insetGrouped` section.
  */
 const ItemSeparator = () => (
-  <View
-    style={{
-      backgroundColor: colors.secondarySystemGroupedBackground,
-      paddingLeft: GROUPED_SEPARATOR_INSET,
-    }}
-  >
-    <View
-      style={{
-        height: StyleSheet.hairlineWidth,
-        backgroundColor: colors.separator,
-      }}
-    />
+  <View style={styles.separatorRow}>
+    <View style={styles.separatorLine} />
   </View>
 );
 
@@ -144,13 +160,9 @@ export default function Exercises() {
   return (
     <>
       <LegendList
-        style={{ flex: 1, backgroundColor: colors.systemGroupedBackground }}
+        style={layout.groupedScreen}
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{
-          paddingHorizontal: GROUPED_SECTION_MARGIN,
-          paddingTop: 8,
-          paddingBottom: 32,
-        }}
+        contentContainerStyle={styles.listContent}
         data={rows}
         renderItem={renderExerciseItem}
         keyExtractor={(item) => item.id}

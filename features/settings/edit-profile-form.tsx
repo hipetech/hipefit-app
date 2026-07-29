@@ -15,7 +15,6 @@ import {
   disabled,
   font,
   foregroundStyle,
-  listStyle,
   textInputAutocapitalization,
 } from '@expo/ui/swift-ui/modifiers';
 import { useRouter } from 'expo-router';
@@ -24,10 +23,17 @@ import { useUserStore } from '@/features/user/store/use-user-store';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { hapticSuccess } from '@/lib/haptics';
 import { colors } from '@/theme/colors';
+import { mods } from '@/theme/modifiers';
+import { layout } from '@/theme/styles';
 
 const EMPTY_NAME_MESSAGE = 'Enter a name to save.';
 const HELP_MESSAGE = 'This is the name shown across the app.';
 const SAVE_ERROR_MESSAGE = "Couldn't save your name. Check your connection.";
+
+const NAME_FIELD_MODIFIERS = [
+  autocorrectionDisabled(true),
+  textInputAutocapitalization('words'),
+];
 
 /**
  * Body of the Edit Profile form-sheet route.
@@ -118,11 +124,8 @@ export const EditProfileForm = () => {
       : HELP_MESSAGE;
 
   return (
-    <Host
-      style={{ flex: 1, backgroundColor: colors.systemGroupedBackground }}
-      colorScheme={colorScheme}
-    >
-      <List modifiers={[listStyle('insetGrouped')]}>
+    <Host style={layout.groupedScreen} colorScheme={colorScheme}>
+      <List modifiers={mods.listInsetGrouped}>
         <Section
           title="Name"
           footer={
@@ -143,10 +146,7 @@ export const EditProfileForm = () => {
             placeholder="Your name"
             autoFocus
             onTextChange={handleTextChange}
-            modifiers={[
-              autocorrectionDisabled(true),
-              textInputAutocapitalization('words'),
-            ]}
+            modifiers={NAME_FIELD_MODIFIERS}
           />
         </Section>
 

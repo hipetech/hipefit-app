@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Appearance, useColorScheme, View } from 'react-native';
+import { Appearance, StyleSheet, useColorScheme, View } from 'react-native';
 import { Stack } from 'expo-router';
 import {
   DarkTheme,
@@ -14,10 +14,18 @@ import { useFirestoreSubscriptions } from '@/database/use-firestore-subscription
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { colors } from '@/theme/colors';
+import { layout } from '@/theme/styles';
 
 SplashScreen.setOptions({
   duration: 500,
   fade: true,
+});
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.systemBackground,
+  },
 });
 
 export default function RootLayout() {
@@ -33,30 +41,20 @@ export default function RootLayout() {
     return cleanup;
   }, [initialize]);
 
-  // Apply the user's theme preference app-wide so semantic (PlatformColor)
-  // colors resolve against it. 'unspecified' = follow the device (system) —
+  // Apply the user's theme preference app-wide so the semantic colors in
+  // `@/theme/colors` (`Color.ios.*`) resolve against it. 'unspecified' =
+  // follow the device (system) —
   // this replaces the former Uniwind.setTheme mechanism.
   useEffect(() => {
     Appearance.setColorScheme(scheme ?? 'unspecified');
   }, [scheme]);
 
   if (isLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: colors.systemBackground,
-        }}
-      />
-    );
+    return <View style={layout.centeredScreen} />;
   }
 
   return (
-    <GestureHandlerRootView
-      style={{ flex: 1, backgroundColor: colors.systemBackground }}
-    >
+    <GestureHandlerRootView style={styles.root}>
       <ThemeProvider value={activeScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <StatusBar style="auto" />
         <Stack>

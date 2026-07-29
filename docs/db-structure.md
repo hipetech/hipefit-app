@@ -12,7 +12,7 @@ All documents use the `WithId<T>` pattern: `{ id: string; data: T }` when consum
 
 ### `exerciseGroups/{groupId}`
 
-Default exercise categories seeded via `scripts/seed-exercises.ts`. Copied into each user's subcollection on sign-up.
+Default exercise categories seeded via `scripts/db/seed-exercises.ts`. Copied into each user's subcollection on sign-up.
 
 | Field   | Type             | Description              |
 | ------- | ---------------- | ------------------------ |
@@ -304,10 +304,13 @@ The exercise store merges 4 sources into a unified `MergedExercise` list:
 
 ## Source Files
 
-| File                                    | Purpose                               |
-| --------------------------------------- | ------------------------------------- |
-| `types/firestore.ts`                    | All Firestore type definitions        |
-| `lib/firestore.ts`                      | Collection/document reference helpers |
-| `features/auth/store/use-auth-store.ts` | User creation and auth flow           |
-| `hooks/use-firestore-subscriptions.ts`  | Real-time subscription orchestration  |
-| `scripts/seed-exercises.ts`             | Global exercise/group seed script     |
+Everything Firestore-shaped lives in `database/` and is imported through the barrel `@/database`.
+
+| File                                      | Purpose                                          |
+| ----------------------------------------- | ------------------------------------------------ |
+| `database/types.ts`                       | All Firestore type definitions, `WithId<T>`      |
+| `database/refs.ts`                        | Collection/document reference helpers            |
+| `database/use-firestore-subscriptions.ts` | Real-time subscription orchestration             |
+| `database/index.ts`                       | Barrel — import from `@/database`, not the files |
+| `features/auth/store/use-auth-store.ts`   | User creation and auth flow                      |
+| `scripts/db/seed-exercises.ts`            | Global exercise/group seed script                |

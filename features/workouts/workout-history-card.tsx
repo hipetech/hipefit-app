@@ -10,6 +10,17 @@ import {
 
 import { formatDuration, formatShortDate, formatVolume } from '@/lib/format';
 import { colors } from '@/theme/colors';
+import { mods } from '@/theme/modifiers';
+
+/** The workout name, clamped to one line so a long routine name cannot wrap. */
+const TITLE_MODIFIERS = [...mods.bodyLabel, lineLimit(1)];
+
+/** The trailing exercise count — caption-sized, tabular so the column aligns. */
+const EXERCISE_COUNT_MODIFIERS = [
+  font({ textStyle: 'caption' }),
+  foregroundStyle(colors.secondaryLabel),
+  monospacedDigit(),
+];
 
 export interface WorkoutHistoryCardProps {
   /** A completed / abandoned workout to render as a history row. */
@@ -37,25 +48,13 @@ export const WorkoutHistoryCard = ({ workout }: WorkoutHistoryCardProps) => {
           isCompleted ? 'checkmark.circle.fill' : 'exclamationmark.circle.fill'
         }
         color={isCompleted ? colors.systemGreen : colors.systemOrange}
-        modifiers={[font({ textStyle: 'title3' })]}
+        modifiers={mods.title3}
       />
       <VStack alignment="leading" spacing={2}>
-        <Text
-          modifiers={[
-            font({ textStyle: 'body' }),
-            foregroundStyle(colors.label),
-            lineLimit(1),
-          ]}
-        >
+        <Text modifiers={TITLE_MODIFIERS}>
           {workout.data.routineName ?? 'Quick Workout'}
         </Text>
-        <Text
-          modifiers={[
-            font({ textStyle: 'footnote' }),
-            foregroundStyle(colors.secondaryLabel),
-            lineLimit(1),
-          ]}
-        >
+        <Text modifiers={mods.footnoteSecondaryOneLine}>
           {`${formatShortDate(workout.data.startedAt)} · ${formatDuration(workout.data.duration)}`}
         </Text>
       </VStack>
@@ -74,22 +73,10 @@ export const WorkoutHistoryCard = ({ workout }: WorkoutHistoryCardProps) => {
           modifier on every one of these rows. Animate a figure that moves, not
           one that merely contains digits. */}
       <VStack alignment="trailing" spacing={2}>
-        <Text
-          modifiers={[
-            font({ textStyle: 'body' }),
-            foregroundStyle(colors.label),
-            monospacedDigit(),
-          ]}
-        >
+        <Text modifiers={mods.bodyLabelMono}>
           {formatVolume(workout.data.totalVolume)}
         </Text>
-        <Text
-          modifiers={[
-            font({ textStyle: 'caption' }),
-            foregroundStyle(colors.secondaryLabel),
-            monospacedDigit(),
-          ]}
-        >
+        <Text modifiers={EXERCISE_COUNT_MODIFIERS}>
           {`${workout.data.totalExercises} exercises`}
         </Text>
       </VStack>

@@ -15,16 +15,11 @@ import {
   Animation,
   animation,
   contentTransition,
-  disabled,
-  font,
-  foregroundStyle,
   listRowBackground,
   listRowInsets,
   listRowSeparator,
-  listStyle,
   monospacedDigit,
   padding,
-  redacted,
 } from '@expo/ui/swift-ui/modifiers';
 
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
@@ -32,6 +27,8 @@ import { useWorkoutStore } from '@/features/workouts/store/use-workout-store';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { colors } from '@/theme/colors';
+import { mods } from '@/theme/modifiers';
+import { layout } from '@/theme/styles';
 import { Card } from '@/ui/card';
 
 import { ActiveWorkoutBanner } from './active-workout-banner';
@@ -59,6 +56,28 @@ const HISTORY_PAGE_SIZE = 20;
  */
 const SECTION_HORIZONTAL_MARGIN = 16;
 
+/**
+ * Full-bleed carousel row: the App Store idiom for a horizontal strip inside a
+ * grouped list. Zero leading/trailing row insets and the page background make
+ * the row itself disappear; the section margin is re-applied to the content so
+ * the cards stay aligned.
+ */
+const CAROUSEL_ROW_MODIFIERS = [
+  listRowInsets({
+    top: 8,
+    leading: 0,
+    bottom: 8,
+    trailing: 0,
+  }),
+  listRowBackground(colors.systemGroupedBackground),
+  listRowSeparator('hidden'),
+];
+
+/** Puts the section margin the carousel row gave up back inside its content. */
+const CAROUSEL_CONTENT_MODIFIERS = [
+  padding({ horizontal: SECTION_HORIZONTAL_MARGIN }),
+];
+
 /** Stable keys for the rows rendered behind `redacted('placeholder')`. */
 const PLACEHOLDER_ROUTINE_KEYS = ['routine-a', 'routine-b'];
 const PLACEHOLDER_HISTORY_KEYS = ['history-a', 'history-b', 'history-c'];
@@ -68,6 +87,12 @@ const PLACEHOLDER_HISTORY_KEYS = ['history-a', 'history-b', 'history-c'];
  * figures — 250ms of ease-in-out, well inside the ~300ms motion budget.
  */
 const COUNTER_ANIMATION = Animation.easeInOut({ duration: 0.25 });
+
+/**
+ * The section header's trailing count. Font-*refining* only, so the count keeps
+ * inheriting the header font and color the list style publishes.
+ */
+const COUNT_MODIFIERS = [monospacedDigit()];
 
 interface SectionHeaderProps {
   title: string;
@@ -117,11 +142,11 @@ const SectionHeader = ({ title, count, animateCount }: SectionHeaderProps) => (
         modifiers={
           animateCount
             ? [
-                monospacedDigit(),
+                ...COUNT_MODIFIERS,
                 contentTransition('numericText'),
                 animation(COUNTER_ANIMATION, count),
               ]
-            : [monospacedDigit()]
+            : COUNT_MODIFIERS
         }
       >
         {String(count)}
@@ -133,31 +158,10 @@ const SectionHeader = ({ title, count, animateCount }: SectionHeaderProps) => (
 /** A routine card shaped like the real one, shown while the stores load. */
 const PlaceholderRoutineCard = () => (
   <Card width={200} radius={12} spacing={8}>
-    <Text
-      modifiers={[
-        font({ textStyle: 'headline' }),
-        foregroundStyle(colors.label),
-      ]}
-    >
-      Placeholder Routine
-    </Text>
+    <Text modifiers={mods.headlineLabel}>Placeholder Routine</Text>
     <VStack alignment="leading" spacing={2}>
-      <Text
-        modifiers={[
-          font({ textStyle: 'footnote' }),
-          foregroundStyle(colors.secondaryLabel),
-        ]}
-      >
-        8 exercises
-      </Text>
-      <Text
-        modifiers={[
-          font({ textStyle: 'footnote' }),
-          foregroundStyle(colors.secondaryLabel),
-        ]}
-      >
-        ~45 min
-      </Text>
+      <Text modifiers={mods.footnoteSecondary}>8 exercises</Text>
+      <Text modifiers={mods.footnoteSecondary}>~45 min</Text>
     </VStack>
   </Card>
 );
@@ -170,50 +174,27 @@ const PlaceholderHistoryRow = () => (
     <Image
       systemName="circle.fill"
       color={colors.systemGray}
-      modifiers={[font({ textStyle: 'title3' })]}
+      modifiers={mods.title3}
     />
     <VStack alignment="leading" spacing={2}>
-      <Text
-        modifiers={[font({ textStyle: 'body' }), foregroundStyle(colors.label)]}
-      >
-        Placeholder Workout
-      </Text>
-      <Text
-        modifiers={[
-          font({ textStyle: 'footnote' }),
-          foregroundStyle(colors.secondaryLabel),
-        ]}
-      >
-        Jan 1, 2026 · 45 min
-      </Text>
+      <Text modifiers={mods.bodyLabel}>Placeholder Workout</Text>
+      <Text modifiers={mods.footnoteSecondary}>Jan 1, 2026 · 45 min</Text>
     </VStack>
     <Spacer />
     {/* Mirrors the real row's trailing figure modifier-for-modifier, including
         `monospacedDigit()`: redaction draws a bar the width of the *measured*
         text, so a placeholder that resolves a different font measures — and
-        therefore redacts — to a different width than the row it stands in for. */}
-    <Text
-      modifiers={[
-        font({ textStyle: 'body' }),
-        foregroundStyle(colors.label),
-        monospacedDigit(),
-      ]}
-    >
-      1.2k kg
-    </Text>
+        therefore redacts — to a different width than the row it stands in for.
+        That invariant is why both this row and `WorkoutHistoryCard` reach for
+        the same `mods.bodyLabelMono` — the shared constant is what keeps the
+        two from drifting apart one edit at a time. */}
+    <Text modifiers={mods.bodyLabelMono}>1.2k kg</Text>
   </HStack>
 );
 
 /** Muted single-row stand-in for an empty section. */
 const EmptyRow = ({ label }: { label: string }) => (
-  <Text
-    modifiers={[
-      font({ textStyle: 'body' }),
-      foregroundStyle(colors.secondaryLabel),
-    ]}
-  >
-    {label}
-  </Text>
+  <Text modifiers={mods.bodySecondary}>{label}</Text>
 );
 
 /**
@@ -264,19 +245,10 @@ export const WorkoutsContent = () => {
   }, []);
 
   return (
-    <Host
-      style={{ flex: 1, backgroundColor: colors.systemGroupedBackground }}
-      colorScheme={colorScheme}
-    >
+    <Host style={layout.groupedScreen} colorScheme={colorScheme}>
       <List
         modifiers={
-          isLoading
-            ? [
-                listStyle('insetGrouped'),
-                redacted('placeholder'),
-                disabled(true),
-              ]
-            : [listStyle('insetGrouped')]
+          isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
         }
       >
         {inProgressWorkout ? (
@@ -309,28 +281,15 @@ export const WorkoutsContent = () => {
           }
         >
           {isLoading || hasRoutines ? (
-            // Full-bleed carousel row: the App Store idiom for a horizontal
-            // strip inside a grouped list. Zero leading/trailing row insets and
-            // the page background make the row itself disappear; the section
-            // margin is re-applied to the content so the cards stay aligned.
             <ScrollView
               axes="horizontal"
               showsIndicators={false}
-              modifiers={[
-                listRowInsets({
-                  top: 8,
-                  leading: 0,
-                  bottom: 8,
-                  trailing: 0,
-                }),
-                listRowBackground(colors.systemGroupedBackground),
-                listRowSeparator('hidden'),
-              ]}
+              modifiers={CAROUSEL_ROW_MODIFIERS}
             >
               <HStack
                 alignment="top"
                 spacing={12}
-                modifiers={[padding({ horizontal: SECTION_HORIZONTAL_MARGIN })]}
+                modifiers={CAROUSEL_CONTENT_MODIFIERS}
               >
                 {isLoading
                   ? PLACEHOLDER_ROUTINE_KEYS.map((key) => (

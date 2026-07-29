@@ -1,15 +1,9 @@
 import type { WithId } from '@/database';
 import type { Routine } from '@/database/types';
 import { Button, Text, VStack } from '@expo/ui/swift-ui';
-import {
-  buttonStyle,
-  disabled,
-  font,
-  foregroundStyle,
-  lineLimit,
-} from '@expo/ui/swift-ui/modifiers';
+import { buttonStyle, disabled } from '@expo/ui/swift-ui/modifiers';
 
-import { colors } from '@/theme/colors';
+import { mods } from '@/theme/modifiers';
 import { Card } from '@/ui/card';
 
 export interface RoutineCardProps {
@@ -32,15 +26,7 @@ export interface RoutineCardProps {
  */
 export const RoutineCard = ({ routine, onStart }: RoutineCardProps) => (
   <Card width={200} radius={12} spacing={8}>
-    <Text
-      modifiers={[
-        font({ textStyle: 'headline' }),
-        foregroundStyle(colors.label),
-        lineLimit(1),
-      ]}
-    >
-      {routine.data.name}
-    </Text>
+    <Text modifiers={mods.headlineLabelOneLine}>{routine.data.name}</Text>
     {/* None of these three lines is a counter, so none takes
         `monospacedDigit()` or a `numericText` transition: they are sentence
         fragments ("8 exercises", "Performed 12 times"), not standalone figures
@@ -48,30 +34,15 @@ export const RoutineCard = ({ routine, onStart }: RoutineCardProps) => (
         only after a workout finishes — a moment the user spends leaving the
         player, not watching this card. */}
     <VStack alignment="leading" spacing={2}>
-      <Text
-        modifiers={[
-          font({ textStyle: 'footnote' }),
-          foregroundStyle(colors.secondaryLabel),
-        ]}
-      >
+      <Text modifiers={mods.footnoteSecondary}>
         {`${routine.data.exercises.length} exercises`}
       </Text>
       {routine.data.estimatedDuration ? (
-        <Text
-          modifiers={[
-            font({ textStyle: 'footnote' }),
-            foregroundStyle(colors.secondaryLabel),
-          ]}
-        >
+        <Text modifiers={mods.footnoteSecondary}>
           {`~${routine.data.estimatedDuration} min`}
         </Text>
       ) : null}
-      <Text
-        modifiers={[
-          font({ textStyle: 'footnote' }),
-          foregroundStyle(colors.secondaryLabel),
-        ]}
-      >
+      <Text modifiers={mods.footnoteSecondary}>
         {`Performed ${routine.data.timesPerformed} times`}
       </Text>
     </VStack>

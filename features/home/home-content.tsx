@@ -16,13 +16,9 @@ import {
   Animation,
   animation,
   contentTransition,
-  disabled,
   font,
-  foregroundStyle,
-  listStyle,
   monospacedDigit,
   padding,
-  redacted,
 } from '@expo/ui/swift-ui/modifiers';
 
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
@@ -32,6 +28,8 @@ import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { formatDuration, formatRelativeDate } from '@/lib/format';
 import { colors } from '@/theme/colors';
+import { mods } from '@/theme/modifiers';
+import { layout } from '@/theme/styles';
 
 /** One row of the "Recent Workouts" section, already formatted for display. */
 interface RecentWorkoutRow {
@@ -70,6 +68,12 @@ const toRecentWorkoutRow = (workout: WithId<Workout>): RecentWorkoutRow => ({
 const COUNTER_ANIMATION = Animation.easeInOut({ duration: 0.25 });
 
 /**
+ * The static half of an Activity value's modifiers — see `counterModifiers`
+ * below for why the motion modifiers are appended rather than baked in here.
+ */
+const COUNTER_BASE_MODIFIERS = [font({ textStyle: 'body' }), monospacedDigit()];
+
+/**
  * Modifiers for one Activity value.
  *
  * `font` then `monospacedDigit` is the Phase 2.5 order and is load-bearing
@@ -87,13 +91,14 @@ const COUNTER_ANIMATION = Animation.easeInOut({ duration: 0.25 });
  * real ones. It also leaves the redacted modifier arrays byte-identical to what
  * they were before, so nothing about the measured placeholder widths shifts.
  */
-const counterModifiers = (value: number, animated: boolean) => [
-  font({ textStyle: 'body' }),
-  monospacedDigit(),
-  ...(animated
-    ? [contentTransition('numericText'), animation(COUNTER_ANIMATION, value)]
-    : []),
-];
+const counterModifiers = (value: number, animated: boolean) =>
+  animated
+    ? [
+        ...COUNTER_BASE_MODIFIERS,
+        contentTransition('numericText'),
+        animation(COUNTER_ANIMATION, value),
+      ]
+    : COUNTER_BASE_MODIFIERS;
 
 /**
  * Realistic stand-ins rendered behind `redacted('placeholder')` while the
@@ -135,6 +140,10 @@ const PLACEHOLDER_WORKOUTS: RecentWorkoutRow[] = [
     isCompleted: true,
   },
 ];
+
+const FEATURED_STACK_MODIFIERS = [padding({ vertical: 4 })];
+
+const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
 
 /**
  * Body of the Home screen.
@@ -197,19 +206,10 @@ export const HomeContent = () => {
     : recentWorkouts.map(toRecentWorkoutRow);
 
   return (
-    <Host
-      style={{ flex: 1, backgroundColor: colors.systemGroupedBackground }}
-      colorScheme={colorScheme}
-    >
+    <Host style={layout.groupedScreen} colorScheme={colorScheme}>
       <List
         modifiers={
-          isLoading
-            ? [
-                listStyle('insetGrouped'),
-                redacted('placeholder'),
-                disabled(true),
-              ]
-            : [listStyle('insetGrouped')]
+          isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
         }
       >
         {/*
@@ -282,23 +282,13 @@ export const HomeContent = () => {
               <VStack
                 alignment="leading"
                 spacing={4}
-                modifiers={[padding({ vertical: 4 })]}
+                modifiers={FEATURED_STACK_MODIFIERS}
               >
-                <Text
-                  modifiers={[
-                    font({ textStyle: 'headline' }),
-                    foregroundStyle(colors.label),
-                  ]}
-                >
+                <Text modifiers={mods.headlineLabel}>
                   {featuredRoutine.name}
                 </Text>
                 {featuredRoutine.description ? (
-                  <Text
-                    modifiers={[
-                      font({ textStyle: 'subheadline' }),
-                      foregroundStyle(colors.secondaryLabel),
-                    ]}
-                  >
+                  <Text modifiers={mods.subheadlineSecondary}>
                     {featuredRoutine.description}
                   </Text>
                 ) : null}
@@ -309,12 +299,7 @@ export const HomeContent = () => {
                   align against. Fixed-width digits inside running text read as
                   a typographic mistake — reserve them for standalone figures.
                 */}
-                <Text
-                  modifiers={[
-                    font({ textStyle: 'footnote' }),
-                    foregroundStyle(colors.secondaryLabel),
-                  ]}
-                >
+                <Text modifiers={mods.footnoteSecondary}>
                   {featuredRoutine.meta}
                 </Text>
               </VStack>
@@ -329,18 +314,11 @@ export const HomeContent = () => {
               <Button
                 label="Start Workout"
                 systemImage="play.fill"
-                modifiers={[disabled(true)]}
+                modifiers={mods.disabledOnly}
               />
             </>
           ) : (
-            <Text
-              modifiers={[
-                font({ textStyle: 'body' }),
-                foregroundStyle(colors.secondaryLabel),
-              ]}
-            >
-              No Active Routines
-            </Text>
+            <Text modifiers={mods.bodySecondary}>No Active Routines</Text>
           )}
         </Section>
 
@@ -358,12 +336,8 @@ export const HomeContent = () => {
                 key={row.id}
                 spacing={12}
                 alignment="center"
-                modifiers={[padding({ vertical: 2 })]}
+                modifiers={RECENT_ROW_MODIFIERS}
               >
-                {/*
-                  Sized with `font` rather than `size` so the glyph scales with
-                  Dynamic Type (a fixed `size` does not).
-                */}
                 <Image
                   systemName={
                     row.isCompleted ? 'checkmark.circle.fill' : 'xmark.circle'
@@ -371,50 +345,22 @@ export const HomeContent = () => {
                   color={
                     row.isCompleted ? colors.systemGreen : colors.systemOrange
                   }
-                  modifiers={[font({ textStyle: 'title3' })]}
+                  modifiers={mods.title3}
                 />
                 <VStack alignment="leading" spacing={2}>
-                  <Text
-                    modifiers={[
-                      font({ textStyle: 'body' }),
-                      foregroundStyle(colors.label),
-                    ]}
-                  >
-                    {row.title}
-                  </Text>
+                  <Text modifiers={mods.bodyLabel}>{row.title}</Text>
                   {/* Same reasoning as the Featured Routine meta line: a
                       subtitle sentence, not a figure. */}
-                  <Text
-                    modifiers={[
-                      font({ textStyle: 'footnote' }),
-                      foregroundStyle(colors.secondaryLabel),
-                    ]}
-                  >
-                    {row.meta}
-                  </Text>
+                  <Text modifiers={mods.footnoteSecondary}>{row.meta}</Text>
                 </VStack>
                 <Spacer />
                 {/* "Yesterday" / "3 days ago" — prose, and already flush right
                     via the `Spacer`, so fixed-width digits buy no alignment. */}
-                <Text
-                  modifiers={[
-                    font({ textStyle: 'footnote' }),
-                    foregroundStyle(colors.secondaryLabel),
-                  ]}
-                >
-                  {row.dateLabel}
-                </Text>
+                <Text modifiers={mods.footnoteSecondary}>{row.dateLabel}</Text>
               </HStack>
             ))
           ) : (
-            <Text
-              modifiers={[
-                font({ textStyle: 'body' }),
-                foregroundStyle(colors.secondaryLabel),
-              ]}
-            >
-              No Recent Workouts
-            </Text>
+            <Text modifiers={mods.bodySecondary}>No Recent Workouts</Text>
           )}
         </Section>
       </List>

@@ -19,14 +19,11 @@ import {
 import {
   accessibilityHidden,
   accessibilityHint,
-  disabled,
   font,
   foregroundStyle,
   lineLimit,
-  listStyle,
   padding,
   pickerStyle,
-  redacted,
   tag,
   truncationMode,
 } from '@expo/ui/swift-ui/modifiers';
@@ -36,11 +33,48 @@ import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useUserStore } from '@/features/user/store/use-user-store';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { colors } from '@/theme/colors';
+import { mods } from '@/theme/modifiers';
+import { layout } from '@/theme/styles';
 import { Avatar } from '@/ui/avatar';
 
 /** Placeholder text shown behind `redacted('placeholder')` while the profile loads. */
 const PLACEHOLDER_NAME = 'Placeholder Name';
 const PLACEHOLDER_EMAIL = 'placeholder@example.com';
+
+/**
+ * Apple private-relay addresses are long and unbreakable; a tail/word wrap
+ * hyphenates mid-token ("appleid.-com") and reads as a rendering bug. One line
+ * + middle truncation keeps the mailbox and the domain, and degrades honestly.
+ */
+const PROFILE_EMAIL_MODIFIERS = [
+  font({ textStyle: 'footnote' }),
+  foregroundStyle(colors.secondaryLabel),
+  lineLimit(1),
+  truncationMode('middle'),
+];
+
+/**
+ * Hand-drawn disclosure indicator, deliberately.
+ * @expo/ui exposes no `NavigationLink`, and the SwiftUI `Link`
+ * it does export takes a URL `destination` handed to `openURL` —
+ * it neither pushes an Expo Router route nor draws a chevron. An
+ * expo-router `<Link>` is a React Native view and cannot nest
+ * inside this SwiftUI `List`. So the glyph stays hand-drawn, but:
+ * it now scales with Dynamic Type (`font` with a `textStyle`,
+ * which also supersedes the old fixed `size={14}`), and it is
+ * hidden from VoiceOver so the row announces once, as a button
+ * with a hint, instead of trailing a stray image.
+ * `foregroundStyle({ hierarchical: 'tertiary' })` was tried and
+ * rejected: hierarchical styles resolve against the *inherited*
+ * foreground, which inside a `Button` is the accent tint, so the
+ * chevron would render blue. `tertiaryLabel` is the gray UIKit
+ * itself uses for the disclosure indicator.
+ */
+const DISCLOSURE_CHEVRON_MODIFIERS = [
+  font({ textStyle: 'footnote', weight: 'semibold' }),
+  foregroundStyle(colors.tertiaryLabel),
+  accessibilityHidden(true),
+];
 
 /**
  * Body of the Settings screen.
@@ -93,19 +127,10 @@ export const SettingsContent = () => {
   }, [router]);
 
   return (
-    <Host
-      style={{ flex: 1, backgroundColor: colors.systemGroupedBackground }}
-      colorScheme={colorScheme}
-    >
+    <Host style={layout.groupedScreen} colorScheme={colorScheme}>
       <List
         modifiers={
-          isLoading
-            ? [
-                listStyle('insetGrouped'),
-                redacted('placeholder'),
-                disabled(true),
-              ]
-            : [listStyle('insetGrouped')]
+          isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
         }
       >
         {/* Profile — the Settings.app Apple-ID row: tap to push the edit sheet. */}
@@ -117,64 +142,18 @@ export const SettingsContent = () => {
             <HStack spacing={12} modifiers={[padding({ vertical: 6 })]}>
               <Avatar source={photoURL} fallback={displayName} size={60} />
               <VStack alignment="leading" spacing={2}>
-                <Text
-                  modifiers={[
-                    font({ textStyle: 'headline' }),
-                    foregroundStyle(colors.label),
-                    lineLimit(1),
-                  ]}
-                >
-                  {displayName}
-                </Text>
-                {/* Apple private-relay addresses are long and unbreakable; a
-                    tail/word wrap hyphenates mid-token ("appleid.-com") and
-                    reads as a rendering bug. One line + middle truncation
-                    keeps the mailbox and the domain, and degrades honestly. */}
-                <Text
-                  modifiers={[
-                    font({ textStyle: 'footnote' }),
-                    foregroundStyle(colors.secondaryLabel),
-                    lineLimit(1),
-                    truncationMode('middle'),
-                  ]}
-                >
-                  {email}
-                </Text>
+                <Text modifiers={mods.headlineLabelOneLine}>{displayName}</Text>
+                <Text modifiers={PROFILE_EMAIL_MODIFIERS}>{email}</Text>
                 {memberSince ? (
-                  <Text
-                    modifiers={[
-                      font({ textStyle: 'footnote' }),
-                      foregroundStyle(colors.secondaryLabel),
-                      lineLimit(1),
-                    ]}
-                  >
+                  <Text modifiers={mods.footnoteSecondaryOneLine}>
                     {memberSince}
                   </Text>
                 ) : null}
               </VStack>
               <Spacer />
-              {/* Hand-drawn disclosure indicator, deliberately.
-                  @expo/ui exposes no `NavigationLink`, and the SwiftUI `Link`
-                  it does export takes a URL `destination` handed to `openURL` —
-                  it neither pushes an Expo Router route nor draws a chevron. An
-                  expo-router `<Link>` is a React Native view and cannot nest
-                  inside this SwiftUI `List`. So the glyph stays hand-drawn, but:
-                  it now scales with Dynamic Type (`font` with a `textStyle`,
-                  which also supersedes the old fixed `size={14}`), and it is
-                  hidden from VoiceOver so the row announces once, as a button
-                  with a hint, instead of trailing a stray image.
-                  `foregroundStyle({ hierarchical: 'tertiary' })` was tried and
-                  rejected: hierarchical styles resolve against the *inherited*
-                  foreground, which inside a `Button` is the accent tint, so the
-                  chevron would render blue. `tertiaryLabel` is the gray UIKit
-                  itself uses for the disclosure indicator. */}
               <Image
                 systemName="chevron.right"
-                modifiers={[
-                  font({ textStyle: 'footnote', weight: 'semibold' }),
-                  foregroundStyle(colors.tertiaryLabel),
-                  accessibilityHidden(true),
-                ]}
+                modifiers={DISCLOSURE_CHEVRON_MODIFIERS}
               />
             </HStack>
           </Button>
@@ -215,14 +194,7 @@ export const SettingsContent = () => {
               >
                 <HStack>
                   <Spacer />
-                  <Text
-                    modifiers={[
-                      font({ textStyle: 'body' }),
-                      foregroundStyle(colors.systemRed),
-                    ]}
-                  >
-                    Log Out
-                  </Text>
+                  <Text modifiers={mods.bodyDestructive}>Log Out</Text>
                   <Spacer />
                 </HStack>
               </Button>

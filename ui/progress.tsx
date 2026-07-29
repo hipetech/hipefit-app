@@ -1,5 +1,5 @@
 import type { ViewStyle } from 'react-native';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { colors } from '@/theme/colors';
 
@@ -12,34 +12,34 @@ interface ProgressProps {
   indicatorStyle?: ViewStyle;
 }
 
+const styles = StyleSheet.create({
+  track: {
+    height: 8,
+    width: '100%',
+    overflow: 'hidden',
+    borderRadius: 9999,
+    borderCurve: 'continuous',
+    backgroundColor: colors.tertiarySystemBackground,
+  },
+  indicator: {
+    height: '100%',
+    borderRadius: 9999,
+    borderCurve: 'continuous',
+    backgroundColor: colors.label,
+  },
+});
+
 /**
  * Simple determinate progress bar. Plain RN `View` track + indicator styled
  * from `@/theme/colors` (was `bg-default/20` track, `bg-foreground` bar).
  */
 export function Progress({ value = 0, style, indicatorStyle }: ProgressProps) {
   return (
-    <View
-      style={[
-        {
-          height: 8,
-          width: '100%',
-          overflow: 'hidden',
-          borderRadius: 9999,
-          borderCurve: 'continuous',
-          backgroundColor: colors.tertiarySystemBackground,
-        },
-        style,
-      ]}
-    >
+    <View style={[styles.track, style]}>
       <View
         style={[
-          {
-            height: '100%',
-            borderRadius: 9999,
-            borderCurve: 'continuous',
-            backgroundColor: colors.label,
-            width: `${Math.min(100, Math.max(0, value))}%`,
-          },
+          styles.indicator,
+          { width: `${Math.min(100, Math.max(0, value))}%` },
           indicatorStyle,
         ]}
       />

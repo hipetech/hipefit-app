@@ -1,5 +1,8 @@
 # Redesign plan: full Apple-native look
 
+> **Status: complete as of 2026-07-27. This is a historical record, not a work list — every phase below has landed, and the Phase 0/1 bugs it describes are already fixed.**
+> **Its conclusions are distilled into the "UI Components" section of `AGENTS.md`, which is the authority; read this only for the Phase 0 diagnostics.**
+
 Target: Hipefit reads as an app Apple could have shipped — indistinguishable in styling
 from Fitness / Health / Journal. iOS only.
 

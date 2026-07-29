@@ -1,16 +1,11 @@
 import type { WithId } from '@/database';
 import type { Workout } from '@/database/types';
 import { Button, HStack, Image, Spacer, Text, VStack } from '@expo/ui/swift-ui';
-import {
-  buttonStyle,
-  disabled,
-  font,
-  foregroundStyle,
-  lineLimit,
-} from '@expo/ui/swift-ui/modifiers';
+import { buttonStyle, disabled } from '@expo/ui/swift-ui/modifiers';
 
 import { formatShortDate } from '@/lib/format';
 import { colors } from '@/theme/colors';
+import { mods } from '@/theme/modifiers';
 
 export interface ActiveWorkoutBannerProps {
   /** The in-progress workout to surface. */
@@ -42,25 +37,13 @@ export const ActiveWorkoutBanner = ({
     <Image
       systemName="figure.run"
       color={colors.systemOrange}
-      modifiers={[font({ textStyle: 'title3' })]}
+      modifiers={mods.title3}
     />
     <VStack alignment="leading" spacing={2}>
-      <Text
-        modifiers={[
-          font({ textStyle: 'headline' }),
-          foregroundStyle(colors.label),
-          lineLimit(1),
-        ]}
-      >
+      <Text modifiers={mods.headlineLabelOneLine}>
         {workout.data.routineName ?? 'Quick Workout'}
       </Text>
-      <Text
-        modifiers={[
-          font({ textStyle: 'footnote' }),
-          foregroundStyle(colors.secondaryLabel),
-          lineLimit(1),
-        ]}
-      >
+      <Text modifiers={mods.footnoteSecondaryOneLine}>
         {`${workout.data.totalExercises} exercises · ${formatShortDate(workout.data.startedAt)}`}
       </Text>
     </VStack>
