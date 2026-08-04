@@ -55,3 +55,12 @@ scripts/*-firebase-adminsdk-*.json
 
 # Agent tmp files
 /qa-artifacts
+
+# Obsidian vault over docs/. The Markdown is canonical and Obsidian is optional, so
+# only the config that gives every reader the same behaviour is tracked (app.json,
+# core-plugins.json). Everything else is per-machine: workspace.json rewrites on
+# every pane move, appearance/graph state is personal, and plugins/ is downloaded
+# third-party code nobody should have to review in a diff.
+docs/.obsidian/*
+!docs/.obsidian/app.json
+!docs/.obsidian/core-plugins.json

@@ -2,7 +2,7 @@
  * Metrics shared by the Exercises list and its rows so the flat `LegendList`
  * reads as a single `insetGrouped` section.
  *
- * The screen is deliberately *not* a SwiftUI `List` (see `exercise-row.ios.tsx`
+ * The screen is deliberately *not* a SwiftUI `List` (see `exercise-row.tsx`
  * for the reasoning), so the grouped look is reproduced by hand: the scroll
  * container supplies the 16pt side margins, each row paints
  * `secondarySystemGroupedBackground`, the first and last rows round their outer

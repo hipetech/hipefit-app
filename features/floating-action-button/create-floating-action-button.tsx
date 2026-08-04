@@ -76,7 +76,7 @@ const MENU_MODIFIERS = [
  * The open menu covers this button and drops it from the accessibility tree.
  * That is what an anchored `UIMenu` does on iOS 26 — expected, not a bug.
  *
- * Evidence and measurements: `docs/plans/create-fab-menu-defect.md`.
+ * The rules above and the reasoning behind them: `docs/app/navigation.md`.
  */
 export const CreateFloatingActionButton = () => {
   const colorScheme = useAppColorScheme();

@@ -27,6 +27,10 @@ ios/Pods/
 android/.gradle/
 android/app/build/
 
+# Obsidian vault config. Obsidian rewrites these files itself, so formatting them
+# only produces a diff it will undo; the Markdown they describe is still formatted.
+docs/.obsidian/
+
 # Vendored agent skills (upstream content tracked in skills-lock.json).
 # `bun run format` globs **/*.md and would otherwise rewrite these third-party
 # docs — reformatting tables and sorting imports inside their code fences.
