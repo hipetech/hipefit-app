@@ -2,7 +2,7 @@
 type: flow
 status: current
 area: workouts
-updated: 2026-08-04
+updated: 2026-08-05
 ---
 
 # Flow: finish and log a workout
@@ -55,10 +55,10 @@ is inert:
 The banner renders only when `inProgressWorkout` is non-null, inside an "In Progress" section that
 [`features/workouts/workouts-content.tsx`](../../features/workouts/workouts-content.tsx) places
 above the routine carousel. There is no **Finish**, **Complete**, **Discard**, or **Abandon**
-control anywhere — not on the banner, not in the global create menu
-([`features/floating-action-button/create-floating-action-button.tsx`](../../features/floating-action-button/create-floating-action-button.tsx),
-whose three actions are Start Workout / New Routine / Custom Exercise, all disabled), and not in a
-toolbar: [`app/(private)/workouts/index.tsx`](<../../app/(private)/workouts/index.tsx>) declares
+control anywhere — not on the banner, not in the global create panel
+([`features/navigation-dock/navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts),
+whose three actions are Start Workout / New Routine / Custom Exercise, all shipping
+`enabled: false`), and not in a toolbar: [`app/(private)/workouts/index.tsx`](<../../app/(private)/workouts/index.tsx>) declares
 only a large title.
 
 ## Main path today

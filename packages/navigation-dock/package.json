@@ -1,0 +1,13 @@
+{
+  "name": "@hipefit/navigation-dock",
+  "version": "1.0.0",
+  "private": true,
+  "description": "iOS-only Expo view module rendering the Hipefit create button and its native action panel.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}

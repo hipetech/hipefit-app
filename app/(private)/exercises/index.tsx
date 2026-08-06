@@ -17,7 +17,6 @@ import {
   GROUPED_SEPARATOR_INSET,
 } from '@/features/exercises/row-metrics';
 import { useExerciseStore } from '@/features/exercises/store/use-exercise-store';
-import { FLOATING_ACTION_BUTTON_CONTENT_INSET } from '@/features/floating-action-button/floating-action-button-metrics';
 import { hapticImpact, hapticSelection } from '@/lib/haptics';
 import { colors } from '@/theme/colors';
 import { layout } from '@/theme/styles';
@@ -57,15 +56,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.separator,
   },
   /**
-   * `paddingBottom` clears the floating create button.
-   * `contentInsetAdjustmentBehavior` only accounts for the tab bar, which the
-   * button sits above, so without this the last row scrolls under it and loses
-   * its trailing hit area.
+   * No bottom padding for the create affordance any more. It used to be a
+   * circle floating *above* the tab bar, which `contentInsetAdjustmentBehavior`
+   * knows nothing about, so the last row needed extra clearance to avoid
+   * scrolling underneath it. The button is now a tab bar item beside the bar, so
+   * the automatic inset already covers everything on screen.
    */
   listContent: {
     paddingHorizontal: GROUPED_SECTION_MARGIN,
     paddingTop: 8,
-    paddingBottom: FLOATING_ACTION_BUTTON_CONTENT_INSET,
   },
 });
 

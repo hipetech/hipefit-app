@@ -6,6 +6,7 @@
       "name": "hipefit-app",
       "dependencies": {
         "@expo/ui": "~57.0.7",
+        "@hipefit/navigation-dock": "workspace:*",
         "@legendapp/list": "^3.3.3",
         "@react-native-firebase/ai": "25.1.0",
         "@react-native-firebase/analytics": "25.1.0",
@@ -50,7 +51,17 @@
         "husky": "^9.1.7",
         "lint-staged": "^16.2.7",
         "prettier": "^3.9.6",
+        "sf-symbols-typescript": "^2.1.0",
         "typescript": "~6.0.3",
+      },
+    },
+    "packages/navigation-dock": {
+      "name": "@hipefit/navigation-dock",
+      "version": "1.0.0",
+      "peerDependencies": {
+        "expo": "*",
+        "react": "*",
+        "react-native": "*",
       },
     },
   },
@@ -398,6 +409,8 @@
     "@grpc/grpc-js": ["@grpc/grpc-js@1.14.3", "", { "dependencies": { "@grpc/proto-loader": "^0.8.0", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-Iq8QQQ/7X3Sac15oB6p0FmUg/klxQvXLeileoqrTRGJYLV+/9tubbr9ipz0GKHjmXVsgFPo/+W+2cA8eNcR+XA=="],
 
     "@grpc/proto-loader": ["@grpc/proto-loader@0.8.0", "", { "dependencies": { "lodash.camelcase": "^4.3.0", "long": "^5.0.0", "protobufjs": "^7.5.3", "yargs": "^17.7.2" }, "bin": { "proto-loader-gen-types": "build/bin/proto-loader-gen-types.js" } }, "sha512-rc1hOQtjIWGxcxpb9aHAfLpIctjEnsDehj0DAiVfBlmT84uvR0uUtN2hEi/ecvWVjXUGf5qPF4qEgiLOx1YIMQ=="],
+
+    "@hipefit/navigation-dock": ["@hipefit/navigation-dock@workspace:packages/navigation-dock"],
 
     "@humanfs/core": ["@humanfs/core@0.19.1", "", {}, "sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA=="],
 

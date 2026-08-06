@@ -2,7 +2,7 @@
 type: flow
 status: current
 area: workouts
-updated: 2026-08-04
+updated: 2026-08-05
 ---
 
 # Flow: start a workout
@@ -40,12 +40,12 @@ Only the first half of the first clause is reachable: the user can see routines 
 
 Four affordances advertise this journey. All four are inert.
 
-| Entry point                                          | Where                                                                                                                                          | Why it does nothing                                                                                        |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Start Workout** in the global create menu          | [`features/floating-action-button/create-floating-action-button.tsx`](../../features/floating-action-button/create-floating-action-button.tsx) | Carries `mods.disabledOnly` and no `onPress`.                                                              |
-| **Start Workout** under Home's Featured Routine      | [`features/home/home-content.tsx`](../../features/home/home-content.tsx)                                                                       | Same — `mods.disabledOnly`, no handler.                                                                    |
-| **Start** on a routine card in the Workouts carousel | [`features/workouts/routine-card.tsx`](../../features/workouts/routine-card.tsx)                                                               | `onStart` is optional and `WorkoutsContent` never passes it, so `disabled(onStart == null)` resolves true. |
-| **Resume** on the in-progress banner                 | [`features/workouts/active-workout-banner.tsx`](../../features/workouts/active-workout-banner.tsx)                                             | Same shape: `onContinue` is never passed, so the button is disabled.                                       |
+| Entry point                                          | Where                                                                                                              | Why it does nothing                                                                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| **Start Workout** in the global create panel         | [`features/navigation-dock/navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts) | Ships `enabled: false`; the native control swallows the touch, so `onActionPress` never fires.             |
+| **Start Workout** under Home's Featured Routine      | [`features/home/home-content.tsx`](../../features/home/home-content.tsx)                                           | Same — `mods.disabledOnly`, no handler.                                                                    |
+| **Start** on a routine card in the Workouts carousel | [`features/workouts/routine-card.tsx`](../../features/workouts/routine-card.tsx)                                   | `onStart` is optional and `WorkoutsContent` never passes it, so `disabled(onStart == null)` resolves true. |
+| **Resume** on the in-progress banner                 | [`features/workouts/active-workout-banner.tsx`](../../features/workouts/active-workout-banner.tsx)                 | Same shape: `onContinue` is never passed, so the button is disabled.                                       |
 
 Two adjacent affordances belong to the same missing destination and are disabled by the same shared
 constant, `mods.primaryActionButtonDisabled` in [`theme/modifiers.ts`](../../theme/modifiers.ts):
@@ -69,9 +69,9 @@ Numbered because these steps do happen — the journey just terminates at step 2
 1. **The user opens Home or Workouts.** Both routes are thin: they mount one feature island and
    declare a large title. See [`app/(private)/(home)/index.tsx`](<../../app/(private)/(home)/index.tsx>)
    and [`app/(private)/workouts/index.tsx`](<../../app/(private)/workouts/index.tsx>). The tab
-   navigator and the floating create button are siblings in
-   [`app/(private)/_layout.tsx`](<../../app/(private)/_layout.tsx>), which is why the create menu is
-   reachable from every tab.
+   navigator and the native create panel are siblings in
+   [`app/(private)/_layout.tsx`](<../../app/(private)/_layout.tsx>), and Create is itself a tab bar
+   item, which is why the panel is reachable from every tab.
 2. **The user reaches for a start affordance and finds it disabled.** On Workouts, if an
    `in_progress` workout somehow exists in Firestore, an "In Progress" section renders above the
    routine carousel with a disabled Resume button
@@ -107,7 +107,7 @@ The gap is larger than a screen. Enumerated because the disabled buttons make it
   [`use-auth-store.ts`](../../features/auth/store/use-auth-store.ts) and the two profile mutations
   in [`features/user/store/use-user-store.ts`](../../features/user/store/use-user-store.ts).
 - **A routine-creation path**, which everything routine-based here depends on. "New Routine" in the
-  create menu is disabled too, and `features/routines/` contains a store and nothing else.
+  create panel is disabled too, and `features/routines/` contains a store and nothing else.
 - **A rule for how many workouts may be in progress.** The store takes the _first_ `in_progress`
   document in `startedAt desc` order (`use-workout-store.ts`); nothing enforces uniqueness, and the
   UI assumes it.

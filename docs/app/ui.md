@@ -2,7 +2,7 @@
 type: app
 status: current
 area: ui
-updated: 2026-08-04
+updated: 2026-08-05
 ---
 
 # The UI system
@@ -14,7 +14,7 @@ provider. Metro carries no `global.css` and no uniwind configuration, and the ro
 consequence of that choice.
 
 This document is the authority for building screen bodies. Navigation chrome — titles, toolbars,
-search bars, tabs and the global create button — belongs to [navigation.md](navigation.md); the
+search bars, tabs and the global create dock — belongs to [navigation.md](navigation.md); the
 layer map and the route/feature split are in [architecture.md](architecture.md).
 
 ## Three vocabularies and one bridge
@@ -93,6 +93,156 @@ inside a `Host`.
 
 Add to `ui/` only when a shape has more than one call site. Anything with a single call site stays
 in its feature directory, where its rationale can live beside the screen that needs it.
+
+## When a hand-written native view is correct
+
+`@expo/ui` is the default and stays the default. The app has **one** hand-written native view:
+[`packages/navigation-dock/`](../../packages/navigation-dock/index.ts), a workspace package consumed
+as `@hipefit/navigation-dock`, whose `NavigationDockView` is a UIKit `ExpoView` — the create action
+panel and the scrim behind it, drawn in UIKit rather than SwiftUI. It draws no button: Create is a
+`UITabBar` item, for the reason given in [navigation.md](navigation.md). Where such packages live and
+how they are linked is in [architecture.md](architecture.md#packages-the-local-native-boundary); this
+section is about when reaching for one is justified and what the resulting view owes.
+
+Write a UIKit `ExpoView` only when the view needs something the SwiftUI bridge structurally cannot
+give it. Three such requirements produced this one:
+
+- **It must pass touches through where it is not drawing.** That means owning `hitTest`. A
+  `UIHostingController`'s view answers for its whole frame and offers no supported way to say "not
+  here", so a full-screen SwiftUI overlay would swallow the screen.
+- **It must move VoiceOver focus to a specific control.** Posting a focus notification needs a
+  stable `UIView` to pass as the argument, which a SwiftUI subtree does not hand back.
+- **It needs presentation semantics with no `@expo/ui` equivalent** — `accessibilityViewIsModal`,
+  `accessibilityPerformEscape`.
+
+If none of those apply, the answer is a `Host` and `@expo/ui`. Wanting a custom look is not a
+reason; neither is an animation, which SwiftUI can express.
+
+**The bridge is props in, events out.** The module declares no `Function` or `AsyncFunction`, so
+React cannot drive the view out of band and there is no second source of truth for its state: React
+owns `expanded`, native owns everything drawn, and the view animates toward whatever prop arrives —
+it has no press to interpret, since the button that toggles it is a tab bar item outside this view
+entirely. Prop setters record what changed and a single `OnViewDidUpdateProps` applies the commit as
+one unit, so the view never draws a frame built from some new props and some old ones. The three-way
+ownership split is tabulated in [navigation.md](navigation.md).
+
+### Materials and the pre-26 fallback
+
+**The card's glass is SwiftUI, hosted inside the UIKit view.**
+[`DockGlassSurface.swift`](../../packages/navigation-dock/ios/DockGlassSurface.swift) renders it and
+handles both sides of the iOS 26 line — `glassEffect` above, `.regularMaterial` below. It is the
+module's only SwiftUI, and the reason is animation rather than taste: a `CAAnimation` attached to a
+`UIGlassEffect` surface or any ancestor composites its system-drawn shadow twice, and SwiftUI's
+animation engine does not attach one. That file carries the measurement, the six falsified UIKit
+routes, and the numbers on both sides. It replaced a `MaterialSurfaceView` wrapper around
+`UIVisualEffectView`, which no UIKit animation could fade cleanly.
+
+**Only the background is SwiftUI.** The grid, the scroll view and every control stay UIKit, drawn as
+siblings on top rather than children — which is what keeps `hitTest` UIKit's and lets the grid keep
+fading through `UIView.animate` without reintroducing the artifact.
+
+**The backdrop is not one of them, and no longer draws anything at all.** It has been three things:
+a full-screen `.systemUltraThinMaterial`, which obscured the screen and starved the card — glass
+renders by refracting what is behind it, so a card floating on an already-blurred backdrop had
+nothing left to sample and stopped reading as a surface; then a black dimming scrim, which fixed the
+glass but still shaded the whole app; now nothing. The card's own material is what separates it from
+the content, exactly as in the reference.
+
+**The view survives with a clear background because its job was never the shade.** It covers the
+whole screen, captures the dismiss tap, blocks every touch behind it, and carries
+`accessibilityViewIsModal`. An invisible modal barrier is still a modal barrier. Two earlier
+revisions stopped it short of the tab bar — one the dimming, one the touches — and both were wrong:
+the first drew a bright band across the bottom of a dimmed screen, the second left a tab bar that
+still navigated from under a scrim.
+
+The OS split is an **availability check, never a preprocessor branch**, so one code path is compiled
+and shipped for every supported version. Glass is gated three times over: `#if compiler(>=6.2)`
+because `UIGlassEffect` does not exist in pre-Xcode-26 SDKs and would not compile; `@available(iOS
+26.0, *)`; and an `NSClassFromString` runtime probe, because early iOS 26 betas vend a
+`UIGlassEffect` whose initializer fails. Below that, the fallback is a `UIVisualEffectView` with
+`.systemChromeMaterial` — what UIKit puts behind its own bars, so the dock reads as chrome rather
+than as a sheet.
+
+Two ordering traps are encoded in that file and must not be "simplified" away: a glass effect
+assigned before the view has a non-zero size renders nothing, and re-assigning one without tearing
+down the old effect leaves the surface blank. So the effect is applied on the first real layout pass
+and not again.
+
+**Not verified below iOS 26.** The glass path was confirmed at runtime on an iOS 26.5 simulator. The
+16.4–25 fallback has never been seen — no pre-26 simulator runtime exists on this machine — so its
+appearance is reasoned from the API, not observed. Treat it as unverified until someone runs it.
+
+### Pass-through hit testing
+
+A full-screen overlay that is mostly empty must return `nil` from `hitTest` for the parts it does
+not want, or it takes the whole screen away from the tab bar and the list underneath. The rule the
+dock uses is the whole rule: `super.hitTest` already returns the deepest view that claims the point,
+and the panel and scrim are `isHidden` while collapsed, so a hit that lands on the overlay _itself_
+means nothing in it wanted the touch — return `nil` and it falls through. Expanded there is no rule
+at all: the overlay claims every point, because the panel is modal.
+
+Two related distinctions, both easy to get backwards:
+
+- A decorative `UIVisualEffectView` inside a control must set `isUserInteractionEnabled = false`, or
+  it consumes the touch before the control sees it.
+- A **disabled** control uses `isEnabled = false`, never `isUserInteractionEnabled = false`. A
+  disabled `UIControl` is still hit-tested and fires nothing, which is what makes a disabled action
+  swallow its touch; switching off interaction would drop the touch onto whatever is behind it.
+
+### Native motion
+
+The dock's motion is UIKit's, and it follows the same principle as the SwiftUI screens: one
+animation drives every view that participates. Since the backdrop became invisible, that is a single
+property — the panel's `alpha`, in one `UIView.animate` block. There is **no transform**. A glass
+surface's shadow is drawn by the system and does not follow a scale, which showed up as a halo wider
+and darker than the card for the first frames of every open; a translation avoided that but bought
+nothing a fade does not already do. The backdrop still takes part in the _timing_: it is unhidden
+before the animation and re-hidden in the completion, so it blocks touches for the whole
+presentation rather than only once the panel has landed. The Create glyph is not part of it — a tab
+bar item cannot cross-fade between two images, so it swaps. That is the one piece of motion given up
+by moving the button into the bar.
+
+**Reduce Motion is a prop, not an automatic behaviour** — UIKit no more honours it for you than
+SwiftUI does. `reduceMotion` comes from [hooks/use-reduce-motion.ts](../../hooks/use-reduce-motion.ts),
+the same hook the `List` screens gate on. With the motion already reduced to a cross-fade for
+everyone, that path only shortens it.
+
+**Two animations, deliberately.** SwiftUI fades the glass; `UIView.animate` fades the grid. They run
+the same curve and duration and look like one animation, and splitting them is what removes the
+doubled-shadow artifact rather than a compromise around it: the glass never gets a `CAAnimation`, and
+the grid is a sibling of the glass rather than an ancestor, so its animation cannot reach it.
+Fading the _card_ instead would put the animation above the glass and bring the halo straight back —
+[`DockGlassSurface.swift`](../../packages/navigation-dock/ios/DockGlassSurface.swift) carries the
+measurement and the six falsified alternatives. Check it before re-investigating.
+
+### Accessibility rules for a native overlay
+
+- **Modality follows the state, not the animation.** `accessibilityViewIsModal` is set the moment
+  the panel is requested, so the tab bar behind it stops being reachable immediately rather than
+  when the spring settles.
+- **The scrim is hidden from VoiceOver** (`accessibilityElementsHidden`). A full-screen "Dismiss"
+  element would sit in front of the panel and be the first thing a swipe reaches. Escape is served
+  by `accessibilityPerformEscape`, which emits the same dismissal a scrim tap does — and it is the
+  _only_ route for a VoiceOver user, because `accessibilityViewIsModal` also hides the tab bar and
+  therefore the Close button. The scrim blocks that region for everyone, so this matches the sighted
+  behaviour rather than diverging from it.
+- **Focus is posted explicitly on both edges**, with `.layoutChanged`: to the first action on
+  expand — a container argument makes VoiceOver pick its own starting element, which lands on the
+  scroll view — and to `nil` on dismiss, asking UIKit to re-read the screen. It cannot name the
+  Create button any more: that control belongs to the tab bar, and this view has no reference to it.
+- **Expanded state is spelled in the button's label**, "Create" / "Close", not in a selected trait —
+  set on the trigger in the tab layout, not here.
+- **Dynamic Type is structural, not observed.** Sizes come from text-style SF Symbols and
+  `adjustsFontForContentSizeCategory` labels, so a content-size change invalidates intrinsic sizes
+  and re-solves the layout by itself — which is why the module installs no trait observer and
+  overrides no `traitCollectionDidChange`. On the action controls Apple's 44pt minimum is a `>=`
+  constraint, so they clear it and can still grow past it.
+- **Nothing here is pinned to a measured size.** There used to be one exception — a fixed 60pt
+  Create circle, coupled to a list's content inset — and it went away with the button itself, which
+  is now a `UITabBar` item UIKit sizes.
+  [`DockLayout.swift`](../../packages/navigation-dock/ios/DockLayout.swift) holds padding and motion
+  values only; the single number the module cannot derive is the vertical offset, and React supplies
+  it.
 
 ## Color and theme
 
@@ -247,19 +397,25 @@ tall centred empty card the grouped-list migration deleted.
 ## Hit testing and accessibility
 
 **A SwiftUI `Menu` hit-tests and labels its `label` view, not the `Menu`.** Modifiers on the `Menu`
-reach the menu _container_ and silently do nothing to the interactive part. This has bitten twice:
-first with `accessibilityLabel`, which produced two accessibility nodes, one of them a stray
-full-screen element; then with `contentShape`, which had no effect at all (measured). Anything
-concerning **hit area, accessibility or the appearance of the control itself** goes on the leaf
-inside `label`; only appearance of the container belongs on the `Menu`.
+reach the menu _container_ and silently do nothing to the interactive part. This bit twice on the
+create button before it became a native view: first with `accessibilityLabel`, which produced two
+accessibility nodes, one of them a stray full-screen element; then with `contentShape`, which had no
+effect at all (measured). Anything concerning **hit area, accessibility or the appearance of the
+control itself** goes on the leaf inside `label`; only appearance of the container belongs on the
+`Menu`.
 
-A glyph is only as tappable as it is large. Pair `frame(...)` with `contentShape(...)` **on the
-label, in that order** — `frame` alone is not enough, because hit-testing follows drawn content
-rather than layout bounds. A 24pt glyph centred in a 60pt circle otherwise leaves an 18pt dead ring
-and fails Apple's 44pt minimum target.
-[features/floating-action-button/create-floating-action-button.tsx](../../features/floating-action-button/create-floating-action-button.tsx)
-keeps its label modifiers and its container modifiers in two separate arrays for exactly this reason;
-that control's own contract is in [navigation.md](navigation.md).
+Related, and the reason that pair of findings is worth keeping: a glyph is only as tappable as it is
+large. Pair `frame(...)` with `contentShape(...)` **on the label, in that order** — `frame` alone is
+not enough, because hit-testing follows drawn content rather than layout bounds. A 24pt glyph centred
+in a 60pt circle otherwise leaves an 18pt dead ring and fails Apple's 44pt minimum target.
+
+**No `@expo/ui` `Menu` exists in the app today.** The create menu was the last one and is now the
+native dock ([navigation.md](navigation.md)); the only menu still on screen is the
+`Stack.Toolbar.Menu` in [app/(private)/exercises/index.tsx](<../../app/(private)/exercises/index.tsx>),
+which is Expo Router's toolbar API and a different thing. Both rules above are recorded findings to
+apply if a SwiftUI `Menu` comes back, not descriptions of live code. Hit testing inside the native
+dock follows a different set of rules —
+[Pass-through hit testing](#pass-through-hit-testing) above.
 
 Two more rules the screens already follow. Decorative glyphs are hidden from VoiceOver with
 `accessibilityHidden(true)` so a row announces once — the hand-drawn disclosure chevron in
@@ -297,7 +453,9 @@ applied **outermost**, after `font` and `monospacedDigit`. `contentTransition` a
 `animation` supplies the transaction that drives it. Animate only values that genuinely mutate in
 place — a logged workout's duration is immutable and gains nothing. Keep durations at or under
 300ms; the Activity counters use 250ms ease-in-out, against Apple's `Animation.default` of roughly
-350ms, which reads as draggy on a three-row stat block.
+350ms, which reads as draggy on a three-row stat block. That cap is about a value changing in place;
+the one recorded exception is the dock's modal presentation, argued in
+[Native motion](#native-motion) above.
 
 **SwiftUI does not honour Reduce Motion for you.** `@expo/ui`'s `animation` modifier is a thin
 pass-through to `.animation(_:value:)` with no accessibility check
