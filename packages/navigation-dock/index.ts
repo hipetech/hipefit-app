@@ -14,18 +14,14 @@ export interface NavigationDockViewProps {
   /** At most nine. Native renders three per row in descriptor order. */
   actions: NavigationDockAction[];
   /**
-   * Distance in points from the bottom of the **screen** to the top edge of the
-   * tab bar, supplied from `NAVIGATION_DOCK_BOTTOM_INSET`.
+   * Points from the bottom of the **screen** to the top edge of the tab bar,
+   * from `NAVIGATION_DOCK_BOTTOM_INSET`. Anchors the panel and stops the scrim,
+   * so the tab bar stays lit while the panel is open.
    *
-   * It does two jobs: the panel is anchored above this line, and the scrim stops
-   * at it, so the tab bar and the Create circle stay lit and tappable while the
-   * panel is open.
-   *
-   * Passed in rather than measured because a sibling overlay cannot read the
-   * system tab bar's geometry through public API. Do **not** subtract the safe
-   * area before sending it: the measured constant already accounts for the
-   * floating tab bar being inset within the safe area on iOS 26, and native
-   * treats the safe area as a floor rather than adding it.
+   * Passed in because a sibling overlay cannot read the tab bar's geometry
+   * through public API. Do **not** subtract the safe area first — the constant
+   * already accounts for the bar being inset within it on iOS 26, and native
+   * treats the safe area as a floor rather than an addend.
    */
   bottomInset: number;
   reduceMotion: boolean;
@@ -38,21 +34,16 @@ export interface NavigationDockViewProps {
 }
 
 /**
- * The Create action panel and the scrim behind it.
- *
- * It renders no tabs **and no button**. All five items along the bottom — the
- * four tabs and the Create circle — are real `UITabBar` items; Create is a
- * `role="search"` trigger, which is what makes UIKit draw it detached beside the
- * bar. This view is the panel that trigger opens.
+ * The Create action panel and the scrim behind it. It renders no tabs and no
+ * button — all five bottom items are real `UITabBar` items, Create being a
+ * `role="search"` trigger UIKit draws detached beside the bar.
  *
  * `ViewProps` is intersected in rather than folded into
- * `NavigationDockViewProps`: that interface is the frozen bridge contract
- * (`docs/plans/native-navigation-dock/reference/bridge-contract.md`) and adding
- * `style` to it would make the contract and the component's accepted props two
- * different things. The caller still needs `style` — the panel's horizontal
- * margins and its top limit come from `safeAreaLayoutGuide`, and UIKit shrinks
- * a subview's safe-area insets by however much its frame is inset from the
- * window, so this must be mounted edge to edge (`StyleSheet.absoluteFill`).
+ * `NavigationDockViewProps`, which is the frozen bridge contract
+ * (`docs/plans/native-navigation-dock/reference/bridge-contract.md`). The caller
+ * still needs `style`: UIKit shrinks a subview's safe-area insets by however
+ * much its frame is inset from the window, so this must be mounted edge to edge
+ * (`StyleSheet.absoluteFill`).
  */
 export const NavigationDockView = requireNativeView<
   NavigationDockViewProps & ViewProps

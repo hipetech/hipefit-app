@@ -11,37 +11,26 @@ import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 
 /**
- * The view is full-screen so it can own its own hit testing: collapsed it
- * passes every touch through, expanded its scrim captures everything above the
- * tab bar and nothing below it. Mount it edge to edge — an inset frame shrinks
- * the safe-area insets UIKit hands it and moves the panel off its measured
- * offset.
+ * Mount edge to edge: an inset frame shrinks the safe-area insets UIKit hands
+ * the view and moves the panel off its measured offset.
  */
 const styles = StyleSheet.create({
   dock: StyleSheet.absoluteFill,
 });
 
 /**
- * The app-wide create panel, drawn natively by `@hipefit/navigation-dock`
- * (`packages/navigation-dock/`).
+ * The app-wide create panel, drawn natively by `@hipefit/navigation-dock`.
  *
- * **The button is not here.** Neither are the tabs. All five bottom items are
- * real `UITabBar` items — Create is the `role="search"` trigger in
- * `app/(private)/_layout.tsx`, which is what puts it beside the bar instead of
- * floating above it. This component is only the panel that trigger opens, which
- * is why it has no press handler and why `expanded` lives in a store both halves
- * can reach.
+ * **The button is not here**, nor the tabs — all five bottom items are real
+ * `UITabBar` items (`app/(private)/_layout.tsx`). This is only the panel the
+ * Create trigger opens, which is why it has no press handler and why `expanded`
+ * lives in a store both halves can reach.
  *
- * The division is the one frozen in
- * `docs/plans/native-navigation-dock/reference/bridge-contract.md`: React owns
- * the expanded state and the action descriptors, native owns rendering,
- * animation, materials and accessibility. `expanded` is controlled — native
- * animates toward whatever arrives rather than keeping its own copy — which is
- * what lets the three dismissals below win over a stale native state.
- *
- * All three dismissals are subscriptions to something outside React rather than
- * effects watching React state, because the panel is transient modal state and
- * the things that should close it are events, not renders.
+ * React owns the expanded state and the action descriptors; native owns
+ * rendering, animation, materials and accessibility
+ * (`docs/plans/native-navigation-dock/reference/bridge-contract.md`). All three
+ * dismissals below subscribe to something outside React rather than watching
+ * state, because the things that should close the panel are events, not renders.
  */
 export const NavigationDock = () => {
   const expanded = useNavigationDockStore((state) => state.expanded);
@@ -51,12 +40,10 @@ export const NavigationDock = () => {
   const navigationRef = useNavigationContainerRef();
 
   /*
-   * Any navigation closes the panel — a push, a presented sheet, a deep link, or
-   * the redirect that follows a session change. Not a tab switch while the panel
-   * is up: the scrim is modal and swallows that tap. This covers navigation that
-   * originates anywhere else. Watching route state in an effect instead would
-   * mean a `setState` in an effect body, which React Compiler's lint rejects for
-   * the cascading render it causes.
+   * Any navigation closes the panel — a push, a sheet, a deep link, a redirect.
+   * Not a tab switch while it is up: the scrim is modal and swallows that tap.
+   * Watching route state in an effect instead would mean a `setState` in an
+   * effect body, which React Compiler's lint rejects.
    */
   useEffect(
     () => navigationRef.addListener('state', close),
@@ -65,10 +52,9 @@ export const NavigationDock = () => {
 
   useEffect(() => {
     /*
-     * `'background'`, not `'inactive'`. iOS reports `'inactive'` for a pulled
-     * Control Center, a notification banner and an incoming system alert — all
-     * of which the user is still standing in front of the panel for, and all of
-     * which would otherwise collapse it out from under them.
+     * `'background'`, not `'inactive'`: iOS reports `'inactive'` for Control
+     * Center, a notification banner and a system alert — all cases where the
+     * user is still standing in front of the panel.
      */
     const subscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'background') {
@@ -80,12 +66,10 @@ export const NavigationDock = () => {
   }, [close]);
 
   /*
-   * Collapse when the session ends. Signing out through Settings cannot reach
-   * this — that button is behind the scrim — but Firebase can end a session on
-   * its own at any moment (revoked token, deleted account), and the panel may
-   * well be open when it does. Subscribing to the store rather than selecting
-   * `isLoggedIn` keeps this out of the render path: the dock has no reason to
-   * re-render on an auth change it is not displaying.
+   * Collapse when the session ends. Signing out cannot reach this — that button
+   * is behind the scrim — but Firebase can end a session on its own at any
+   * moment. Subscribing rather than selecting `isLoggedIn` keeps it out of the
+   * render path.
    */
   useEffect(
     () =>
@@ -103,24 +87,17 @@ export const NavigationDock = () => {
       expanded={expanded}
       actions={NAVIGATION_DOCK_ACTIONS}
       reduceMotion={reduceMotion}
-      // The hook returns `undefined` for "follow the device"; the bridge spells
-      // that `null`, because it becomes `overrideUserInterfaceStyle` and a
-      // missing key and an explicit "unspecified" are different things there.
+      // `undefined` means "follow the device"; the bridge spells that `null`,
+      // because it becomes `overrideUserInterfaceStyle` and a missing key and an
+      // explicit "unspecified" are different things there.
       colorScheme={colorScheme ?? null}
-      /*
-        The one number the view cannot work out for itself. It sits above the
-        system tab bar, and no public API reports that bar's height or its
-        minimize state — which is the entire reason
-        `navigation-dock-metrics.ts` exists and why every value in it is
-        measured rather than derived. Re-measure there, not here.
-      */
+      // The one number the view cannot work out for itself. Re-measure in
+      // `navigation-dock-metrics.ts`, not here.
       bottomInset={NAVIGATION_DOCK_BOTTOM_INSET}
       onDismissRequest={close}
-      // All three actions ship unavailable, so native swallows their touches
-      // and this never fires. It is wired to nothing rather than left off: an
-      // unhandled event is how a "temporary" stub becomes a silent navigation
-      // to the wrong place later. `navigation-dock-actions.ts` records what
-      // they wait on.
+      // All three actions ship unavailable, so native swallows their touches and
+      // this never fires. Wired to nothing rather than left off: an unhandled
+      // event is how a stub becomes a silent navigation to the wrong place.
       onActionPress={() => {}}
     />
   );

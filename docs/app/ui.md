@@ -128,10 +128,18 @@ ownership split is tabulated in [navigation.md](navigation.md).
 
 ### Materials and the pre-26 fallback
 
-**Every blurred surface goes through one type.**
-[`MaterialSurfaceView.swift`](../../packages/navigation-dock/ios/MaterialSurfaceView.swift) is
-the single source that renders on both sides of the iOS 26 line. The action card is its one instance
-now that the Create circle belongs to the tab bar.
+**The card's glass is SwiftUI, hosted inside the UIKit view.**
+[`DockGlassSurface.swift`](../../packages/navigation-dock/ios/DockGlassSurface.swift) renders it and
+handles both sides of the iOS 26 line — `glassEffect` above, `.regularMaterial` below. It is the
+module's only SwiftUI, and the reason is animation rather than taste: a `CAAnimation` attached to a
+`UIGlassEffect` surface or any ancestor composites its system-drawn shadow twice, and SwiftUI's
+animation engine does not attach one. That file carries the measurement, the six falsified UIKit
+routes, and the numbers on both sides. It replaced a `MaterialSurfaceView` wrapper around
+`UIVisualEffectView`, which no UIKit animation could fade cleanly.
+
+**Only the background is SwiftUI.** The grid, the scroll view and every control stay UIKit, drawn as
+siblings on top rather than children — which is what keeps `hitTest` UIKit's and lets the grid keep
+fading through `UIView.animate` without reintroducing the artifact.
 
 **The backdrop is not one of them, and no longer draws anything at all.** It has been three things:
 a full-screen `.systemUltraThinMaterial`, which obscured the screen and starved the card — glass
@@ -184,27 +192,28 @@ Two related distinctions, both easy to get backwards:
 ### Native motion
 
 The dock's motion is UIKit's, and it follows the same principle as the SwiftUI screens: one
-animation drives every view that participates — which, since the backdrop became invisible, is just
-the panel's alpha and transform in a single `UIView.animate` block. That transform **translates and
-never scales**: the panel is a glass surface whose shadow the system draws, and a scale leaves the
-shadow sized for the untransformed bounds, which showed up as a halo darker and wider than the card
-for the first frames of every open. `DockLayout.panelCollapsedOffset` carries the full argument. The backdrop still takes part in
-the _timing_: it is unhidden before the animation and re-hidden in the completion, so it blocks
-touches for the whole presentation rather than only once the panel has landed. The Create glyph is
-not part of it — a tab bar item cannot cross-fade between two images, so it swaps. That is the one
-piece of motion given up by moving the button into the bar.
+animation drives every view that participates. Since the backdrop became invisible, that is a single
+property — the panel's `alpha`, in one `UIView.animate` block. There is **no transform**. A glass
+surface's shadow is drawn by the system and does not follow a scale, which showed up as a halo wider
+and darker than the card for the first frames of every open; a translation avoided that but bought
+nothing a fade does not already do. The backdrop still takes part in the _timing_: it is unhidden
+before the animation and re-hidden in the completion, so it blocks touches for the whole
+presentation rather than only once the panel has landed. The Create glyph is not part of it — a tab
+bar item cannot cross-fade between two images, so it swaps. That is the one piece of motion given up
+by moving the button into the bar.
 
 **Reduce Motion is a prop, not an automatic behaviour** — UIKit no more honours it for you than
 SwiftUI does. `reduceMotion` comes from [hooks/use-reduce-motion.ts](../../hooks/use-reduce-motion.ts),
-the same hook the `List` screens gate on, and on that path the spring and the rise collapse to a
-plain cross-fade.
+the same hook the `List` screens gate on. With the motion already reduced to a cross-fade for
+everyone, that path only shortens it.
 
-`ui.md` caps animation at 300ms elsewhere, and that rule is about numeric text transitions inside a
-`List`, where anything longer reads as lag. The dock's expand/collapse is a **modal presentation**,
-where 300ms reads as a snap and UIKit's own sheet presentation is longer still, so it runs a 0.4s
-spring at 0.82 damping. The reasoning is recorded on the constants in
-[`DockLayout.swift`](../../packages/navigation-dock/ios/DockLayout.swift) so it is not "corrected"
-back. Tune the damping, not the duration.
+**Two animations, deliberately.** SwiftUI fades the glass; `UIView.animate` fades the grid. They run
+the same curve and duration and look like one animation, and splitting them is what removes the
+doubled-shadow artifact rather than a compromise around it: the glass never gets a `CAAnimation`, and
+the grid is a sibling of the glass rather than an ancestor, so its animation cannot reach it.
+Fading the _card_ instead would put the animation above the glass and bring the halo straight back —
+[`DockGlassSurface.swift`](../../packages/navigation-dock/ios/DockGlassSurface.swift) carries the
+measurement and the six falsified alternatives. Check it before re-investigating.
 
 ### Accessibility rules for a native overlay
 

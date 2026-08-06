@@ -6,13 +6,12 @@ import ExpoModulesCore
  The names below are the frozen bridge contract
  (`docs/plans/native-navigation-dock/reference/bridge-contract.md`, as revised)
  and are mirrored one-for-one in `packages/navigation-dock/index.ts`.
- Renaming anything here without renaming it there fails silently: an unknown
+ Renaming anything here without renaming it there **fails silently**: an unknown
  prop is dropped by `ExpoFabricView.updateProps` and an unknown event never
  reaches JS.
 
- There are no `Function`s or `AsyncFunction`s on purpose. Everything this view
- does is a consequence of a prop, so there is no imperative surface for React to
- drive it out of band and no second source of truth for expanded state.
+ No `Function`s or `AsyncFunction`s on purpose — no imperative surface means no
+ second source of truth for expanded state.
  */
 public final class HipefitNavigationDockModule: Module {
   public func definition() -> ModuleDefinition {
@@ -32,10 +31,8 @@ public final class HipefitNavigationDockModule: Module {
         view.setActions(actions.map(DockAction.init(record:)))
       }
 
-      // Supplied by React because a sibling overlay cannot measure the system
-      // tab bar through public API; see `NavigationDockView` for the full
-      // reasoning and the double-counting trap. It anchors the panel above the
-      // bar; the scrim ignores it and covers the screen.
+      // Supplied by React; `NavigationDockView` carries the reasoning and the
+      // double-counting trap.
       Prop("bottomInset") { (view: NavigationDockView, bottomInset: Double) in
         view.setBottomInset(CGFloat(bottomInset))
       }
