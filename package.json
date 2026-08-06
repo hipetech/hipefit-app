@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@expo/ui": "~57.0.7",
+    "@hipefit/navigation-dock": "workspace:*",
     "@legendapp/list": "^3.3.3",
     "@react-native-firebase/ai": "25.1.0",
     "@react-native-firebase/analytics": "25.1.0",
@@ -64,11 +65,15 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.9.6",
+    "sf-symbols-typescript": "^2.1.0",
     "typescript": "~6.0.3"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint --fix",
     "*.{ts,tsx,js,jsx,json,md}": "prettier --write"
   },
-  "private": true
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
 }

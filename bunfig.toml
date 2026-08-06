@@ -1,0 +1,12 @@
+# Bun defaults workspace installs to the isolated linker, which stops hoisting
+# transitive dependencies to the project root. Expo's Metro config resolves
+# `node_modules/metro-runtime/...` from the root, and Metro resolves its own
+# transform worker the same way, so an isolated layout breaks the dev server
+# with "Cannot read properties of undefined (reading 'transformFile')" even
+# though every package is installed.
+#
+# Adding `packages/*` as a workspace is what introduced this; pinning the linker
+# keeps the flat layout the app had before. Remove only if Metro stops resolving
+# from the project root.
+[install]
+linker = "hoisted"

@@ -2,7 +2,7 @@
 type: app
 status: current
 area: architecture
-updated: 2026-08-04
+updated: 2026-08-05
 ---
 
 # Application architecture
@@ -26,9 +26,11 @@ database/       Firestore refs, document types, subscription orchestration
 Firebase        Firestore / Auth, via @react-native-firebase directly
 ```
 
-Three cross-cutting modules sit beside those layers rather than inside them: `theme/` (colors,
-shared SwiftUI modifier arrays, shared RN styles), `ui/` (reusable native primitives), and
-`lib/` + `hooks/` (formatting, constants, haptics, cross-feature hooks).
+Four things sit beside those layers rather than inside them: `theme/` (colors, shared SwiftUI
+modifier arrays, shared RN styles), `ui/` (reusable native primitives), `lib/` + `hooks/`
+(formatting, constants, haptics, cross-feature hooks), and `packages/` (workspace packages the app
+consumes by name — today one iOS native module; see
+[`packages/`: the local native boundary](#packages-the-local-native-boundary)).
 
 The absence of an API/service layer is deliberate. Every read is a live `onSnapshot` subscription and
 every write is a one-line `updateDoc`/`writeBatch` against a ref helper, so a wrapper would only add
@@ -59,7 +61,7 @@ Inside `features/<name>/`:
 - `store/use-<name>-store.ts` for the domain's Zustand store;
 - measured native constants live next to the feature that measured them
   ([features/exercises/row-metrics.ts](../../features/exercises/row-metrics.ts),
-  [features/floating-action-button/floating-action-button-metrics.ts](../../features/floating-action-button/floating-action-button-metrics.ts)).
+  [features/navigation-dock/navigation-dock-metrics.ts](../../features/navigation-dock/navigation-dock-metrics.ts)).
 
 Two features do not follow the pattern, both knowingly.
 [app/(private)/exercises/index.tsx](<../../app/(private)/exercises/index.tsx>) keeps the list, the
@@ -67,8 +69,9 @@ filter state and the placeholder data in the route file because the screen _is_ 
 [features/auth/index.tsx](../../features/auth/index.tsx) is a bare `index.tsx` left over from an
 earlier convention. Neither is a template to copy.
 
-`features/floating-action-button/` is the one feature with no route of its own — it is mounted by
-the tab layout rather than by a screen. Its placement and menu contract are in
+One feature directory has no route of its own. `features/navigation-dock/` is mounted by the tab
+layout rather than by a screen — it is the React adapter for the native create panel, plus the store
+the tab layout shares with it and the measured tab bar geometry both need. Its contract is in
 [navigation.md](navigation.md).
 
 ## State: one Zustand store per domain
@@ -200,6 +203,56 @@ the ordering rule that constrains how the shared arrays may be reused are all in
 Shared formatting lives in [lib/format.ts](../../lib/format.ts) — check it before writing a local
 helper, since most date, duration and volume strings already exist there.
 
+## `packages/`: the local native boundary
+
+[packages/](../../packages) is where native code the app owns lives. Each subdirectory is a
+workspace package: a `package.json`, an `expo-module.config.json`, an `ios/` directory of Swift plus
+a podspec, and an `index.ts` that types the bridge and calls `requireNativeView`. There is exactly
+one today, [packages/navigation-dock/](../../packages/navigation-dock/index.ts) — published to the
+app as `@hipefit/navigation-dock` — which draws the global create panel and its scrim.
+
+The boundary is worth stating plainly because it is the only place in the repository where app
+behavior is written in Swift:
+
+- **A package is imported by name, never by path.**
+  `import { NavigationDockView } from '@hipefit/navigation-dock'`, not a `@/`-aliased path — the
+  `@/*` alias maps to the repository root and deliberately does not reach in here. That is the line
+  between the two directories: something reachable only by a relative path belongs in `features/`.
+- **`packages/` is for views and APIs UIKit must own.** A native module is not the answer to "this
+  should look different" — `@expo/ui` renders real SwiftUI already. It is the answer to a
+  requirement the SwiftUI bridge structurally cannot serve; [ui.md](ui.md#when-a-hand-written-native-view-is-correct)
+  lists the three that produced this one and is the authority for how such a view must behave.
+- **Linking is automatic and native config stays committed.** The package is a real dependency:
+  root `package.json` declares `workspaces: ["packages/*"]` and depends on
+  `@hipefit/navigation-dock` at `workspace:*`, so Bun symlinks it into `node_modules` and Expo
+  autolinking finds it there by its `expo-module.config.json` — exactly as it finds a published
+  module. Hence no entry in `app.config.js` and none in the `Podfile`. What there _is_, is a
+  `Podfile.lock` entry pointing at `../packages/navigation-dock/ios`, so adding, changing **or
+  removing** a local package means `pod install --project-directory=ios` and committing that lock
+  change.
+
+  **The install layout is pinned, and must stay pinned.** Bun defaults a workspace install to the
+  _isolated_ linker, which stops hoisting transitive dependencies to the project root. Expo's Metro
+  config resolves `metro-runtime` from the root and Metro resolves its own transform worker the same
+  way, so the isolated layout takes the dev server down with
+  `Cannot read properties of undefined (reading 'transformFile')` while every package is nonetheless
+  installed. [bunfig.toml](../../bunfig.toml) pins the hoisted linker for that reason.
+
+  The same episode surfaced a second rule. Adding workspaces also exposed a package the app imported
+  but never declared, relying on it being hoisted as someone else's transitive dependency. **If a
+  file imports it, `package.json` declares it.** A transitive dependency is an implementation detail
+  of the package that owns it, free to vanish in a patch release, and the failure surfaces at an
+  unrelated moment with nothing pointing back at the import that caused it.
+
+- **The React side of a native view belongs in `features/`, not in `packages/`.** `index.ts` exports
+  a typed view and nothing else — no state, no store reads, no navigation. The adapter that owns
+  those is [features/navigation-dock/navigation-dock.tsx](../../features/navigation-dock/navigation-dock.tsx),
+  which is what keeps the module reusable and the app logic testable by reading. Nothing under
+  `app/` imports from `packages/`.
+- **The bridge is a contract in two files.** Prop and event names appear in the Swift
+  `ModuleDefinition` and in `index.ts`, and nothing checks that they agree: an unknown prop is
+  dropped silently and an unknown event never reaches JS. Rename in both or not at all.
+
 ## Environments
 
 Three environments, each a distinct bundle identifier, Xcode scheme, Firebase project and App Store
@@ -237,11 +290,13 @@ Stated plainly so nothing here is mistaken for shipped behavior:
 - **There is no workout player.** Every "Start Workout" affordance is rendered `disabled` — in
   [features/home/home-content.tsx](../../features/home/home-content.tsx), in
   [features/workouts/workouts-content.tsx](../../features/workouts/workouts-content.tsx) and in the
-  create menu — and `mods.primaryActionButtonDisabled` in [theme/modifiers.ts](../../theme/modifiers.ts)
+  create panel — and `mods.primaryActionButtonDisabled` in [theme/modifiers.ts](../../theme/modifiers.ts)
   exists so those TODOs are dropped together. The `Workout` document type and the workout store are
   in place; nothing writes a workout yet.
-- **All three global create actions are stubs** — Start Workout, New Routine and Custom Exercise are
-  each declared `disabled` with no `onPress`. See [navigation.md](navigation.md) for the menu itself.
+- **All three global create actions are stubs** — Start Workout, New Routine and Custom Exercise
+  each ship `enabled: false` in
+  [features/navigation-dock/navigation-dock-actions.ts](../../features/navigation-dock/navigation-dock-actions.ts),
+  and native swallows their touches. See [navigation.md](navigation.md) for the panel itself.
 - **There is no automated test suite.** No test runner is installed; `bun run type-check` is the
   verification gate, with `bun run lint` and `bun run format:check` alongside it.
 - **There is no Android project**, by decision — see [AGENTS.md](../../AGENTS.md). Reviving it is a

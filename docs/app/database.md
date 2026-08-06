@@ -2,7 +2,7 @@
 type: app
 status: current
 area: database
-updated: 2026-08-04
+updated: 2026-08-05
 ---
 
 # Data layer
@@ -157,8 +157,8 @@ The shipped app performs exactly three kinds of write, all of them against the u
 3. `updateProfile` — `displayName` only.
 
 Nothing in the app creates or mutates a routine, a workout, a custom exercise, an exercise override,
-or a history entry. The three actions in the global create menu are `disabled` in
-[`features/floating-action-button/create-floating-action-button.tsx`](../../features/floating-action-button/create-floating-action-button.tsx)
+or a history entry. The three actions in the global create panel ship `enabled: false` in
+[`features/navigation-dock/navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts)
 until they have a destination. Every read path in the table above is real and shipped; the
 corresponding write paths are not. Any document that describes creating a routine or logging a
 workout is describing intended work, not current behavior.

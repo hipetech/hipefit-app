@@ -2,13 +2,13 @@
 type: flow
 status: current
 area: routines
-updated: 2026-08-04
+updated: 2026-08-05
 ---
 
 # Flow: create a routine
 
 > **This journey does not ship — not even partially.** The only affordance that advertises it is
-> the **New Routine** item in the global create menu, and it is `disabled`. There is no routine
+> the **New Routine** action in the global create panel, and it is `disabled`. There is no routine
 > editor route, no exercise-picker, no draft state, and no code path anywhere in the app that
 > writes a document to `users/{uid}/routines`. `features/routines/` contains one file: a read-only
 > Zustand store. What follows documents the one entry point that exists, the read side that
@@ -21,7 +21,7 @@ Build a reusable workout template — name it, add exercises in order, give each
 sets — and end up with a routine that appears in the Workouts carousel and can be started in one
 tap.
 
-**None of that is reachable.** A user can open the create menu and read the words "New Routine";
+**None of that is reachable.** A user can open the create panel and read the words "New Routine";
 they cannot press it. Routines can only enter the app by being written to Firestore by hand or by
 a script outside this repository.
 
@@ -43,18 +43,18 @@ Listed for completeness — nothing downstream of them ships.
 
 One, and it is inert.
 
-| Entry point                               | Where                                                                                                                                          | Why it does nothing                                                                              |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| **New Routine** in the global create menu | [`features/floating-action-button/create-floating-action-button.tsx`](../../features/floating-action-button/create-floating-action-button.tsx) | Carries `mods.disabledOnly` ([`theme/modifiers.ts`](../../theme/modifiers.ts)) and no `onPress`. |
+| Entry point                                | Where                                                                                                              | Why it does nothing                                                                            |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| **New Routine** in the global create panel | [`features/navigation-dock/navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts) | Ships `enabled: false`; the native control swallows the touch, so `onActionPress` never fires. |
 
-The menu itself is fully built: a SwiftUI `Menu` in a `Host` positioned absolutely as a sibling of
-`NativeTabs` in [`app/(private)/_layout.tsx`](<../../app/(private)/_layout.tsx>), so it is
-reachable from every tab. It opens on both tap and long press, its three actions are declared as
-literal JSX, and all three — **Start Workout**, **New Routine**, **Custom Exercise** — are
-disabled. The mechanics of the button (measured geometry, why it is an overlay rather than a
-`BottomAccessory`, why there is no `onPrimaryAction`) are documented in the component and in
-[`features/floating-action-button/floating-action-button-metrics.ts`](../../features/floating-action-button/floating-action-button-metrics.ts);
-none of it is specific to this flow.
+The affordance itself is fully built. **Create** is a tab bar item — a `role="search"` trigger that
+iOS 26 draws as a detached circle beside the tab bar — so it is present on every tab. Tapping it
+opens a native action panel over a modal scrim; its three actions — **Start Workout**, **New
+Routine**, **Custom Exercise** — are declared in
+[`features/navigation-dock/navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts)
+and all three are disabled. The mechanics (measured geometry, what closes the panel, why it is UIKit
+rather than `@expo/ui`) are in [`docs/app/navigation.md`](../app/navigation.md) and
+[`docs/app/ui.md`](../app/ui.md); none of it is specific to this flow.
 
 There is **no second entry point**. The Workouts screen has no `+` toolbar item — it was
 deliberately removed when the create actions moved to the tab layer, and
@@ -74,9 +74,12 @@ wrong: it names the Workouts tab, which is where the `+` used to be and no longe
 
 ## Main path today
 
-1. **The user opens any tab and taps the floating `+`.** The anchored menu opens over the button.
-   [`app/(private)/_layout.tsx`](<../../app/(private)/_layout.tsx>) mounts
-   `CreateFloatingActionButton` beside the tab navigator.
+1. **The user opens any tab and taps the `+` beside the tab bar.** The action panel animates in
+   above the bar, over a scrim that blocks the rest of the screen including the tab bar.
+   [`app/(private)/_layout.tsx`](<../../app/(private)/_layout.tsx>) declares the Create trigger and
+   mounts `NavigationDock`
+   ([`features/navigation-dock/navigation-dock.tsx`](../../features/navigation-dock/navigation-dock.tsx))
+   beside the tab navigator.
 2. — **Stops here.** **New Routine** is greyed out and does not respond. There is no route to push,
    no sheet to present, and no handler to call. `app/(private)/` contains four tab folders
    (`(home)`, `workouts`, `exercises`, `settings`) and exactly one route-based sheet,
@@ -85,7 +88,7 @@ wrong: it names the Workouts tab, which is where the `+` used to be and no longe
 
 ## What is missing
 
-Every piece. Enumerated because a disabled menu item reads as one `onPress` away, and this is
+Every piece. Enumerated because a disabled action reads as one `onPress` away, and this is
 closer to a feature than a wiring job:
 
 - **A routine editor route** under `app/(private)/`, plus a decision about its presentation — a
@@ -127,10 +130,12 @@ closer to a feature than a wiring job:
 
 ## Screens, routes, and data involved
 
-- **Routes:** none specific to this flow. The create menu is mounted by
-  [`app/(private)/_layout.tsx`](<../../app/(private)/_layout.tsx>) and therefore overlays `/`,
-  `/workouts`, `/exercises` and `/settings` equally.
-- **Islands:** `CreateFloatingActionButton` (the entry point) plus the two read consumers,
+- **Routes:** none specific to this flow, though
+  [`app/(private)/create.tsx`](<../../app/(private)/create.tsx>) exists as the route the Create tab
+  item must name; it is never displayed and redirects to Home. The panel is mounted by
+  [`app/(private)/_layout.tsx`](<../../app/(private)/_layout.tsx>) and is therefore reachable from
+  `/`, `/workouts`, `/exercises` and `/settings` equally.
+- **Islands:** `NavigationDock` (the entry point) plus the two read consumers,
   [`features/workouts/workouts-content.tsx`](../../features/workouts/workouts-content.tsx) and
   [`features/home/home-content.tsx`](../../features/home/home-content.tsx), with
   [`features/workouts/routine-card.tsx`](../../features/workouts/routine-card.tsx) as the card

@@ -2,7 +2,7 @@
 type: index
 status: current
 area: documentation
-updated: 2026-08-04
+updated: 2026-08-05
 ---
 
 # Documentation
@@ -170,7 +170,7 @@ step is reachable — three of the four below document journeys that stop partwa
 - [`flows/log-workout.md`](flows/log-workout.md) — finishing a session and the writes that would
   record it. The **write** half does not ship; the read half renders correctly.
 - [`flows/create-routine.md`](flows/create-routine.md) — building a reusable template. **Does not
-  ship**; the only affordance is a disabled menu item.
+  ship**; the only affordance is a disabled action in the native create panel.
 
 ### Templates
 
@@ -186,6 +186,9 @@ Historical and proposed work, never current behavior. New plans use an initiativ
   structure implements.
 - [`plans/agent-documentation-structure/plan.md`](plans/agent-documentation-structure/plan.md) — the
   plan that split `AGENTS.md` from the durable documents and defined the lifecycle above.
+- [`plans/native-navigation-dock/plan.md`](plans/native-navigation-dock/plan.md) — the iOS-native
+  create panel that ships today, its parallel ownership model, manual approval gate, and
+  post-approval mobile QA.
 
 Older plans remain as loose files directly under [`plans/`](plans/). They were not migrated, and
 several describe work that was never built — verify anything you take from them against the code.
