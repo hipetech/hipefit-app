@@ -83,3 +83,18 @@ export const getDifficultyValue = (difficulty: string): number => {
       return 0;
   }
 };
+
+/**
+ * A **local** calendar day ID, `YYYY-MM-DD` — the day as the device reckons it.
+ *
+ * Never `toISOString().slice(0, 10)`: that converts to UTC first, so any device
+ * behind UTC reports tomorrow's date after its local evening, and any device
+ * ahead of it reports yesterday's before local morning. The calendar keys every
+ * day off this string, so an off-by-one here selects the wrong cell.
+ */
+export const toLocalDateId = (date: Date): string => {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+
+  return `${date.getFullYear()}-${month}-${day}`;
+};

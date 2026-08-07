@@ -1,4 +1,6 @@
 import type { WithId, Workout } from '@/database';
+import { useCallback, useState } from 'react';
+import { View } from 'react-native';
 import { Host } from '@expo/ui';
 import {
   Button,
@@ -20,7 +22,13 @@ import {
   monospacedDigit,
   padding,
 } from '@expo/ui/swift-ui/modifiers';
+// Not on `expo-router`'s public surface: Expo Router 57 vendors React
+// Navigation, and this is the only way to ask how tall the navigation bar is.
+// Re-check the path on an SDK upgrade — see `headerHeight` below for why the
+// screen cannot do without it.
+import { useHeaderHeight } from 'expo-router/build/react-navigation/elements';
 
+import { ExpandableWeeklyCalendar } from '@/features/calendar/expandable-weekly-calendar';
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
 import { useUserStore } from '@/features/user/store/use-user-store';
 import { useWorkoutStore } from '@/features/workouts/store/use-workout-store';
@@ -30,6 +38,8 @@ import { formatDuration, formatRelativeDate } from '@/lib/format';
 import { colors } from '@/theme/colors';
 import { mods } from '@/theme/modifiers';
 import { layout } from '@/theme/styles';
+
+import { buildHomeCalendarMocks } from './home-calendar-mocks';
 
 /** One row of the "Recent Workouts" section, already formatted for display. */
 interface RecentWorkoutRow {
@@ -151,12 +161,16 @@ const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
  * The component reads its stores itself and takes no props, so the route file
  * stays thin (title + this island).
  *
- * One `Host` filling the screen (`flex: 1`, deliberately **no**
- * `matchContents`) around one SwiftUI `List` with `listStyle('insetGrouped')`.
- * This replaces the nine separate `Host` islands the screen used to mount. A
- * `List` has no intrinsic content height, so it can only live at the root of a
- * Host that owns real space — nesting it in an RN `ScrollView`, or measuring it
- * with `matchContents`, renders nothing. `insetGrouped` supplies the 16pt
+ * **Two sibling islands, not one.** A React Native container holds the
+ * expandable calendar above one `Host` filling the rest of the screen
+ * (`flex: 1`, deliberately **no** `matchContents`) around a SwiftUI `List` with
+ * `listStyle('insetGrouped')`. The calendar is React Native — Wix's animated
+ * open/close height is an RN layout, so it pushes the list down as a flex
+ * sibling. It cannot go inside the `Host`: SwiftUI has no place to put it, and
+ * hosting it back through a dynamically sized `RNHostView` list row would make
+ * its animation depend on cross-bridge intrinsic-size invalidation. The `Host`
+ * keeps real flex space either way, because a `List` has no intrinsic content
+ * height and renders nothing without it. `insetGrouped` supplies the 16pt
  * margins, 44pt row heights, inset hairlines and grouped background for free,
  * which is why every hand-rolled width/padding/gap constant is gone.
  *
@@ -165,6 +179,14 @@ const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
  */
 export const HomeContent = () => {
   const colorScheme = useAppColorScheme();
+  const headerHeight = useHeaderHeight();
+  // Built once, from the day the screen first mounted: the mock is relative to
+  // today, and rebuilding it on every render would hand the calendar a fresh
+  // array identity each time.
+  const [calendarMocks] = useState(() => buildHomeCalendarMocks(new Date()));
+  const [selectedDateId, setSelectedDateId] = useState(
+    calendarMocks.selectedDateId
+  );
   const reduceMotion = useReduceMotion();
   const { profile, isLoading: userLoading } = useUserStore();
   const { recentWorkouts, isLoading: workoutsLoading } = useWorkoutStore();
@@ -188,6 +210,29 @@ export const HomeContent = () => {
 
   const animateCounters = !isLoading && !reduceMotion;
 
+  /*
+   * The navigation bar overlays the screen rather than laying out above it: a
+   * native stack gives its screen the full window and lets each scroll view
+   * inset its own content, which is how the `List` below already clears the
+   * large title. The calendar does not scroll, so nothing insets it, and
+   * without this padding it renders *behind* the greeting and is invisible —
+   * which is exactly how it first appeared to be broken.
+   *
+   * The value is the expanded height, because that is what a large title
+   * measures at rest. Whether it should track the title collapsing on scroll is
+   * unverified: the seeded account has too little content for Home's list to
+   * scroll at all. `useAnimatedHeaderHeight` exposes the live value, but as an
+   * `Animated.Value` it cannot drive `paddingTop` — the native animated module
+   * rejects that property.
+   */
+
+  // Selecting a day moves the circle and nothing else. Activity, the featured
+  // routine and recent workouts are not filtered by it — day summaries need
+  // real workout data, and this initiative deliberately ships none.
+  const handleDatePress = useCallback((dateId: string) => {
+    setSelectedDateId(dateId);
+  }, []);
+
   const routine = activeRoutines[0];
   const featuredRoutine: FeaturedRoutine | null = isLoading
     ? PLACEHOLDER_ROUTINE
@@ -206,13 +251,19 @@ export const HomeContent = () => {
     : recentWorkouts.map(toRecentWorkoutRow);
 
   return (
-    <Host style={layout.groupedScreen} colorScheme={colorScheme}>
-      <List
-        modifiers={
-          isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
-        }
-      >
-        {/*
+    <View style={[layout.groupedScreen, { paddingTop: headerHeight }]}>
+      <ExpandableWeeklyCalendar
+        selectedDateId={selectedDateId}
+        dateMarkers={calendarMocks.dateMarkers}
+        onDatePress={handleDatePress}
+      />
+      <Host style={layout.groupedScreen} colorScheme={colorScheme}>
+        <List
+          modifiers={
+            isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
+          }
+        >
+          {/*
           Stats are label + value rows rather than a tile grid: the same three
           numbers already render this way in Settings, and a full-bleed grid row
           would reintroduce the width math `List` exists to delete.
@@ -226,36 +277,42 @@ export const HomeContent = () => {
           the new digit in the way Fitness and Activity do rather than hard-
           cutting it. This is the only place in the app that gets that treatment.
         */}
-        <Section title="Activity">
-          <LabeledContent
-            label={
-              <Label
-                title="Workouts"
-                systemImage="figure.strengthtraining.traditional"
-              />
-            }
-          >
-            <Text modifiers={counterModifiers(totalWorkouts, animateCounters)}>
-              {String(totalWorkouts)}
-            </Text>
-          </LabeledContent>
-          <LabeledContent
-            label={<Label title="Current Streak" systemImage="flame.fill" />}
-          >
-            <Text modifiers={counterModifiers(currentStreak, animateCounters)}>
-              {`${currentStreak} days`}
-            </Text>
-          </LabeledContent>
-          <LabeledContent
-            label={<Label title="Longest Streak" systemImage="trophy.fill" />}
-          >
-            <Text modifiers={counterModifiers(longestStreak, animateCounters)}>
-              {`${longestStreak} days`}
-            </Text>
-          </LabeledContent>
-        </Section>
+          <Section title="Activity">
+            <LabeledContent
+              label={
+                <Label
+                  title="Workouts"
+                  systemImage="figure.strengthtraining.traditional"
+                />
+              }
+            >
+              <Text
+                modifiers={counterModifiers(totalWorkouts, animateCounters)}
+              >
+                {String(totalWorkouts)}
+              </Text>
+            </LabeledContent>
+            <LabeledContent
+              label={<Label title="Current Streak" systemImage="flame.fill" />}
+            >
+              <Text
+                modifiers={counterModifiers(currentStreak, animateCounters)}
+              >
+                {`${currentStreak} days`}
+              </Text>
+            </LabeledContent>
+            <LabeledContent
+              label={<Label title="Longest Streak" systemImage="trophy.fill" />}
+            >
+              <Text
+                modifiers={counterModifiers(longestStreak, animateCounters)}
+              >
+                {`${longestStreak} days`}
+              </Text>
+            </LabeledContent>
+          </Section>
 
-        {/*
+          {/*
           Empty sections are a plain secondary-label row plus a `Section`
           footer, never a `ContentUnavailableView`. `ContentUnavailableView` is
           a *whole-view* treatment ("there is nothing on this screen"); Home
@@ -266,44 +323,44 @@ export const HomeContent = () => {
           do next" sentence in the section footer — which is exactly what the
           footer is for.
         */}
-        <Section
-          title="Featured Routine"
-          footer={
-            featuredRoutine ? undefined : (
-              <Text>
-                Create a routine in the Workouts tab and it will be featured
-                here.
-              </Text>
-            )
-          }
-        >
-          {featuredRoutine ? (
-            <>
-              <VStack
-                alignment="leading"
-                spacing={4}
-                modifiers={FEATURED_STACK_MODIFIERS}
-              >
-                <Text modifiers={mods.headlineLabel}>
-                  {featuredRoutine.name}
+          <Section
+            title="Featured Routine"
+            footer={
+              featuredRoutine ? undefined : (
+                <Text>
+                  Create a routine in the Workouts tab and it will be featured
+                  here.
                 </Text>
-                {featuredRoutine.description ? (
-                  <Text modifiers={mods.subheadlineSecondary}>
-                    {featuredRoutine.description}
+              )
+            }
+          >
+            {featuredRoutine ? (
+              <>
+                <VStack
+                  alignment="leading"
+                  spacing={4}
+                  modifiers={FEATURED_STACK_MODIFIERS}
+                >
+                  <Text modifiers={mods.headlineLabel}>
+                    {featuredRoutine.name}
                   </Text>
-                ) : null}
-                {/*
+                  {featuredRoutine.description ? (
+                    <Text modifiers={mods.subheadlineSecondary}>
+                      {featuredRoutine.description}
+                    </Text>
+                  ) : null}
+                  {/*
                   No `monospacedDigit()` here, unlike the Activity values
                   above: this is a descriptive sentence fragment ("6 exercises
                   · 45 min") that never updates in place and has nothing to
                   align against. Fixed-width digits inside running text read as
                   a typographic mistake — reserve them for standalone figures.
                 */}
-                <Text modifiers={mods.footnoteSecondary}>
-                  {featuredRoutine.meta}
-                </Text>
-              </VStack>
-              {/*
+                  <Text modifiers={mods.footnoteSecondary}>
+                    {featuredRoutine.meta}
+                  </Text>
+                </VStack>
+                {/*
                 Left-aligned tinted action row — Apple's list idiom for a
                 non-destructive action (centered labels are for destructive
                 confirms). `disabled(true)` until the workout player lands:
@@ -311,59 +368,62 @@ export const HomeContent = () => {
                 promise something it cannot deliver. Drop the modifier and add
                 `onPress` in the same commit that ships the player.
               */}
-              <Button
-                label="Start Workout"
-                systemImage="play.fill"
-                modifiers={mods.disabledOnly}
-              />
-            </>
-          ) : (
-            <Text modifiers={mods.bodySecondary}>No Active Routines</Text>
-          )}
-        </Section>
-
-        <Section
-          title="Recent Workouts"
-          footer={
-            recentRows.length === 0 ? (
-              <Text>Finish your first workout and it will appear here.</Text>
-            ) : undefined
-          }
-        >
-          {recentRows.length > 0 ? (
-            recentRows.map((row) => (
-              <HStack
-                key={row.id}
-                spacing={12}
-                alignment="center"
-                modifiers={RECENT_ROW_MODIFIERS}
-              >
-                <Image
-                  systemName={
-                    row.isCompleted ? 'checkmark.circle.fill' : 'xmark.circle'
-                  }
-                  color={
-                    row.isCompleted ? colors.systemGreen : colors.systemOrange
-                  }
-                  modifiers={mods.title3}
+                <Button
+                  label="Start Workout"
+                  systemImage="play.fill"
+                  modifiers={mods.disabledOnly}
                 />
-                <VStack alignment="leading" spacing={2}>
-                  <Text modifiers={mods.bodyLabel}>{row.title}</Text>
-                  {/* Same reasoning as the Featured Routine meta line: a
+              </>
+            ) : (
+              <Text modifiers={mods.bodySecondary}>No Active Routines</Text>
+            )}
+          </Section>
+
+          <Section
+            title="Recent Workouts"
+            footer={
+              recentRows.length === 0 ? (
+                <Text>Finish your first workout and it will appear here.</Text>
+              ) : undefined
+            }
+          >
+            {recentRows.length > 0 ? (
+              recentRows.map((row) => (
+                <HStack
+                  key={row.id}
+                  spacing={12}
+                  alignment="center"
+                  modifiers={RECENT_ROW_MODIFIERS}
+                >
+                  <Image
+                    systemName={
+                      row.isCompleted ? 'checkmark.circle.fill' : 'xmark.circle'
+                    }
+                    color={
+                      row.isCompleted ? colors.systemGreen : colors.systemOrange
+                    }
+                    modifiers={mods.title3}
+                  />
+                  <VStack alignment="leading" spacing={2}>
+                    <Text modifiers={mods.bodyLabel}>{row.title}</Text>
+                    {/* Same reasoning as the Featured Routine meta line: a
                       subtitle sentence, not a figure. */}
-                  <Text modifiers={mods.footnoteSecondary}>{row.meta}</Text>
-                </VStack>
-                <Spacer />
-                {/* "Yesterday" / "3 days ago" — prose, and already flush right
+                    <Text modifiers={mods.footnoteSecondary}>{row.meta}</Text>
+                  </VStack>
+                  <Spacer />
+                  {/* "Yesterday" / "3 days ago" — prose, and already flush right
                     via the `Spacer`, so fixed-width digits buy no alignment. */}
-                <Text modifiers={mods.footnoteSecondary}>{row.dateLabel}</Text>
-              </HStack>
-            ))
-          ) : (
-            <Text modifiers={mods.bodySecondary}>No Recent Workouts</Text>
-          )}
-        </Section>
-      </List>
-    </Host>
+                  <Text modifiers={mods.footnoteSecondary}>
+                    {row.dateLabel}
+                  </Text>
+                </HStack>
+              ))
+            ) : (
+              <Text modifiers={mods.bodySecondary}>No Recent Workouts</Text>
+            )}
+          </Section>
+        </List>
+      </Host>
+    </View>
   );
 };
