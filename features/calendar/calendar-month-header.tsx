@@ -7,6 +7,7 @@ import { CALENDAR_HORIZONTAL_INSET } from './calendar-metrics';
 const styles = StyleSheet.create({
   title: {
     paddingHorizontal: CALENDAR_HORIZONTAL_INSET,
+    paddingTop: 8,
     paddingBottom: 8,
   },
 });
@@ -17,9 +18,12 @@ export interface CalendarMonthHeaderProps {
 }
 
 /**
- * The month title above the expanded grid. Collapsed, the calendar is a
- * seven-day strip with no title row, so the caller renders this only while the
- * month is open.
+ * The month title above the calendar, shown whether the month is open or the
+ * strip is collapsed. It follows the *visible* week or month, not the selected
+ * day, so paging past a boundary retitles it.
+ *
+ * Presentational only — opening and closing the month belongs to
+ * [calendar-expand-toggle.tsx](calendar-expand-toggle.tsx), below the grid.
  *
  * **It deliberately sits outside the library's own header**, above the whole
  * calendar, rather than inside `renderHeader` with the weekday labels — even

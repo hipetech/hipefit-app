@@ -98,8 +98,8 @@ const overrides = StyleSheet.create({
   /**
    * The collapsed week strip. Also opaque, and for a sharper reason: it is
    * absolutely positioned *over* the first week row of the month page behind
-   * it, and cross-fades against it while the calendar opens. Transparent here
-   * renders both rows at once.
+   * it, and is swapped out for that row as the calendar opens. Transparent
+   * here renders the strip's week and the month's first week at once.
    */
   weekStripContainer: {
     backgroundColor: colors.systemGroupedBackground,

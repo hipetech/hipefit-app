@@ -1,6 +1,5 @@
 import type { WithId, Workout } from '@/database';
 import { useCallback, useState } from 'react';
-import { View } from 'react-native';
 import { Host } from '@expo/ui';
 import {
   Button,
@@ -9,6 +8,7 @@ import {
   Label,
   LabeledContent,
   List,
+  RNHostView,
   Section,
   Spacer,
   Text,
@@ -19,14 +19,13 @@ import {
   animation,
   contentTransition,
   font,
+  listRowBackground,
+  listRowInsets,
+  listRowSeparator,
+  listSectionMargins,
   monospacedDigit,
   padding,
 } from '@expo/ui/swift-ui/modifiers';
-// Not on `expo-router`'s public surface: Expo Router 57 vendors React
-// Navigation, and this is the only way to ask how tall the navigation bar is.
-// Re-check the path on an SDK upgrade — see `headerHeight` below for why the
-// screen cannot do without it.
-import { useHeaderHeight } from 'expo-router/build/react-navigation/elements';
 
 import { ExpandableWeeklyCalendar } from '@/features/calendar/expandable-weekly-calendar';
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
@@ -151,6 +150,23 @@ const PLACEHOLDER_WORKOUTS: RecentWorkoutRow[] = [
   },
 ];
 
+/**
+ * Strips a list row back to bare full-bleed space for the calendar.
+ *
+ * `insetGrouped` wants to put every row in a rounded card at a 16pt margin,
+ * which is right for the sections below and wrong for a calendar: the grid
+ * carries its own inset, so a card around it would double the margin and box in
+ * a surface that is meant to read as part of the page. All four are needed —
+ * `listSectionMargins` is what actually owns the horizontal 16pt under
+ * `insetGrouped`, and `listRowInsets` alone leaves it in place.
+ */
+const CALENDAR_ROW_MODIFIERS = [
+  listSectionMargins({ length: 0, edges: 'horizontal' }),
+  listRowInsets({ top: 0, leading: 0, bottom: 0, trailing: 0 }),
+  listRowBackground('transparent'),
+  listRowSeparator('hidden'),
+];
+
 const FEATURED_STACK_MODIFIERS = [padding({ vertical: 4 })];
 
 const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
@@ -179,7 +195,6 @@ const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
  */
 export const HomeContent = () => {
   const colorScheme = useAppColorScheme();
-  const headerHeight = useHeaderHeight();
   // Built once, from the day the screen first mounted: the mock is relative to
   // today, and rebuilding it on every render would hand the calendar a fresh
   // array identity each time.
@@ -210,22 +225,6 @@ export const HomeContent = () => {
 
   const animateCounters = !isLoading && !reduceMotion;
 
-  /*
-   * The navigation bar overlays the screen rather than laying out above it: a
-   * native stack gives its screen the full window and lets each scroll view
-   * inset its own content, which is how the `List` below already clears the
-   * large title. The calendar does not scroll, so nothing insets it, and
-   * without this padding it renders *behind* the greeting and is invisible —
-   * which is exactly how it first appeared to be broken.
-   *
-   * The value is the expanded height, because that is what a large title
-   * measures at rest. Whether it should track the title collapsing on scroll is
-   * unverified: the seeded account has too little content for Home's list to
-   * scroll at all. `useAnimatedHeaderHeight` exposes the live value, but as an
-   * `Animated.Value` it cannot drive `paddingTop` — the native animated module
-   * rejects that property.
-   */
-
   // Selecting a day moves the circle and nothing else. Activity, the featured
   // routine and recent workouts are not filtered by it — day summaries need
   // real workout data, and this initiative deliberately ships none.
@@ -251,19 +250,22 @@ export const HomeContent = () => {
     : recentWorkouts.map(toRecentWorkoutRow);
 
   return (
-    <View style={[layout.groupedScreen, { paddingTop: headerHeight }]}>
-      <ExpandableWeeklyCalendar
-        selectedDateId={selectedDateId}
-        dateMarkers={calendarMocks.dateMarkers}
-        onDatePress={handleDatePress}
-      />
-      <Host style={layout.groupedScreen} colorScheme={colorScheme}>
-        <List
-          modifiers={
-            isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
-          }
-        >
-          {/*
+    <Host style={layout.groupedScreen} colorScheme={colorScheme}>
+      <List
+        modifiers={
+          isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
+        }
+      >
+        <Section modifiers={CALENDAR_ROW_MODIFIERS}>
+          <RNHostView matchContents>
+            <ExpandableWeeklyCalendar
+              selectedDateId={selectedDateId}
+              dateMarkers={calendarMocks.dateMarkers}
+              onDatePress={handleDatePress}
+            />
+          </RNHostView>
+        </Section>
+        {/*
           Stats are label + value rows rather than a tile grid: the same three
           numbers already render this way in Settings, and a full-bleed grid row
           would reintroduce the width math `List` exists to delete.
@@ -277,42 +279,36 @@ export const HomeContent = () => {
           the new digit in the way Fitness and Activity do rather than hard-
           cutting it. This is the only place in the app that gets that treatment.
         */}
-          <Section title="Activity">
-            <LabeledContent
-              label={
-                <Label
-                  title="Workouts"
-                  systemImage="figure.strengthtraining.traditional"
-                />
-              }
-            >
-              <Text
-                modifiers={counterModifiers(totalWorkouts, animateCounters)}
-              >
-                {String(totalWorkouts)}
-              </Text>
-            </LabeledContent>
-            <LabeledContent
-              label={<Label title="Current Streak" systemImage="flame.fill" />}
-            >
-              <Text
-                modifiers={counterModifiers(currentStreak, animateCounters)}
-              >
-                {`${currentStreak} days`}
-              </Text>
-            </LabeledContent>
-            <LabeledContent
-              label={<Label title="Longest Streak" systemImage="trophy.fill" />}
-            >
-              <Text
-                modifiers={counterModifiers(longestStreak, animateCounters)}
-              >
-                {`${longestStreak} days`}
-              </Text>
-            </LabeledContent>
-          </Section>
+        <Section title="Activity">
+          <LabeledContent
+            label={
+              <Label
+                title="Workouts"
+                systemImage="figure.strengthtraining.traditional"
+              />
+            }
+          >
+            <Text modifiers={counterModifiers(totalWorkouts, animateCounters)}>
+              {String(totalWorkouts)}
+            </Text>
+          </LabeledContent>
+          <LabeledContent
+            label={<Label title="Current Streak" systemImage="flame.fill" />}
+          >
+            <Text modifiers={counterModifiers(currentStreak, animateCounters)}>
+              {`${currentStreak} days`}
+            </Text>
+          </LabeledContent>
+          <LabeledContent
+            label={<Label title="Longest Streak" systemImage="trophy.fill" />}
+          >
+            <Text modifiers={counterModifiers(longestStreak, animateCounters)}>
+              {`${longestStreak} days`}
+            </Text>
+          </LabeledContent>
+        </Section>
 
-          {/*
+        {/*
           Empty sections are a plain secondary-label row plus a `Section`
           footer, never a `ContentUnavailableView`. `ContentUnavailableView` is
           a *whole-view* treatment ("there is nothing on this screen"); Home
@@ -323,44 +319,44 @@ export const HomeContent = () => {
           do next" sentence in the section footer — which is exactly what the
           footer is for.
         */}
-          <Section
-            title="Featured Routine"
-            footer={
-              featuredRoutine ? undefined : (
-                <Text>
-                  Create a routine in the Workouts tab and it will be featured
-                  here.
+        <Section
+          title="Featured Routine"
+          footer={
+            featuredRoutine ? undefined : (
+              <Text>
+                Create a routine in the Workouts tab and it will be featured
+                here.
+              </Text>
+            )
+          }
+        >
+          {featuredRoutine ? (
+            <>
+              <VStack
+                alignment="leading"
+                spacing={4}
+                modifiers={FEATURED_STACK_MODIFIERS}
+              >
+                <Text modifiers={mods.headlineLabel}>
+                  {featuredRoutine.name}
                 </Text>
-              )
-            }
-          >
-            {featuredRoutine ? (
-              <>
-                <VStack
-                  alignment="leading"
-                  spacing={4}
-                  modifiers={FEATURED_STACK_MODIFIERS}
-                >
-                  <Text modifiers={mods.headlineLabel}>
-                    {featuredRoutine.name}
+                {featuredRoutine.description ? (
+                  <Text modifiers={mods.subheadlineSecondary}>
+                    {featuredRoutine.description}
                   </Text>
-                  {featuredRoutine.description ? (
-                    <Text modifiers={mods.subheadlineSecondary}>
-                      {featuredRoutine.description}
-                    </Text>
-                  ) : null}
-                  {/*
+                ) : null}
+                {/*
                   No `monospacedDigit()` here, unlike the Activity values
                   above: this is a descriptive sentence fragment ("6 exercises
                   · 45 min") that never updates in place and has nothing to
                   align against. Fixed-width digits inside running text read as
                   a typographic mistake — reserve them for standalone figures.
                 */}
-                  <Text modifiers={mods.footnoteSecondary}>
-                    {featuredRoutine.meta}
-                  </Text>
-                </VStack>
-                {/*
+                <Text modifiers={mods.footnoteSecondary}>
+                  {featuredRoutine.meta}
+                </Text>
+              </VStack>
+              {/*
                 Left-aligned tinted action row — Apple's list idiom for a
                 non-destructive action (centered labels are for destructive
                 confirms). `disabled(true)` until the workout player lands:
@@ -368,62 +364,59 @@ export const HomeContent = () => {
                 promise something it cannot deliver. Drop the modifier and add
                 `onPress` in the same commit that ships the player.
               */}
-                <Button
-                  label="Start Workout"
-                  systemImage="play.fill"
-                  modifiers={mods.disabledOnly}
-                />
-              </>
-            ) : (
-              <Text modifiers={mods.bodySecondary}>No Active Routines</Text>
-            )}
-          </Section>
+              <Button
+                label="Start Workout"
+                systemImage="play.fill"
+                modifiers={mods.disabledOnly}
+              />
+            </>
+          ) : (
+            <Text modifiers={mods.bodySecondary}>No Active Routines</Text>
+          )}
+        </Section>
 
-          <Section
-            title="Recent Workouts"
-            footer={
-              recentRows.length === 0 ? (
-                <Text>Finish your first workout and it will appear here.</Text>
-              ) : undefined
-            }
-          >
-            {recentRows.length > 0 ? (
-              recentRows.map((row) => (
-                <HStack
-                  key={row.id}
-                  spacing={12}
-                  alignment="center"
-                  modifiers={RECENT_ROW_MODIFIERS}
-                >
-                  <Image
-                    systemName={
-                      row.isCompleted ? 'checkmark.circle.fill' : 'xmark.circle'
-                    }
-                    color={
-                      row.isCompleted ? colors.systemGreen : colors.systemOrange
-                    }
-                    modifiers={mods.title3}
-                  />
-                  <VStack alignment="leading" spacing={2}>
-                    <Text modifiers={mods.bodyLabel}>{row.title}</Text>
-                    {/* Same reasoning as the Featured Routine meta line: a
+        <Section
+          title="Recent Workouts"
+          footer={
+            recentRows.length === 0 ? (
+              <Text>Finish your first workout and it will appear here.</Text>
+            ) : undefined
+          }
+        >
+          {recentRows.length > 0 ? (
+            recentRows.map((row) => (
+              <HStack
+                key={row.id}
+                spacing={12}
+                alignment="center"
+                modifiers={RECENT_ROW_MODIFIERS}
+              >
+                <Image
+                  systemName={
+                    row.isCompleted ? 'checkmark.circle.fill' : 'xmark.circle'
+                  }
+                  color={
+                    row.isCompleted ? colors.systemGreen : colors.systemOrange
+                  }
+                  modifiers={mods.title3}
+                />
+                <VStack alignment="leading" spacing={2}>
+                  <Text modifiers={mods.bodyLabel}>{row.title}</Text>
+                  {/* Same reasoning as the Featured Routine meta line: a
                       subtitle sentence, not a figure. */}
-                    <Text modifiers={mods.footnoteSecondary}>{row.meta}</Text>
-                  </VStack>
-                  <Spacer />
-                  {/* "Yesterday" / "3 days ago" — prose, and already flush right
+                  <Text modifiers={mods.footnoteSecondary}>{row.meta}</Text>
+                </VStack>
+                <Spacer />
+                {/* "Yesterday" / "3 days ago" — prose, and already flush right
                     via the `Spacer`, so fixed-width digits buy no alignment. */}
-                  <Text modifiers={mods.footnoteSecondary}>
-                    {row.dateLabel}
-                  </Text>
-                </HStack>
-              ))
-            ) : (
-              <Text modifiers={mods.bodySecondary}>No Recent Workouts</Text>
-            )}
-          </Section>
-        </List>
-      </Host>
-    </View>
+                <Text modifiers={mods.footnoteSecondary}>{row.dateLabel}</Text>
+              </HStack>
+            ))
+          ) : (
+            <Text modifiers={mods.bodySecondary}>No Recent Workouts</Text>
+          )}
+        </Section>
+      </List>
+    </Host>
   );
 };
