@@ -89,3 +89,23 @@ export const toLocalDateId = (date: Date): string => {
 
   return `${date.getFullYear()}-${month}-${day}`;
 };
+
+/**
+ * The inverse of `toLocalDateId`, read back in local time.
+ *
+ * Never `new Date(dateId)`: a bare `YYYY-MM-DD` is specified to parse as UTC,
+ * which undoes exactly what `toLocalDateId` was written to avoid.
+ */
+const fromLocalDateId = (dateId: string): Date => {
+  const [year, month, day] = dateId.split('-');
+
+  return new Date(Number(year), Number(month) - 1, Number(day));
+};
+
+/** The month a day ID falls in, spelled out for the locale: `2026-08-17` → "August". */
+export const formatMonthName = (dateId: string): string =>
+  fromLocalDateId(dateId).toLocaleDateString(undefined, { month: 'long' });
+
+/** The day of the month, in the locale's own digits: `2026-08-17` → "17". */
+export const formatDayOfMonth = (dateId: string): string =>
+  fromLocalDateId(dateId).toLocaleDateString(undefined, { day: 'numeric' });
