@@ -1,0 +1,220 @@
+---
+type: flow
+status: current
+area: calendar
+updated: 2026-08-12
+---
+
+# Flow: browse the Home calendar
+
+> **This journey is presentation only.** Everything below happens, and it happens against
+> **demonstration data**: the workout dots come from
+> [`features/home/home-calendar-mocks.ts`](../../features/home/home-calendar-mocks.ts), which builds
+> them relative to today and touches no Firestore. **Selecting a day filters nothing** — Activity,
+> the featured routine and Recent Workouts are unaffected, and the selection is local component
+> state that does not survive unmount. There is no calendar store, no Firestore read, and no
+> `Timestamp` → local-date-ID conversion anywhere in the app.
+
+## User goal
+
+Look at the current week on Home, move around the calendar to see which days carry workouts, and
+pick a day.
+
+The looking and moving are fully reachable. **Picking a day gets the user a moved selection circle
+and nothing else** — no day summary, no filtered history — because the dots that would motivate the
+pick are demonstration data.
+
+## Prerequisites
+
+- **Signed in.** Home lives under `(private)`, which `app/_layout.tsx` wraps in `<Stack.Protected>`;
+  see [`features/auth/store/use-auth-store.ts`](../../features/auth/store/use-auth-store.ts).
+- **Nothing else.** This is the one flow in `docs/flows/` with no data prerequisite. The calendar
+  reads no store and subscribes to nothing: its markers arrive as props from Home's mock builder and
+  its dates come from the device clock, so it renders identically on a brand-new account and a
+  populated one.
+
+## Entry points
+
+The calendar is not entered — it is already on screen. [`app/(private)/(home)/index.tsx`](<../../app/(private)/(home)/index.tsx>)
+mounts [`features/home/home-content.tsx`](../../features/home/home-content.tsx), which renders
+[`ExpandableWeeklyCalendar`](../../features/calendar/index.tsx) inside an
+`RNHostView matchContents` row of the screen's SwiftUI `List`. It is a full-bleed row rather than a
+card — `CALENDAR_ROW_MODIFIERS` in `home-content.tsx` strips the `insetGrouped` margins, background
+and separator off that one row — and because it is a list row it **scrolls with the page** instead
+of pinning above it. The boundary that makes this work, and what it costs, is in
+[`ui.md`](../app/ui.md#the-calendar-a-react-native-island-inside-the-list).
+
+Three affordances live inside it, and they are the whole journey:
+
+| Affordance             | Where                                                                                  | Notes                                                            |
+| ---------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **A day**              | [`components/day.tsx`](../../features/calendar/components/day.tsx)                     | One ≥44pt button per day. The only thing that changes selection. |
+| **Horizontal swipe**   | [`components/pager.tsx`](../../features/calendar/components/pager.tsx)                 | Pages by week collapsed, by month expanded. Never selects.       |
+| **The chevron toggle** | [`components/expand-toggle.tsx`](../../features/calendar/components/expand-toggle.tsx) | Centred below the grid; opens and closes the month.              |
+
+There is deliberately **no drag gesture**, and that is a placement consequence rather than an
+omission: the calendar is a row of a scrolling SwiftUI `List`, and Gesture Handler cannot arbitrate
+a vertical pan with a `UIScrollView` across the bridge. The button competes with nothing.
+
+## Main path
+
+1. **The user opens Home.** The calendar renders collapsed, on the week containing today, with today
+   accented and selected. Home seeds its selection from `buildHomeCalendarMocks(new Date())` once, in
+   a `useState` initializer, so the mock array keeps one identity for the life of the screen; the
+   calendar derives its own opening week and month from that date in
+   [`index.tsx`](../../features/calendar/index.tsx).
+2. **The user swipes the strip sideways.** One swipe advances exactly one week, in either direction.
+   Each pager renders three pages — previous, current, next — and recentres on the middle one every
+   time it settles, reporting the move as a delta rather than an index
+   ([`components/pager.tsx`](../../features/calendar/components/pager.tsx)).
+3. **The title follows the swipe, and a straddling week is titled by majority.** The month header
+   names the _visible_ position, not the selection. A week split across two months belongs to the
+   month containing its **fourth day** — `toWeekMonthStartDateId` in
+   [`helpers/dates.ts`](../../features/calendar/helpers/dates.ts) — so the week of 30 August
+   2026 reads "September 2026" and expands into September.
+4. **The user presses the chevron.** The month opens: the container's height animates from one week
+   row to the month's full height while the grid translates so that the week already on screen stays
+   where it is and the rest of the month grows around it. It is a clip over one surface, not a
+   cross-fade — [`hooks/use-expansion.ts`](../../features/calendar/hooks/use-expansion.ts)
+   holds the single shared value both styles interpolate from, and the chevron turns with it rather
+   than snapping. The SwiftUI list below is pushed down by the height, which is the reason the height
+   is animated at all.
+5. **The user swipes the open month sideways.** One swipe advances exactly one month. **The
+   collapsed week does not move.** The calendar tracks two independent positions — a visible week and
+   a visible month — precisely so that paging months while open cannot throw away the week the user
+   came from.
+6. **The user presses a day.** The circle moves to it, the calendar stays open if it was open, and
+   the visible week moves to that day's week so that closing later returns to what was chosen rather
+   than to what was browsed. This is the only path to `onDatePress`, and Home's handler sets
+   `selectedDateId` and nothing else.
+7. **The user presses the chevron again.** The month closes back to a single week row. In the common
+   case nothing relocates — the remembered week is still drawn by the month on screen, so it is the
+   week that survives. It only moves when the user paged far enough that the remembered week is no
+   longer part of the grid; then it prefers the selected day's week, and falls back to the month's
+   first row when the selection is elsewhere entirely.
+8. — **The journey ends there.** A selected day produces no summary, no filter and no navigation.
+   See **What is missing**.
+
+Paging — by week, by month, in either direction — **never changes the selection**, at any point in
+the sequence above. Selection is controlled by the caller and the calendar never sets it on its own;
+the contract states this as a promise in
+[`types.ts`](../../features/calendar/types.ts).
+
+## What is missing
+
+The dots are the affordance that makes a day worth pressing, and they are fabricated. Concretely,
+what does not exist:
+
+- **No Firestore read.** `MOCK_WORKOUT_TONES` in
+  [`home-calendar-mocks.ts`](../../features/home/home-calendar-mocks.ts) is a fixed list of day
+  offsets from today, chosen to exercise every case the cell can draw — zero, one, two, three and
+  overflow markers, plus markers under the selection circle. `useWorkoutStore` is on the same screen
+  and the calendar is not connected to it.
+- **No `Timestamp` → local-date-ID adapter.** The contract is stated in local calendar IDs shaped
+  `YYYY-MM-DD`, and [`lib/format.ts`](../../lib/format.ts)'s `toLocalDateId` converts a JS `Date`.
+  Turning a Firestore `Timestamp` into one is deliberately unbuilt: it has timezone and
+  daylight-saving semantics that have to be settled before a query depends on them.
+- **No day summary and no filtering.** `handleDatePress` in
+  [`home-content.tsx`](../../features/home/home-content.tsx) calls `setSelectedDateId` and returns.
+  Nothing downstream reads the selected day.
+- **No persistence.** No store, and nothing written anywhere.
+
+Each of these is a documented non-goal of
+[`plans/flash-calendar-rewrite/plan.md`](../plans/flash-calendar-rewrite/plan.md#non-goals), not an
+oversight.
+
+## Screens, routes, and data involved
+
+- **Route:** `(private)/(home)` — [`app/(private)/(home)/index.tsx`](<../../app/(private)/(home)/index.tsx>),
+  which mounts one island and declares its own screen options.
+- **Islands:** [`features/home/home-content.tsx`](../../features/home/home-content.tsx) owns the
+  screen and the mock props;
+  [`features/calendar/index.tsx`](../../features/calendar/index.tsx)
+  orchestrates the calendar. Under it: the title
+  ([`components/month-header.tsx`](../../features/calendar/components/month-header.tsx)), the `Sun`–`Sat`
+  row ([`components/weekday-labels.tsx`](../../features/calendar/components/weekday-labels.tsx)), the
+  two pagers ([`components/pager.tsx`](../../features/calendar/components/pager.tsx)) over week rows and
+  month pages ([`components/week-row.tsx`](../../features/calendar/components/week-row.tsx),
+  [`components/month-page.tsx`](../../features/calendar/components/month-page.tsx)), the cells
+  ([`components/day.tsx`](../../features/calendar/components/day.tsx),
+  [`components/marker-dots.tsx`](../../features/calendar/components/marker-dots.tsx)), and the toggle
+  ([`components/expand-toggle.tsx`](../../features/calendar/components/expand-toggle.tsx)).
+- **Documents: none.** This flow touches no Firestore collection, so there is nothing to look up in
+  [`docs/db-structure.md`](../db-structure.md). Selection and markers arrive as the props declared in
+  [`types.ts`](../../features/calendar/types.ts); `@marceloterreiro/flash-calendar`
+  supplies date arithmetic only and none of its types reach a call site.
+
+## State and data changes
+
+**Writes: none.** Nothing on this journey reaches Firestore, and no Zustand store is involved.
+
+What is read, and where it lives:
+
+- **`selectedDateId`** — `useState` in [`home-content.tsx`](../../features/home/home-content.tsx),
+  seeded with today. Controlled: it is passed down and only `onDatePress` changes it.
+- **`dateMarkers`** — built once on mount by `buildHomeCalendarMocks(new Date())`, relative to that
+  day.
+- **The visible week and the visible month** — two `useState` values in
+  [`index.tsx`](../../features/calendar/index.tsx),
+  deliberately not derived from one another.
+- **The open/closed position** — a Reanimated shared value plus its two mirrors (`isExpanded` for
+  intent and accessibility, `isMonthMounted` for whether the month grid stays mounted) in
+  [`hooks/use-expansion.ts`](../../features/calendar/hooks/use-expansion.ts).
+
+All of it is transient. Leaving Home and coming back to a fresh mount restores the initial state:
+collapsed, on today's week, with today selected. Nothing persists across a relaunch, and nothing is
+shared with another screen.
+
+One cache is worth knowing about because it has a clock in it: month grids are memoized in
+[`components/month-page.tsx`](../../features/calendar/components/month-page.tsx) under a key that
+includes **today's date ID**, because the library resolves `isToday` when a grid is built and bakes
+the answer into all 42 days. An app left open across midnight therefore re-derives its grids rather
+than keeping the accent ring on yesterday.
+
+## Alternative, empty, and error paths
+
+- **No loading state.** The calendar takes no `isLoading` input and awaits nothing. Home's other
+  sections render redacted placeholders while their stores load; the calendar is fully drawn from the
+  first frame.
+- **No error state.** There is no subscription and no async call, so there is no failure to report.
+- **A day with no workouts** draws an empty marker row of the same fixed height as a marked one — so
+  the day numbers never shift as markers appear — and announces "no workouts"
+  ([`components/marker-dots.tsx`](../../features/calendar/components/marker-dots.tsx),
+  `describeCalendarDay` in [`helpers/dates.ts`](../../features/calendar/helpers/dates.ts)).
+- **More than three workouts on a day** draws two dots plus an overflow lozenge in the third
+  position, which keeps the cell's width — and therefore the column grid — unchanged. The
+  **untruncated** count still reaches VoiceOver.
+- **Days from the adjacent month** are dimmed inside an expanded month grid and **not** dimmed in the
+  collapsed strip. The surface decides rather than the cell: a straddling week has no anchor month,
+  and dimming five of its seven days while the header names the other month is the failure that
+  `dimOutsideMonth={false}` prevents.
+- **Reduce Motion** collapses the open and close to an instant change, with no branch in any
+  component — Reanimated's `withSpring` jumps to its target under the system setting. Note for
+  testers: iOS applies the setting to an already-running app only after a relaunch.
+- **Dynamic Type** scales the day number up to a 1.4 cap
+  (`CALENDAR_DAY_NUMBER_MAX_SCALE` in [`helpers/metrics.ts`](../../features/calendar/helpers/metrics.ts)),
+  a deviation from [`ui.md`](../app/ui.md#typography) that the constant documents: the row pitch is
+  what the expansion animation interpolates over, so it has to be known before the first frame. The
+  weekday labels and the month title sit outside the clip and scale freely.
+- **VoiceOver** reaches one element per day — role `button`, label "Wednesday, 12 August 2026, today,
+  2 workouts", `accessibilityState.selected` — and skips the weekday labels and the dots, which are
+  hidden as decorative because the cell already announces both.
+
+## Completion state
+
+There is no terminal state to reach. The user is left with a moved selection circle, a calendar
+positioned wherever they browsed to, and no change anywhere else in the app: no Firestore document,
+no store value, no navigation. The **intended** terminal state — a day whose real workouts are
+summarized or filtered into view — is not implemented, and nothing writes toward it.
+
+## Historical context
+
+- [`plans/flash-calendar-rewrite/plan.md`](../plans/flash-calendar-rewrite/plan.md) — the rewrite
+  that replaced Wix `react-native-calendars` with `@marceloterreiro/flash-calendar` for dates and
+  Reanimated for motion, and that finally settled Reduce Motion.
+- [`plans/weekly-calendar/plan.md`](../plans/weekly-calendar/plan.md) — the original initiative,
+  **superseded**. Its interaction engine and its drag-to-expand gesture were both replaced; its
+  contract and its acceptance matrix were not.
+
+> These are plans, not descriptions of current behavior. Where either disagrees with this document,
+> check the code.

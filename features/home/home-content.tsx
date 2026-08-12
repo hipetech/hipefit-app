@@ -27,7 +27,7 @@ import {
   padding,
 } from '@expo/ui/swift-ui/modifiers';
 
-import { ExpandableWeeklyCalendar } from '@/features/calendar/expandable-weekly-calendar';
+import { ExpandableWeeklyCalendar } from '@/features/calendar';
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
 import { useUserStore } from '@/features/user/store/use-user-store';
 import { useWorkoutStore } from '@/features/workouts/store/use-workout-store';
@@ -177,18 +177,22 @@ const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
  * The component reads its stores itself and takes no props, so the route file
  * stays thin (title + this island).
  *
- * **Two sibling islands, not one.** A React Native container holds the
- * expandable calendar above one `Host` filling the rest of the screen
- * (`flex: 1`, deliberately **no** `matchContents`) around a SwiftUI `List` with
- * `listStyle('insetGrouped')`. The calendar is React Native — Wix's animated
- * open/close height is an RN layout, so it pushes the list down as a flex
- * sibling. It cannot go inside the `Host`: SwiftUI has no place to put it, and
- * hosting it back through a dynamically sized `RNHostView` list row would make
- * its animation depend on cross-bridge intrinsic-size invalidation. The `Host`
- * keeps real flex space either way, because a `List` has no intrinsic content
- * height and renders nothing without it. `insetGrouped` supplies the 16pt
- * margins, 44pt row heights, inset hairlines and grouped background for free,
- * which is why every hand-rolled width/padding/gap constant is gone.
+ * **One `Host` around a SwiftUI `List`, with the calendar inside it.** The
+ * screen is a single screen-filling `Host` (`flex: 1`, deliberately **no**
+ * `matchContents`) around a `List` with `listStyle('insetGrouped')`; the `Host`
+ * needs that real flex space because a `List` has no intrinsic content height
+ * and renders nothing without it. `insetGrouped` supplies the 16pt margins,
+ * 44pt row heights, inset hairlines and grouped background for free, which is
+ * why every hand-rolled width/padding/gap constant is gone.
+ *
+ * The calendar is plain React Native and comes back through `RNHostView
+ * matchContents` as a full-bleed row of that list, rather than sitting above the
+ * `Host` as a sibling. That is what lets it scroll with the page rather than
+ * pinning above it. The price is real and accepted: its Reanimated
+ * open/close animates a height, so every frame of the spring crosses the bridge
+ * as an intrinsic-size invalidation on this row. If the open/close ever starts
+ * to stutter, that is where to look, and moving the calendar back out to a
+ * sibling island is the escape hatch.
  *
  * The greeting is not in the body: it is the screen's large navigation title
  * (see the route file), the way Apple's own Home app renders "Good Evening".

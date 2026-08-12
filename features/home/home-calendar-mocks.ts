@@ -1,7 +1,7 @@
 import type {
   CalendarDateMarkers,
   CalendarMarkerTone,
-} from '@/features/calendar/calendar-types';
+} from '@/features/calendar';
 
 import { toLocalDateId } from '@/lib/format';
 

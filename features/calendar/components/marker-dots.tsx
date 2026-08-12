@@ -7,14 +7,13 @@ import {
   CALENDAR_MARKER_DOT_GAP,
   CALENDAR_MARKER_DOT_SIZE,
   CALENDAR_MAX_VISIBLE_MARKERS,
-} from './calendar-metrics';
-import { type CalendarMarker, type CalendarMarkerTone } from './calendar-types';
+} from '../helpers/metrics';
+import { type CalendarMarker, type CalendarMarkerTone } from '../types';
 
 /**
- * Tones map to the system status colours, the same mapping
- * [ui/chip.tsx](../../ui/chip.tsx) uses for status labels. `accent` is the one
- * place the app names a colour value for an RN view rather than letting a native
- * control pick up the system accent — there is no SwiftUI here to inherit it.
+ * The same tone-to-system-colour mapping [ui/chip.tsx](../../../ui/chip.tsx)
+ * uses. `accent` is named explicitly because this is plain RN, with no SwiftUI
+ * to inherit the system accent.
  */
 const toneColor: Record<CalendarMarkerTone, ColorValue> = {
   accent: colors.accent,
@@ -23,11 +22,7 @@ const toneColor: Record<CalendarMarkerTone, ColorValue> = {
 };
 
 const styles = StyleSheet.create({
-  /**
-   * Fixed height whether or not the day has markers, so the day number sits at
-   * the same offset in every cell and the grid does not jitter as markers
-   * arrive.
-   */
+  /** Fixed height with or without markers, so the grid does not jitter as markers arrive. */
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -42,9 +37,8 @@ const styles = StyleSheet.create({
     borderRadius: CALENDAR_MARKER_DOT_SIZE / 2,
   },
   /**
-   * The overflow treatment: the last position stretches into a lozenge rather
-   * than adding a fourth dot. Widening one dot keeps the cell's width — and so
-   * the column grid — untouched, which a fourth dot would not.
+   * Overflow widens the last dot into a lozenge rather than adding a fourth,
+   * which keeps the cell's width — and so the column grid — untouched.
    */
   overflow: {
     width: CALENDAR_MARKER_DOT_SIZE * 2,
@@ -55,19 +49,15 @@ export interface CalendarMarkerDotsProps {
   /** Every marker on the day. The full count still reaches VoiceOver. */
   markers: readonly CalendarMarker[];
   /**
-   * Whether the day is the selected one. Selected days draw the accent circle
-   * behind these dots, where a status colour would be illegible, so they invert
-   * to solid on-accent content instead.
+   * Whether the day is the selected one. Its accent circle sits behind these
+   * dots, where a status colour would be illegible, so they invert.
    */
   isSelected: boolean;
 }
 
 /**
- * The workout dots under a day number, capped at
- * `CALENDAR_MAX_VISIBLE_MARKERS` positions.
- *
- * Decorative: the whole cell is one accessibility element and announces the
- * count itself, so nothing here is a focus stop.
+ * The workout dots under a day number, capped at `CALENDAR_MAX_VISIBLE_MARKERS`
+ * positions. Decorative: the cell announces the count itself.
  */
 export const CalendarMarkerDots = ({
   markers,

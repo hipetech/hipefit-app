@@ -1,11 +1,20 @@
 ---
 type: plan
-status: in-progress
+status: superseded
 area: calendar
 created: 2026-08-07
 ---
 
 # Plan: expandable weekly calendar
+
+> **Superseded by [`plans/flash-calendar-rewrite/plan.md`](../flash-calendar-rewrite/plan.md).**
+> Everything below is the record of the first calendar initiative and is left unedited. The engine
+> it chose — Wix `react-native-calendars` — is gone, along with the drag-to-expand gesture, the
+> sibling-island Home layout, and the version-pinned theme module; the open Reduce Motion gate in
+> Phase 0 was closed by the rewrite. What survived is the public contract, the mock ownership, and
+> the runtime acceptance matrix. Its unfinished Phase 3 was absorbed into the rewrite and is
+> discharged by [`flows/browse-home-calendar.md`](../../flows/browse-home-calendar.md). **Do not
+> read anything here as current behavior** — check the code, or that flow.
 
 ## Outcome
 

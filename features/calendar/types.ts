@@ -1,18 +1,8 @@
 /**
- * The calendar feature's public contract.
- *
- * Deliberately vendor-free: the feature is implemented with Wix
- * `react-native-calendars`, and **none of that reaches a call site**. No
- * `CalendarProvider`, no `ExpandableCalendarProps`, no `DateData`, no marking
- * object, no theme key and no navigation enum is re-exported here or anywhere
- * outside `features/calendar/`. A consumer describes days and markers in
- * Hipefit's own words; the wrapper translates.
- *
- * Dates are **local calendar IDs** shaped `YYYY-MM-DD` — the day as the user's
- * device reckons it, never a UTC instant. Producing one from a Firestore
- * `Timestamp` is a separate concern with its own timezone semantics and is not
- * defined by this feature; see `@/lib/format`'s `toLocalDateId` for the only
- * conversion that exists today (a JS `Date` in local time).
+ * The calendar feature's public contract. Deliberately vendor-free — nothing
+ * from `@marceloterreiro/flash-calendar` reaches a call site, and every type
+ * below survived the swap of the underlying engine unchanged. Dates are **local
+ * calendar IDs** shaped `YYYY-MM-DD`, never a UTC instant.
  */
 
 /**
