@@ -56,7 +56,8 @@ Remote images inside a `Host` go through `RNHostView` + `expo-image`, **never a 
 SwiftUI's `Image` cannot load a URL. `RNHostView` attaches an `RCTSurfaceTouchHandler` to the hosted
 RN view, whose gesture recognizer swallows taps meant for an enclosing SwiftUI `Button`, so a purely
 presentational hosted image must carry `pointerEvents="none"` —
-[ui/avatar.tsx](../../ui/avatar.tsx) documents the case that found this (the Settings profile row),
+[features/avatar/avatar.tsx](../../features/avatar/avatar.tsx) documents the case that found this
+(the Settings profile row),
 and [features/exercises/exercise-detail-sheet.tsx](../../features/exercises/exercise-detail-sheet.tsx)
 is the other call site.
 
@@ -75,24 +76,34 @@ and the default recorded as `@default` — `CardProps`, `ChipProps`, `AvatarProp
 
 ## The `ui/` primitives
 
-Seven files, and the inventory is complete as written:
+Six files, and the inventory is complete as written:
 
 | Primitive                           | Tree     | Notes                                                       |
 | ----------------------------------- | -------- | ----------------------------------------------------------- |
 | [Card](../../ui/card.tsx)           | SwiftUI  | Host-less surface container; border-box `width`             |
 | [Chip](../../ui/chip.tsx)           | SwiftUI  | Capsule status label; variants map to system status colors  |
 | [Separator](../../ui/separator.tsx) | SwiftUI  | Native `Divider` horizontally, a tinted 1pt rule vertically |
-| [Avatar](../../ui/avatar.tsx)       | SwiftUI  | Circular image via `RNHostView`, initials fallback          |
 | [Text](../../ui/text.tsx)           | Plain RN | Apple's 11 text styles — see [Typography](#typography)      |
 | [Progress](../../ui/progress.tsx)   | Plain RN | Determinate bar; **no call sites today**                    |
 | [Image](../../ui/Image.tsx)         | Plain RN | A one-line re-export of `expo-image`                        |
 
-The four SwiftUI primitives are **host-less** — they compose inside a screen's `Host` and must never
+The three SwiftUI primitives are **host-less** — they compose inside a screen's `Host` and must never
 open one of their own. The three plain-RN primitives are usable anywhere in the RN tree and nowhere
 inside a `Host`.
 
-Add to `ui/` only when a shape has more than one call site. Anything with a single call site stays
-in its feature directory, where its rationale can live beside the screen that needs it.
+Avatar is a shared feature rather than a generic UI primitive. The component, fixed artwork palette,
+and deterministic seed selection live together under [`features/avatar/`](../../features/avatar).
+It uses a supplied stable user seed to choose one of 14 pastel vertical gradients. Each swatch
+specifies dark or light initials for contrast, and a display-name edit does not change the selected
+background. Names render the first and final initials; when `source` is present, `expo-image` crops
+it to fill the same circle instead. Home uses it in a transparent greeting row, while Settings uses
+it in the profile row. The component accepts an image URI but the app has no photo picker or upload
+path.
+
+Add to `ui/` only when a generic shape has more than one call site. Anything with a single call site
+stays in its feature directory, where its rationale can live beside the screen that needs it. Avatar
+is shared but remains a feature because its domain-specific palette and identity rules belong with
+the component rather than in cross-cutting modules.
 
 ## When a hand-written native view is correct
 
@@ -246,11 +257,13 @@ measurement and the six falsified alternatives. Check it before re-investigating
 
 ## Color and theme
 
-[theme/colors.ts](../../theme/colors.ts) is the **only** source of color. Tokens resolve to UIKit
+[theme/colors.ts](../../theme/colors.ts) is the source of semantic app color. Tokens resolve to UIKit
 semantic colors through `Color.ios.*` — the type-safe `expo-router` wrapper, never raw
 `PlatformColor` — wrapped in `Platform.select` purely to supply a `default` web fallback. That
-`Platform.select` is the one sanctioned platform branch in the codebase. No hardcoded hex anywhere
-else, and no brand accent.
+`Platform.select` is the one sanctioned platform branch in the codebase, and there is no brand
+accent. The one fixed-artwork exception is the 14-swatch reference palette in
+[`features/avatar/avatar-backgrounds.ts`](../../features/avatar/avatar-backgrounds.ts); those colors
+must not adapt because they reproduce selectable artwork rather than semantic UI roles.
 
 Two tokens carry rules rather than values. `systemGroupedBackground` — not `systemBackground` — is
 the correct backdrop behind `insetGrouped` rows, which is why
@@ -343,7 +356,8 @@ ramp routes scaling through `UIFontMetrics` for that style, which is the curve S
 `font({ textStyle })` already follows, so RN text and SwiftUI text inside a `Host` scale together
 instead of drifting apart. Never set `allowFontScaling={false}`.
 
-The one sanctioned exception to the text-style rule is [ui/avatar.tsx](../../ui/avatar.tsx), whose
+The one sanctioned exception to the text-style rule is
+[features/avatar/avatar.tsx](../../features/avatar/avatar.tsx), whose
 initials are sized relative to a fixed-pixel circle that cannot itself scale; the file carries the
 full argument, including the fact that its `expo-image` branch has no Dynamic Type support at all.
 

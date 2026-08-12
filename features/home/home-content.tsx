@@ -27,6 +27,7 @@ import {
   padding,
 } from '@expo/ui/swift-ui/modifiers';
 
+import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { ExpandableWeeklyCalendar } from '@/features/calendar';
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
 import { useUserStore } from '@/features/user/store/use-user-store';
@@ -39,6 +40,7 @@ import { mods } from '@/theme/modifiers';
 import { layout } from '@/theme/styles';
 
 import { buildHomeCalendarMocks } from './home-calendar-mocks';
+import { HomeHeader } from './home-header';
 
 /** One row of the "Recent Workouts" section, already formatted for display. */
 interface RecentWorkoutRow {
@@ -194,8 +196,8 @@ const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
  * to stutter, that is where to look, and moving the calendar back out to a
  * sibling island is the escape hatch.
  *
- * The greeting is not in the body: it is the screen's large navigation title
- * (see the route file), the way Apple's own Home app renders "Good Evening".
+ * Home starts with a transparent profile greeting row. It stays in this Host so
+ * the avatar and typography remain native SwiftUI.
  */
 export const HomeContent = () => {
   const colorScheme = useAppColorScheme();
@@ -207,12 +209,18 @@ export const HomeContent = () => {
     calendarMocks.selectedDateId
   );
   const reduceMotion = useReduceMotion();
+  const user = useAuthStore((state) => state.user);
   const { profile, isLoading: userLoading } = useUserStore();
   const { recentWorkouts, isLoading: workoutsLoading } = useWorkoutStore();
   const { activeRoutines, isLoading: routinesLoading } = useRoutineStore();
 
   const isLoading = userLoading || workoutsLoading || routinesLoading;
   const stats = profile?.stats;
+  const profileDisplayName = profile?.displayName.trim();
+  const displayName = userLoading
+    ? 'Placeholder User'
+    : profileDisplayName || 'User';
+  const photoURL = userLoading ? null : profile?.photoURL;
 
   // Each figure is kept as a number and formatted at the call site, because
   // `animation` is driven by the value itself (the native side accepts only a
@@ -260,6 +268,12 @@ export const HomeContent = () => {
           isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
         }
       >
+        <HomeHeader
+          displayName={displayName}
+          photoURL={photoURL}
+          avatarSeed={user?.uid ?? displayName}
+          isLoading={userLoading}
+        />
         <Section modifiers={CALENDAR_ROW_MODIFIERS}>
           <RNHostView matchContents>
             <ExpandableWeeklyCalendar

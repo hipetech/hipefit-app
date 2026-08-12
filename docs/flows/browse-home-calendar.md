@@ -38,7 +38,8 @@ pick are demonstration data.
 The calendar is not entered — it is already on screen. [`app/(private)/(home)/index.tsx`](<../../app/(private)/(home)/index.tsx>)
 mounts [`features/home/home-content.tsx`](../../features/home/home-content.tsx), which renders
 [`ExpandableWeeklyCalendar`](../../features/calendar/index.tsx) inside an
-`RNHostView matchContents` row of the screen's SwiftUI `List`. It is a full-bleed row rather than a
+`RNHostView matchContents` row of the screen's SwiftUI `List`, directly below the profile greeting
+row ([`home-header.tsx`](../../features/home/home-header.tsx)). It is a full-bleed row rather than a
 card — `CALENDAR_ROW_MODIFIERS` in `home-content.tsx` strips the `insetGrouped` margins, background
 and separator off that one row — and because it is a list row it **scrolls with the page** instead
 of pinning above it. The boundary that makes this work, and what it costs, is in

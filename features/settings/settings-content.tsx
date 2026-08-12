@@ -30,12 +30,12 @@ import {
 import { useRouter } from 'expo-router';
 
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
+import { Avatar } from '@/features/avatar/avatar';
 import { useUserStore } from '@/features/user/store/use-user-store';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { colors } from '@/theme/colors';
 import { mods } from '@/theme/modifiers';
 import { layout } from '@/theme/styles';
-import { Avatar } from '@/ui/avatar';
 
 /** Placeholder text shown behind `redacted('placeholder')` while the profile loads. */
 const PLACEHOLDER_NAME = 'Placeholder Name';
@@ -92,7 +92,7 @@ const DISCLOSURE_CHEVRON_MODIFIERS = [
 export const SettingsContent = () => {
   const router = useRouter();
   const colorScheme = useAppColorScheme();
-  const { signOut } = useAuthStore();
+  const { user, signOut } = useAuthStore();
   const { profile, isLoading, updateSettings } = useUserStore();
 
   const [isLogoutAlertPresented, setLogoutAlertPresented] = useState(false);
@@ -140,7 +140,12 @@ export const SettingsContent = () => {
             modifiers={[accessibilityHint('Opens the Edit Profile form.')]}
           >
             <HStack spacing={12} modifiers={[padding({ vertical: 6 })]}>
-              <Avatar source={photoURL} fallback={displayName} size={60} />
+              <Avatar
+                source={photoURL}
+                fallback={displayName}
+                seed={user?.uid ?? displayName}
+                size={60}
+              />
               <VStack alignment="leading" spacing={2}>
                 <Text modifiers={mods.headlineLabelOneLine}>{displayName}</Text>
                 <Text modifiers={PROFILE_EMAIL_MODIFIERS}>{email}</Text>

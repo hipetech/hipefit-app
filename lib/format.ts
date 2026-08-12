@@ -7,15 +7,6 @@ export const getGreeting = (): string => {
   return 'Good Evening';
 };
 
-export const getInitials = (name: string): string => {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-};
-
 export const capitalize = (s: string): string =>
   s.charAt(0).toUpperCase() + s.slice(1);
 
