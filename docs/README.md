@@ -192,6 +192,8 @@ Historical and proposed work, never current behavior. New plans use an initiativ
 - [`plans/native-navigation-dock/plan.md`](plans/native-navigation-dock/plan.md) — the iOS-native
   create panel that ships today, its parallel ownership model, manual approval gate, and
   post-approval mobile QA.
+- [`plans/maestro-e2e/plan.md`](plans/maestro-e2e/plan.md) — the proposed local iOS Maestro harness,
+  development Firebase boundary, AI-assisted authoring, and optional AI assertions.
   calendar's current engine: Flash Calendar for dates, Reanimated for the clip, and the Reduce
   Motion question the previous attempt left open.
 - [`plans/weekly-calendar/plan.md`](plans/weekly-calendar/plan.md) — the first calendar initiative,
