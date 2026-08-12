@@ -2,7 +2,7 @@
 type: app
 status: current
 area: architecture
-updated: 2026-08-05
+updated: 2026-08-12
 ---
 
 # Application architecture
@@ -193,12 +193,15 @@ screens has to pick a side of the bridge before it can move into [ui/](../../ui)
 primitives are host-less and compose inside a screen's `Host`, the plain-RN ones are usable only
 outside one. The rules for building inside that boundary are in [ui.md](ui.md).
 
-**Styling is two vocabularies over one token source**, which is why `theme/` sits beside the layers
-rather than inside them: [theme/colors.ts](../../theme/colors.ts) is the single token source,
+**Styling is two vocabularies over one semantic token source**, which is why `theme/` sits beside the
+layers rather than inside them: [theme/colors.ts](../../theme/colors.ts) is the semantic token source,
 [theme/modifiers.ts](../../theme/modifiers.ts) holds the shared SwiftUI arrays and
 [theme/styles.ts](../../theme/styles.ts) the shared RN styles, so a screen never owns a color or a
-reusable layout of its own. What those tokens are, how the two vocabularies stay named alike, and
-the ordering rule that constrains how the shared arrays may be reused are all in [ui.md](ui.md).
+reusable layout of its own. Fixed artwork may stay with the feature that owns it: Avatar's reference
+swatches live in [`features/avatar/avatar-backgrounds.ts`](../../features/avatar/avatar-backgrounds.ts)
+rather than pretending to be semantic UI roles. What the shared tokens are, how the two vocabularies
+stay named alike, and the ordering rule that constrains how the shared arrays may be reused are all
+in [ui.md](ui.md).
 
 Shared formatting lives in [lib/format.ts](../../lib/format.ts) — check it before writing a local
 helper, since most date, duration and volume strings already exist there.

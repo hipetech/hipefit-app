@@ -2,7 +2,7 @@
 type: app
 status: current
 area: navigation
-updated: 2026-08-05
+updated: 2026-08-12
 ---
 
 # Navigation
@@ -104,9 +104,9 @@ literally `return <Stack />`. The redundancy is deliberate:
   [`app/(private)/settings/_layout.tsx`](<../../app/(private)/settings/_layout.tsx>) is the one
   layout with explicit `<Stack.Screen>` declarations, because the Edit Profile sheet's presentation
   is route configuration and has to be declared where the route is registered.
-- **Large titles.** `Stack.Screen.Title large` only means anything inside a stack. Without the
-  per-tab stack there is no navigation bar to own the title, and the title would have to be drawn
-  in the body.
+- **Large titles.** `Stack.Screen.Title large` only means anything inside a stack. Workouts,
+  Exercises, and Settings use one; Home deliberately hides its header because its avatar, greeting,
+  and display name form a single custom heading in the body.
 
 The cost is three near-empty files. Each carries a comment explaining that it is intentionally
 bare and that the screen supplies its own chrome.
@@ -127,14 +127,13 @@ this; see [`app/(private)/workouts/index.tsx`](<../../app/(private)/workouts/ind
 minimal shape — an island from `features/` plus a title — and
 [`app/(private)/exercises/index.tsx`](<../../app/(private)/exercises/index.tsx>) for the maximal one.
 
-The reason is that chrome depends on screen state. In
-[`app/(private)/(home)/index.tsx`](<../../app/(private)/(home)/index.tsx>) the title _is_ the
-greeting — there is no "Home" title and no heading in the body, because both would say the same
-thing twice — recomputed across noon/18:00 and across an overnight resume by
-[`features/home/use-greeting.ts`](../../features/home/use-greeting.ts). Exercises' toolbar icon
-reflects whether a difficulty filter is active, and its search bar writes into the same `useState`
-that filters the list. Configuring either from the layout would mean lifting that state above the
-screen that owns it for no benefit.
+The reason is that chrome depends on screen state. Home opts out of chrome with
+`headerShown: false`: [`features/home/home-header.tsx`](../../features/home/home-header.tsx) combines
+the avatar, display name, and greeting in the body, with the greeting recomputed across noon/18:00
+and across an overnight resume by [`features/home/use-greeting.ts`](../../features/home/use-greeting.ts).
+Exercises' toolbar icon reflects whether a difficulty filter is active, and its search bar writes
+into the same `useState` that filters the list. Configuring either from the layout would mean lifting
+that state above the screen that owns it for no benefit.
 
 The pattern also keeps route files thin. A route is normally a title plus one island from
 `features/` — [`features/home/home-content.tsx`](../../features/home/home-content.tsx),

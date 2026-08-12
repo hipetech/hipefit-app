@@ -2,7 +2,7 @@
 type: flow
 status: current
 area: auth
-updated: 2026-08-04
+updated: 2026-08-12
 ---
 
 # Flow: sign in with Apple
@@ -103,7 +103,12 @@ is the entire authentication surface.
    [`app/(private)/_layout.tsx`](<../../app/(private)/_layout.tsx>). Screens show their redacted
    placeholder state until the first snapshot arrives — the same loading treatment described in
    [`start-workout.md`](start-workout.md).
-10. **The user's theme takes effect.** [`hooks/use-app-color-scheme.ts`](../../hooks/use-app-color-scheme.ts)
+10. **Home and Settings render the profile identity.** When `photoURL` is present,
+    [`Avatar`](../../features/avatar/avatar.tsx) crops that image into a circle. Otherwise it shows
+    the first and final initials over a deterministic gradient selected from the Firebase uid, so
+    editing the display name does not unexpectedly recolor it. The component accepts the stored URI,
+    but there is no photo picker or upload path in the app.
+11. **The user's theme takes effect.** [`hooks/use-app-color-scheme.ts`](../../hooks/use-app-color-scheme.ts)
     reads `profile.settings.theme` from the user store, and the root layout applies it with
     `Appearance.setColorScheme`. Before the profile snapshot lands, the hook returns `undefined`,
     i.e. follow the device — so a user whose saved theme differs from the system one sees a brief

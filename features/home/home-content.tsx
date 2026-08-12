@@ -21,6 +21,7 @@ import {
   padding,
 } from '@expo/ui/swift-ui/modifiers';
 
+import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
 import { useUserStore } from '@/features/user/store/use-user-store';
 import { useWorkoutStore } from '@/features/workouts/store/use-workout-store';
@@ -30,6 +31,8 @@ import { formatDuration, formatRelativeDate } from '@/lib/format';
 import { colors } from '@/theme/colors';
 import { mods } from '@/theme/modifiers';
 import { layout } from '@/theme/styles';
+
+import { HomeHeader } from './home-header';
 
 /** One row of the "Recent Workouts" section, already formatted for display. */
 interface RecentWorkoutRow {
@@ -160,18 +163,24 @@ const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
  * margins, 44pt row heights, inset hairlines and grouped background for free,
  * which is why every hand-rolled width/padding/gap constant is gone.
  *
- * The greeting is not in the body: it is the screen's large navigation title
- * (see the route file), the way Apple's own Home app renders "Good Evening".
+ * Home starts with a transparent profile greeting row. It stays in this Host so
+ * the avatar and typography remain native SwiftUI.
  */
 export const HomeContent = () => {
   const colorScheme = useAppColorScheme();
   const reduceMotion = useReduceMotion();
+  const user = useAuthStore((state) => state.user);
   const { profile, isLoading: userLoading } = useUserStore();
   const { recentWorkouts, isLoading: workoutsLoading } = useWorkoutStore();
   const { activeRoutines, isLoading: routinesLoading } = useRoutineStore();
 
   const isLoading = userLoading || workoutsLoading || routinesLoading;
   const stats = profile?.stats;
+  const profileDisplayName = profile?.displayName.trim();
+  const displayName = userLoading
+    ? 'Placeholder User'
+    : profileDisplayName || 'User';
+  const photoURL = userLoading ? null : profile?.photoURL;
 
   // Each figure is kept as a number and formatted at the call site, because
   // `animation` is driven by the value itself (the native side accepts only a
@@ -212,6 +221,12 @@ export const HomeContent = () => {
           isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
         }
       >
+        <HomeHeader
+          displayName={displayName}
+          photoURL={photoURL}
+          avatarSeed={user?.uid ?? displayName}
+          isLoading={userLoading}
+        />
         {/*
           Stats are label + value rows rather than a tile grid: the same three
           numbers already render this way in Settings, and a full-bleed grid row
