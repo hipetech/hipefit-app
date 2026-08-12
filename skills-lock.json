@@ -55,6 +55,12 @@
       "skillPath": "plugins/expo/skills/expo-upgrade/SKILL.md",
       "computedHash": "a1f5d3a380aea7f266cac154380cc403df8b8e05ce0e0ef419146a79b1ee2a64"
     },
+    "react-native-best-practices": {
+      "source": "software-mansion-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-native-best-practices/SKILL.md",
+      "computedHash": "d86c2fa6f353b2b126d99351967427536765f8b6ee4d1de9ec13502c860df186"
+    },
     "upgrading-expo": {
       "source": "expo/skills",
       "sourceType": "github",
