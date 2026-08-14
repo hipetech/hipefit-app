@@ -69,6 +69,19 @@ filter state and the placeholder data in the route file because the screen _is_ 
 [features/auth/index.tsx](../../features/auth/index.tsx) is a bare `index.tsx` left over from an
 earlier convention. Neither is a template to copy.
 
+[features/calendar/](../../features/calendar) is a third, and this one **is** deliberate. It is the
+only feature grouped into `components/`, `helpers/` and `hooks/` behind an
+[index.tsx](../../features/calendar/index.tsx) that publishes the component and its
+[types.ts](../../features/calendar/types.ts) contract and nothing else. It earned the exception by
+size: fourteen files, roughly twice the next largest feature, at which point a flat directory stops
+telling you which of them a screen is allowed to import. The `calendar-` filename prefix went with
+the flattening — the directory already says it. Nothing outside the feature reaches past
+`@/features/calendar`.
+
+Copy it only when a feature reaches a comparable size. Below that the flat layout is easier to read,
+which is why the other nine features keep it, and a half-populated `components/` directory is worse
+than no directory at all.
+
 One feature directory has no route of its own. `features/navigation-dock/` is mounted by the tab
 layout rather than by a screen — it is the React adapter for the native create panel, plus the store
 the tab layout shares with it and the measured tab bar geometry both need. Its contract is in

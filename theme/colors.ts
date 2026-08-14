@@ -117,6 +117,18 @@ export const colors = {
     ios: Color.ios.lightText,
     default: '#ffffff',
   })!,
+  /**
+   * Opaque content on a *saturated* accent fill — the calendar's selected day
+   * number and its dots.
+   *
+   * `onAccent` resolves to UIKit's `lightText`, which is white at 60% alpha:
+   * UIKit's token for text over dark photographic content, and roughly 2:1
+   * against `systemBlue`. There is no semantic UIKit color that stays white in
+   * both appearances (`systemBackground` inverts), so this one is a literal by
+   * necessity rather than an oversight. Reach for it only over a filled accent
+   * shape; everywhere else the semantic label tokens are correct.
+   */
+  onAccentSolid: '#ffffff',
 
   /** Destructive / error. */
   systemRed: Platform.select({

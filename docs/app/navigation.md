@@ -129,8 +129,10 @@ minimal shape — an island from `features/` plus a title — and
 
 The reason is that chrome depends on screen state. Home opts out of chrome with
 `headerShown: false`: [`features/home/home-header.tsx`](../../features/home/home-header.tsx) combines
-the avatar, display name, and greeting in the body, with the greeting recomputed across noon/18:00
-and across an overnight resume by [`features/home/use-greeting.ts`](../../features/home/use-greeting.ts).
+the avatar, display name, greeting, and today's date in the body. The greeting is recomputed across
+noon/18:00 and the date across midnight, both on one timer plus an `AppState` resume, by
+[`features/home/use-clock.ts`](../../features/home/use-clock.ts) — iOS suspends timers in the
+background, so a resume has to re-read them.
 Exercises' toolbar icon reflects whether a difficulty filter is active, and its search bar writes
 into the same `useState` that filters the list. Configuring either from the layout would mean lifting
 that state above the screen that owns it for no benefit.

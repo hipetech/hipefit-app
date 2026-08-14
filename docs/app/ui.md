@@ -408,6 +408,44 @@ Empty sections are a plain secondary-label row plus a `Section` footer, never a
 `ContentUnavailableView` — that is a whole-view treatment, and dropping one into a row recreates the
 tall centred empty card the grouped-list migration deleted.
 
+## The calendar: a React Native island inside the `List`
+
+Home's expandable calendar
+([features/calendar/index.tsx](../../features/calendar/index.tsx))
+is the app's one substantial React Native island rendered _through_ the SwiftUI tree rather than
+beside it. [features/home/home-content.tsx](../../features/home/home-content.tsx) puts it in an
+`RNHostView matchContents` row of the screen's `List`, and strips the `insetGrouped` card off that
+one row so the grid reads as part of the page — `listSectionMargins`, `listRowInsets`,
+`listRowBackground` and `listRowSeparator`, all four, because `listSectionMargins` is what actually
+owns the horizontal 16pt under `insetGrouped` and `listRowInsets` alone leaves it in place. The
+island must not open a `Host` of its own; it is already inside one.
+
+A row rather than a sibling island above the `Host`, so the calendar **scrolls with the page**
+instead of pinning above it. **The price is real and accepted: the open/close animates a height, so
+every frame of that spring crosses the bridge as an intrinsic-size invalidation on the row.** It
+measures smooth on device today. If the open/close ever starts to stutter, that is the first place
+to look, and the escape hatch is moving the calendar back out to a sibling island above the `Host`
+— which costs the scroll behaviour, so it is a decision, not a tidy-up.
+
+**One animated layout property in the app, and this is it.** The container's `height` is animated
+because the list below has to be _pushed down_ by the opening month, and a transform cannot push
+anything — it would slide the calendar over the rows instead of moving them. Everything else in the
+island animates `transform` or `opacity`, which composite without touching layout. Nothing else may
+animate layout;
+[features/calendar/hooks/use-expansion.ts](../../features/calendar/hooks/use-expansion.ts)
+carries the reasoning beside the one exception.
+
+**Virtualization does not belong inside an animating clip.** A horizontal paged `FlashList` was the
+obvious choice for the two pagers and was measurably the wrong one: it lives inside a clip that is a
+single week row tall while collapsed, so it measured that viewport, virtualized nearly everything
+out of it, and then re-measured on every frame of the opening spring. QA caught all three
+consequences on device — an initial scroll landing on the wrong page, a settle handler reading an
+offset one page stale, and the grid going blank for ~430ms mid-collapse. Three fixed pages
+(previous, current, next, recentred on settle) replaced it, and bought nothing back: a month page is
+42 cells, well below the size at which recycling pays for itself. See
+[features/calendar/components/pager.tsx](../../features/calendar/components/pager.tsx) before
+reintroducing a list there.
+
 ## Hit testing and accessibility
 
 **A SwiftUI `Menu` hit-tests and labels its `label` view, not the `Menu`.** Modifiers on the `Menu`
@@ -457,10 +495,16 @@ carry built-in haptics; adding more double-fires.
 
 ## Motion
 
-**Motion is native, not Reanimated.** Reanimated cannot reach inside a `Host` to animate SwiftUI
-content, so it is not the tool for the `List`-based screens; where a transition already exists
-natively — a `DisclosureGroup`'s chevron rotation and reveal — use it, since UIKit's own animation
-cannot desync from a recycled row the way a `useAnimatedStyle` pair could.
+**Motion ownership follows the tree, and the two owners are not interchangeable.** Inside a `Host`,
+motion is SwiftUI's: Reanimated cannot reach in to animate SwiftUI content, so it is not the tool for
+the `List`-based screens, and where a transition already exists natively — a `DisclosureGroup`'s
+chevron rotation and reveal — use it, since UIKit's own animation cannot desync from a recycled row
+the way a `useAnimatedStyle` pair could. Inside a plain React Native island, motion is **Reanimated's**
+— the calendar's open/close is the app's only example, and `@expo/ui`'s modifiers are not available
+to it at all.
+
+Two different engines, then, and the difference that bites is Reduce Motion: Reanimated honours it
+automatically and `@expo/ui` does not. Both halves are spelled out below.
 
 Numbers that change in place use `contentTransition('numericText')` plus `animation(...)`, both
 applied **outermost**, after `font` and `monospacedDigit`. `contentTransition` alone never runs:
@@ -476,7 +520,19 @@ pass-through to `.animation(_:value:)` with no accessibility check
 (`AnimationModifier` in `node_modules/@expo/ui/ios/Modifiers/ViewModifierRegistry.swift`), and the
 SwiftUI environment value cannot be read from JS. Gate on
 [hooks/use-reduce-motion.ts](../../hooks/use-reduce-motion.ts) and **drop the motion modifiers
-entirely** rather than animating to zero duration.
+entirely** rather than animating to zero duration. UIKit is no different — the native dock reads the
+same hook, as [Native motion](#native-motion) records.
+
+**Reanimated does honour it, and that is why the calendar has no branch.** Left unset, a
+`withSpring` or `withTiming` config defaults to `ReduceMotion.System`, under which the animation
+jumps straight to its target whenever the OS setting is on. So the calendar opens and closes
+instantly, correctly, with no `useReducedMotion()` check in the hook and none in any component —
+see the `reduceMotion`-is-deliberately-absent note in
+[features/calendar/hooks/use-expansion.ts](../../features/calendar/hooks/use-expansion.ts).
+**Do not import `useReduceMotion()` into a Reanimated island.** That hook exists for the two engines
+that have no check of their own; using it on this side reintroduces by hand a branch Reanimated
+already takes, and a hand-written branch can be wrong. (Testers: iOS applies a Reduce Motion change
+to a running app only after a relaunch.)
 
 Gate on loading state as well. `.animation(_:value:)` never animates the first time it is applied, so
 introducing it at the moment redaction lifts is what stops placeholder figures from visibly rolling

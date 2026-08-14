@@ -161,10 +161,13 @@ is how a document turns into an agent implementing the wrong thing.
 ### Flows
 
 Each flow opens with a callout stating how much of it ships. Read that callout before assuming any
-step is reachable — three of the four below document journeys that stop partway or do not start.
+step is reachable — four of the five below document journeys that stop partway or do not start.
 
 - [`flows/authentication.md`](flows/authentication.md) — Apple Sign-In, first-run profile creation,
   the auth guard, and logging out. The one flow here that ships end to end.
+- [`flows/browse-home-calendar.md`](flows/browse-home-calendar.md) — paging, expanding, and
+  selecting a day in Home's calendar. Every interaction ships; the **markers are mock data** and
+  selecting a day filters nothing.
 - [`flows/start-workout.md`](flows/start-workout.md) — starting a workout from a routine or ad hoc.
   The entry points ship **disabled**.
 - [`flows/log-workout.md`](flows/log-workout.md) — finishing a session and the writes that would
@@ -189,6 +192,11 @@ Historical and proposed work, never current behavior. New plans use an initiativ
 - [`plans/native-navigation-dock/plan.md`](plans/native-navigation-dock/plan.md) — the iOS-native
   create panel that ships today, its parallel ownership model, manual approval gate, and
   post-approval mobile QA.
+  calendar's current engine: Flash Calendar for dates, Reanimated for the clip, and the Reduce
+  Motion question the previous attempt left open.
+- [`plans/weekly-calendar/plan.md`](plans/weekly-calendar/plan.md) — the first calendar initiative,
+  built on Wix `react-native-calendars` and **superseded** by the plan above. Its contract and its
+  runtime acceptance matrix survived the rewrite; its engine and its drag gesture did not.
 
 Older plans remain as loose files directly under [`plans/`](plans/). They were not migrated, and
 several describe work that was never built — verify anything you take from them against the code.

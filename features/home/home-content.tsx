@@ -1,4 +1,5 @@
 import type { WithId, Workout } from '@/database';
+import { useCallback, useState } from 'react';
 import { Host } from '@expo/ui';
 import {
   Button,
@@ -7,6 +8,7 @@ import {
   Label,
   LabeledContent,
   List,
+  RNHostView,
   Section,
   Spacer,
   Text,
@@ -17,11 +19,16 @@ import {
   animation,
   contentTransition,
   font,
+  listRowBackground,
+  listRowInsets,
+  listRowSeparator,
+  listSectionMargins,
   monospacedDigit,
   padding,
 } from '@expo/ui/swift-ui/modifiers';
 
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
+import { ExpandableWeeklyCalendar } from '@/features/calendar';
 import { useRoutineStore } from '@/features/routines/store/use-routine-store';
 import { useUserStore } from '@/features/user/store/use-user-store';
 import { useWorkoutStore } from '@/features/workouts/store/use-workout-store';
@@ -32,6 +39,7 @@ import { colors } from '@/theme/colors';
 import { mods } from '@/theme/modifiers';
 import { layout } from '@/theme/styles';
 
+import { buildHomeCalendarMocks } from './home-calendar-mocks';
 import { HomeHeader } from './home-header';
 
 /** One row of the "Recent Workouts" section, already formatted for display. */
@@ -144,6 +152,23 @@ const PLACEHOLDER_WORKOUTS: RecentWorkoutRow[] = [
   },
 ];
 
+/**
+ * Strips a list row back to bare full-bleed space for the calendar.
+ *
+ * `insetGrouped` wants to put every row in a rounded card at a 16pt margin,
+ * which is right for the sections below and wrong for a calendar: the grid
+ * carries its own inset, so a card around it would double the margin and box in
+ * a surface that is meant to read as part of the page. All four are needed —
+ * `listSectionMargins` is what actually owns the horizontal 16pt under
+ * `insetGrouped`, and `listRowInsets` alone leaves it in place.
+ */
+const CALENDAR_ROW_MODIFIERS = [
+  listSectionMargins({ length: 0, edges: 'horizontal' }),
+  listRowInsets({ top: 0, leading: 0, bottom: 0, trailing: 0 }),
+  listRowBackground('transparent'),
+  listRowSeparator('hidden'),
+];
+
 const FEATURED_STACK_MODIFIERS = [padding({ vertical: 4 })];
 
 const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
@@ -154,20 +179,35 @@ const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
  * The component reads its stores itself and takes no props, so the route file
  * stays thin (title + this island).
  *
- * One `Host` filling the screen (`flex: 1`, deliberately **no**
- * `matchContents`) around one SwiftUI `List` with `listStyle('insetGrouped')`.
- * This replaces the nine separate `Host` islands the screen used to mount. A
- * `List` has no intrinsic content height, so it can only live at the root of a
- * Host that owns real space — nesting it in an RN `ScrollView`, or measuring it
- * with `matchContents`, renders nothing. `insetGrouped` supplies the 16pt
- * margins, 44pt row heights, inset hairlines and grouped background for free,
- * which is why every hand-rolled width/padding/gap constant is gone.
+ * **One `Host` around a SwiftUI `List`, with the calendar inside it.** The
+ * screen is a single screen-filling `Host` (`flex: 1`, deliberately **no**
+ * `matchContents`) around a `List` with `listStyle('insetGrouped')`; the `Host`
+ * needs that real flex space because a `List` has no intrinsic content height
+ * and renders nothing without it. `insetGrouped` supplies the 16pt margins,
+ * 44pt row heights, inset hairlines and grouped background for free, which is
+ * why every hand-rolled width/padding/gap constant is gone.
+ *
+ * The calendar is plain React Native and comes back through `RNHostView
+ * matchContents` as a full-bleed row of that list, rather than sitting above the
+ * `Host` as a sibling. That is what lets it scroll with the page rather than
+ * pinning above it. The price is real and accepted: its Reanimated
+ * open/close animates a height, so every frame of the spring crosses the bridge
+ * as an intrinsic-size invalidation on this row. If the open/close ever starts
+ * to stutter, that is where to look, and moving the calendar back out to a
+ * sibling island is the escape hatch.
  *
  * Home starts with a transparent profile greeting row. It stays in this Host so
  * the avatar and typography remain native SwiftUI.
  */
 export const HomeContent = () => {
   const colorScheme = useAppColorScheme();
+  // Built once, from the day the screen first mounted: the mock is relative to
+  // today, and rebuilding it on every render would hand the calendar a fresh
+  // array identity each time.
+  const [calendarMocks] = useState(() => buildHomeCalendarMocks(new Date()));
+  const [selectedDateId, setSelectedDateId] = useState(
+    calendarMocks.selectedDateId
+  );
   const reduceMotion = useReduceMotion();
   const user = useAuthStore((state) => state.user);
   const { profile, isLoading: userLoading } = useUserStore();
@@ -196,6 +236,13 @@ export const HomeContent = () => {
     : (stats?.longestStreak ?? 0);
 
   const animateCounters = !isLoading && !reduceMotion;
+
+  // Selecting a day moves the circle and nothing else. Activity, the featured
+  // routine and recent workouts are not filtered by it — day summaries need
+  // real workout data, and this initiative deliberately ships none.
+  const handleDatePress = useCallback((dateId: string) => {
+    setSelectedDateId(dateId);
+  }, []);
 
   const routine = activeRoutines[0];
   const featuredRoutine: FeaturedRoutine | null = isLoading
@@ -227,6 +274,15 @@ export const HomeContent = () => {
           avatarSeed={user?.uid ?? displayName}
           isLoading={userLoading}
         />
+        <Section modifiers={CALENDAR_ROW_MODIFIERS}>
+          <RNHostView matchContents>
+            <ExpandableWeeklyCalendar
+              selectedDateId={selectedDateId}
+              dateMarkers={calendarMocks.dateMarkers}
+              onDatePress={handleDatePress}
+            />
+          </RNHostView>
+        </Section>
         {/*
           Stats are label + value rows rather than a tile grid: the same three
           numbers already render this way in Settings, and a full-bleed grid row
