@@ -55,6 +55,7 @@ scripts/*-firebase-adminsdk-*.json
 
 # Agent tmp files
 /qa-artifacts
+/docs/plans/
 
 # Obsidian vault over docs/. The Markdown is canonical and Obsidian is optional, so
 # only the config that gives every reader the same behaviour is tracked (app.json,
