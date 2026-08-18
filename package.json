@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@expo/ui": "~57.0.7",
+    "@hipefit/expandable-accessory": "workspace:*",
     "@hipefit/navigation-dock": "workspace:*",
     "@legendapp/list": "^3.3.3",
     "@marceloterreiro/flash-calendar": "2.0.0",
