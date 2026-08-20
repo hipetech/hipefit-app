@@ -2,7 +2,7 @@
 type: app
 status: current
 area: architecture
-updated: 2026-08-12
+updated: 2026-08-18
 ---
 
 # Application architecture
@@ -29,8 +29,8 @@ Firebase        Firestore / Auth, via @react-native-firebase directly
 Four things sit beside those layers rather than inside them: `theme/` (colors, shared SwiftUI
 modifier arrays, shared RN styles), `ui/` (reusable native primitives), `lib/` + `hooks/`
 (formatting, constants, haptics, cross-feature hooks), and `packages/` (workspace packages the app
-consumes by name — today one iOS native module; see
-[`packages/`: the local native boundary](#packages-the-local-native-boundary)).
+consumes by name — today one iOS native module and one pure React integration; see
+[`packages/`: reusable workspace boundaries](#packages-reusable-workspace-boundaries)).
 
 The absence of an API/service layer is deliberate. Every read is a live `onSnapshot` subscription and
 every write is a one-line `updateDoc`/`writeBatch` against a ref helper, so a wrapper would only add
@@ -219,33 +219,35 @@ in [ui.md](ui.md).
 Shared formatting lives in [lib/format.ts](../../lib/format.ts) — check it before writing a local
 helper, since most date, duration and volume strings already exist there.
 
-## `packages/`: the local native boundary
+## `packages/`: reusable workspace boundaries
 
-[packages/](../../packages) is where native code the app owns lives. Each subdirectory is a
-workspace package: a `package.json`, an `expo-module.config.json`, an `ios/` directory of Swift plus
-a podspec, and an `index.ts` that types the bridge and calls `requireNativeView`. There is exactly
-one today, [packages/navigation-dock/](../../packages/navigation-dock/index.ts) — published to the
-app as `@hipefit/navigation-dock` — which draws the global create panel and its scrim.
+[packages/](../../packages) holds code intentionally consumed through a package contract rather
+than the root `@/*` alias. There are two packages:
 
-The boundary is worth stating plainly because it is the only place in the repository where app
-behavior is written in Swift:
+| Package                                                                          | Kind             | Owns                                                      |
+| -------------------------------------------------------------------------------- | ---------------- | --------------------------------------------------------- |
+| [`@hipefit/navigation-dock`](../../packages/navigation-dock/index.ts)            | Expo native view | UIKit create panel, scrim, and bridge types               |
+| [`@hipefit/expandable-accessory`](../../packages/expandable-accessory/README.md) | Pure React       | Router provider, content slots, outlets, and zoom trigger |
+
+The distinction is load-bearing. `navigation-dock` has `expo-module.config.json`, Swift, a podspec,
+and a typed `requireNativeView` bridge. `expandable-accessory` has none of those: it packages a
+reusable React coordination problem because its provider must span a NativeTabs subtree and a root
+Stack route, not because anything needs new native code.
 
 - **A package is imported by name, never by path.**
   `import { NavigationDockView } from '@hipefit/navigation-dock'`, not a `@/`-aliased path — the
   `@/*` alias maps to the repository root and deliberately does not reach in here. That is the line
   between the two directories: something reachable only by a relative path belongs in `features/`.
-- **`packages/` is for views and APIs UIKit must own.** A native module is not the answer to "this
-  should look different" — `@expo/ui` renders real SwiftUI already. It is the answer to a
+- **Native packages are for views and APIs UIKit must own.** A native module is not the answer to
+  "this should look different" — `@expo/ui` renders real SwiftUI already. It is the answer to a
   requirement the SwiftUI bridge structurally cannot serve; [ui.md](ui.md#when-a-hand-written-native-view-is-correct)
   lists the three that produced this one and is the authority for how such a view must behave.
-- **Linking is automatic and native config stays committed.** The package is a real dependency:
-  root `package.json` declares `workspaces: ["packages/*"]` and depends on
-  `@hipefit/navigation-dock` at `workspace:*`, so Bun symlinks it into `node_modules` and Expo
-  autolinking finds it there by its `expo-module.config.json` — exactly as it finds a published
-  module. Hence no entry in `app.config.js` and none in the `Podfile`. What there _is_, is a
-  `Podfile.lock` entry pointing at `../packages/navigation-dock/ios`, so adding, changing **or
-  removing** a local package means `pod install --project-directory=ios` and committing that lock
-  change.
+- **Linking follows package kind.** Root `package.json` declares `workspaces: ["packages/*"]` and
+  both package dependencies at `workspace:*`, so Bun symlinks both into `node_modules`.
+  `navigation-dock` is native-autolinked through `expo-module.config.json` and has a `Podfile.lock`
+  entry pointing at `../packages/navigation-dock/ios`; changing its native dependency relationship
+  requires `pod install --project-directory=ios`. `expandable-accessory` is TypeScript only, so
+  adding it changed `bun.lock` but requires no pod install or native rebuild.
 
   **The install layout is pinned, and must stay pinned.** Bun defaults a workspace install to the
   _isolated_ linker, which stops hoisting transitive dependencies to the project root. Expo's Metro
@@ -260,11 +262,12 @@ behavior is written in Swift:
   of the package that owns it, free to vanish in a patch release, and the failure surfaces at an
   unrelated moment with nothing pointing back at the import that caused it.
 
-- **The React side of a native view belongs in `features/`, not in `packages/`.** `index.ts` exports
-  a typed view and nothing else — no state, no store reads, no navigation. The adapter that owns
-  those is [features/navigation-dock/navigation-dock.tsx](../../features/navigation-dock/navigation-dock.tsx),
-  which is what keeps the module reusable and the app logic testable by reading. Nothing under
-  `app/` imports from `packages/`.
+- **The app-specific side stays in `features/`.** The native package's `index.ts` exports a typed
+  view and nothing else — no state, store reads, or navigation. Its adapter is
+  [features/navigation-dock/navigation-dock.tsx](../../features/navigation-dock/navigation-dock.tsx).
+  Likewise, the expandable package knows only controlled `active`, an Expo Router `href`, React
+  nodes, and route state. A consumer remains responsible for feature state and visuals under
+  `features/`, while route files own the package outlets.
 - **The bridge is a contract in two files.** Prop and event names appear in the Swift
   `ModuleDefinition` and in `index.ts`, and nothing checks that they agree: an unknown prop is
   dropped silently and an unknown event never reaches JS. Rename in both or not at all.
