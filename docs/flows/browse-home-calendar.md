@@ -109,10 +109,6 @@ Workout markers and their data path do not exist. Concretely, what is missing:
   Nothing downstream reads the selected day.
 - **No persistence.** No store, and nothing written anywhere.
 
-Each of these is a documented non-goal of
-[`plans/flash-calendar-rewrite/plan.md`](../plans/flash-calendar-rewrite/plan.md#non-goals), not an
-oversight.
-
 ## Screens, routes, and data involved
 
 - **Route:** `(private)/(home)` — [`app/(private)/(home)/index.tsx`](<../../app/(private)/(home)/index.tsx>),
@@ -194,15 +190,3 @@ There is no terminal state to reach. The user is left with a moved selection cir
 positioned wherever they browsed to, and no change anywhere else in the app: no Firestore document,
 no store value, no navigation. The **intended** terminal state — a day whose real workouts are
 summarized or filtered into view — is not implemented, and nothing writes toward it.
-
-## Historical context
-
-- [`plans/flash-calendar-rewrite/plan.md`](../plans/flash-calendar-rewrite/plan.md) — the rewrite
-  that replaced Wix `react-native-calendars` with `@marceloterreiro/flash-calendar` for dates and
-  Reanimated for motion, and that finally settled Reduce Motion.
-- [`plans/weekly-calendar/plan.md`](../plans/weekly-calendar/plan.md) — the original initiative,
-  **superseded**. Its interaction engine and its drag-to-expand gesture were both replaced; its
-  contract and its acceptance matrix were not.
-
-> These are plans, not descriptions of current behavior. Where either disagrees with this document,
-> check the code.
