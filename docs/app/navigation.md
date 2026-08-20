@@ -218,8 +218,11 @@ Four files, one of them a workspace package of native code:
   it follows, are in [`docs/app/ui.md`](ui.md).
 
 This replaced an anchored SwiftUI `Menu` — a `UIMenu` presented from the button.
-`NativeTabs.BottomAccessory` remains rejected as the API-supported slot, because it only ever renders
-a full-width pill and the design calls for a circle.
+`NativeTabs.BottomAccessory` remains rejected **for this button**, because it only ever renders a
+full-width pill and the design calls for a circle. That is a rejection of the slot for the Create
+affordance, not of the API: a full-width pill is exactly the shape an active-workout accessory wants,
+which is what [`@hipefit/expandable-accessory`](../../packages/expandable-accessory/README.md) is
+built to fill. No route mounts it yet.
 
 Ownership divides three ways:
 

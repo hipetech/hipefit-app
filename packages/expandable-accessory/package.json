@@ -1,0 +1,13 @@
+{
+  "name": "@hipefit/expandable-accessory",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Expo Router compound component for a native tab accessory that expands through Apple Zoom.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "peerDependencies": {
+    "expo-router": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}
