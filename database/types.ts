@@ -2,91 +2,32 @@ import type { Timestamp } from '@react-native-firebase/firestore';
 
 export type { Timestamp };
 
-// ─── Shared Type Aliases ────────────────────────────────────────────────────
+export type Locale = 'en' | 'uk';
+export type GlobalLocalizedText = { en: string } & Partial<
+  Record<Locale, string>
+>;
+export type UserLocalizedText = Partial<Record<Locale, string>>;
+export type Ref = `global:${string}` | `custom:${string}`;
 
 export type ExerciseType = 'strength' | 'cardio' | 'bodyweight';
-export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 export type WorkoutStatus = 'in_progress' | 'completed' | 'abandoned';
-
-// ─── Utility ────────────────────────────────────────────────────────────────
 
 export interface WithId<T> {
   id: string;
   data: T;
 }
 
-// ─── Exercise Groups ────────────────────────────────────────────────────────
-
-/** Global default exercise group (read-only) */
-export interface ExerciseGroup {
-  name: string;
-  order: number;
-  icon: string | null;
+export interface Body {
+  birthDate: string | null;
+  heightCm: number | null;
 }
-
-/** User's exercise group (seeded from defaults, fully editable) */
-export interface UserExerciseGroup {
-  name: string;
-  order: number;
-  icon: string | null;
-  isDefault: boolean;
-  globalGroupId: string | null;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-// ─── Exercises ──────────────────────────────────────────────────────────────
-
-/** Global default exercise (read-only) */
-export interface Exercise {
-  name: string;
-  description: string;
-  type: ExerciseType;
-  groupKey: string;
-  equipment: string[];
-  difficulty: Difficulty;
-  imageURL: string | null;
-  createdAt: Timestamp;
-}
-
-/** Sparse user overrides on a global exercise */
-export interface ExerciseOverride {
-  name: string | null;
-  description: string | null;
-  groupId: string | null;
-  isHidden: boolean;
-  updatedAt: Timestamp;
-}
-
-/** User-created exercise */
-export interface CustomExercise {
-  name: string;
-  description: string;
-  type: ExerciseType;
-  groupId: string;
-  equipment: string[];
-  difficulty: Difficulty;
-  imageURL: string | null;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-
-// ─── User Profile ───────────────────────────────────────────────────────────
 
 export interface UserSettings {
-  units: 'metric' | 'imperial';
   theme: 'light' | 'dark' | 'system';
-  language: string;
-  notificationsEnabled: boolean;
-  workoutRemindersEnabled: boolean;
-  autoPauseEnabled: boolean;
-}
-
-export interface UserStats {
-  totalWorkouts: number;
-  currentStreak: number;
-  longestStreak: number;
-  lastWorkoutAt: Timestamp | null;
+  language: Locale;
+  units: 'metric' | 'imperial';
+  hiddenExerciseRefs: Ref[];
+  hiddenCategoryRefs: Ref[];
 }
 
 export interface UserProfile {
@@ -95,35 +36,78 @@ export interface UserProfile {
   displayName: string;
   email: string | null;
   photoURL: string | null;
+  body: Body;
+  purpose: string | null;
   settings: UserSettings;
-  stats: UserStats;
+  schemaVersion: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
-// ─── Routines ───────────────────────────────────────────────────────────────
-
-export interface RoutineSet {
-  setNumber: number;
-  targetWeight?: number;
-  targetReps?: number;
-  targetDuration?: number;
-  targetDistance?: number;
-}
-
-export interface RoutineExercise {
-  exerciseId: string;
-  exerciseName: string;
-  exerciseType: ExerciseType;
-  isCustom: boolean;
+export interface ExerciseCategory {
+  name: GlobalLocalizedText;
   order: number;
-  sets: RoutineSet[];
+  icon: string;
+  isRetired: boolean;
 }
 
-export interface Routine {
+export interface Equipment {
+  name: GlobalLocalizedText;
+  icon: string | null;
+  isRetired: boolean;
+}
+
+export interface Exercise {
+  categoryRef: Ref;
+  name: GlobalLocalizedText;
+  description: GlobalLocalizedText;
+  type: ExerciseType;
+  equipment: Ref[];
+  imageURL: string | null;
+  isRetired: boolean;
+}
+
+export interface CustomExerciseCategory {
+  name: UserLocalizedText;
+  defaultLocale: Locale;
+  order: number;
+  icon: string | null;
+  isArchived: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface CustomExercise {
+  categoryRef: Ref;
+  forkedFromRef: Ref | null;
+  name: UserLocalizedText;
+  description: UserLocalizedText;
+  defaultLocale: Locale;
+  type: ExerciseType;
+  equipment: Ref[];
+  imageURL: string | null;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface TemplateSet {
+  weight?: number;
+  reps?: number;
+  duration?: number;
+  distance?: number;
+}
+
+export interface TemplateExercise {
+  exerciseRef: Ref;
+  nameSnapshot: string;
+  type: ExerciseType;
+  sets: TemplateSet[];
+}
+
+export interface WorkoutTemplate {
   name: string;
   description: string | null;
-  exercises: RoutineExercise[];
+  exercises: TemplateExercise[];
   estimatedDuration: number | null;
   isArchived: boolean;
   lastPerformedAt: Timestamp | null;
@@ -132,10 +116,7 @@ export interface Routine {
   updatedAt: Timestamp;
 }
 
-// ─── Workouts ───────────────────────────────────────────────────────────────
-
 export interface WorkoutSet {
-  setNumber: number;
   isCompleted: boolean;
   weight?: number;
   reps?: number;
@@ -146,49 +127,30 @@ export interface WorkoutSet {
 }
 
 export interface WorkoutExercise {
-  exerciseId: string;
-  exerciseName: string;
-  exerciseType: ExerciseType;
-  isCustom: boolean;
-  order: number;
+  exerciseRef: Ref;
+  nameSnapshot: string;
+  type: ExerciseType;
   sets: WorkoutSet[];
 }
 
 export interface Workout {
-  routineId: string | null;
-  routineName: string | null;
+  templateRef: Ref | null;
+  templateName: string | null;
   status: WorkoutStatus;
   startedAt: Timestamp;
   completedAt: Timestamp | null;
-  duration: number | null;
+  activeSeconds: number | null;
+  localDate: string;
+  timeZone: string;
+  bodyweightKg: number | null;
   notes: string | null;
   exercises: WorkoutExercise[];
-  totalVolume: number | null;
-  totalSets: number;
-  totalExercises: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
-// ─── Exercise History ───────────────────────────────────────────────────────
-
-export interface BestSet {
-  weight?: number;
-  reps?: number;
-  duration?: number;
-  distance?: number;
-  volume?: number;
-}
-
-export interface ExerciseHistoryEntry {
-  exerciseId: string;
-  isCustom: boolean;
-  exerciseName: string;
-  exerciseType: ExerciseType;
-  workoutId: string;
-  performedAt: Timestamp;
-  sets: WorkoutSet[];
-  bestSet: BestSet;
-  totalVolume: number | null;
-  createdAt: Timestamp;
+export interface BodyMeasurement {
+  recordedAt: Timestamp;
+  weightKg: number;
+  note?: string;
 }

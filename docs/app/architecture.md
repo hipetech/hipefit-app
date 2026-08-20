@@ -2,7 +2,7 @@
 type: app
 status: current
 area: architecture
-updated: 2026-08-18
+updated: 2026-08-20
 ---
 
 # Application architecture
@@ -32,10 +32,11 @@ modifier arrays, shared RN styles), `ui/` (reusable native primitives), `lib/` +
 consumes by name — today one iOS native module and one pure React integration; see
 [`packages/`: reusable workspace boundaries](#packages-reusable-workspace-boundaries)).
 
-The absence of an API/service layer is deliberate. Every read is a live `onSnapshot` subscription and
-every write is a one-line `updateDoc`/`writeBatch` against a ref helper, so a wrapper would only add
-a name to pass through. What _is_ centralized is the part that actually varies: document paths
-(`database/refs.ts`) and subscription lifetime (`database/use-firestore-subscriptions.ts`).
+The absence of an API/service layer is deliberate. Active reads are live `onSnapshot` subscriptions
+and the small write surface uses Firebase operations directly, so a wrapper would only add a name to
+pass through. What _is_ centralized is the part that actually varies: document paths
+(`database/refs.ts`), persisted types and runtime decoders, and subscription lifetime
+(`database/use-firestore-subscriptions.ts`).
 
 ## Feature-based organization
 
@@ -56,7 +57,7 @@ Inside `features/<name>/`:
   ([features/workouts/workouts-content.tsx](../../features/workouts/workouts-content.tsx),
   [features/settings/settings-content.tsx](../../features/settings/settings-content.tsx));
 - one named component per file for anything reused or large enough to read on its own
-  ([features/workouts/routine-card.tsx](../../features/workouts/routine-card.tsx),
+  ([features/home/home-header.tsx](../../features/home/home-header.tsx),
   [features/exercises/exercise-row.tsx](../../features/exercises/exercise-row.tsx));
 - `store/use-<name>-store.ts` for the domain's Zustand store;
 - measured native constants live next to the feature that measured them
@@ -79,7 +80,7 @@ the flattening — the directory already says it. Nothing outside the feature re
 `@/features/calendar`.
 
 Copy it only when a feature reaches a comparable size. Below that the flat layout is easier to read,
-which is why the other nine features keep it, and a half-populated `components/` directory is worse
+which is why the other eight features keep it, and a half-populated `components/` directory is worse
 than no directory at all.
 
 One feature directory has no route of its own. `features/navigation-dock/` is mounted by the tab
@@ -91,56 +92,44 @@ the tab layout shares with it and the measured tab bar geometry both need. Its c
 
 Stores are module-level singletons created with `create()` and live at
 `features/<name>/store/use-<name>-store.ts`. Zustand rather than context because the stores must be
-usable from outside React — the subscription hook drives them through `getState()` — and because
+usable from outside React, where the subscription hook drives them through `getState()`, and because
 components select narrow slices instead of re-rendering on every unrelated snapshot.
 
-Four stores hold Firestore data and share one shape:
+Two stores hold Firestore data:
 
-| Store                                                                    | Holds                                                     |
-| ------------------------------------------------------------------------ | --------------------------------------------------------- |
-| [useUserStore](../../features/user/store/use-user-store.ts)              | the user profile document, plus its two write methods     |
-| [useWorkoutStore](../../features/workouts/store/use-workout-store.ts)    | workouts, the derived recent list and the in-progress one |
-| [useRoutineStore](../../features/routines/store/use-routine-store.ts)    | routines and the non-archived subset                      |
-| [useExerciseStore](../../features/exercises/store/use-exercise-store.ts) | the merged exercise catalogue and group list              |
+| Store                                                                    | Holds                                                                                 |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| [useUserStore](../../features/user/store/use-user-store.ts)              | profile, newest body measurement/current weight, and profile/settings/weigh-in writes |
+| [useExerciseStore](../../features/exercises/store/use-exercise-store.ts) | localized, visible exercise/category/equipment view models                            |
 
-Each exposes `subscribe(uid)` returning a teardown function, and `reset()`. The important detail is
-that **the teardown returned by `subscribe` clears the store's state itself** — it detaches the
-listeners and then sets the slice back to its initial values, including `isLoading: true`. `reset()`
-is the same clearing without the detach; nothing in the app currently calls it (verified by search),
-so it exists as an API for a caller that does not yet exist rather than as part of the live
-lifecycle.
+Each exposes `subscribe(uid)` returning a teardown. The teardown detaches listeners and clears the
+slice back to initial values, including `isLoading: true`; there are no separate `reset()` actions.
 
-Conventions worth knowing before writing a fifth store:
+Conventions worth knowing before writing another store:
 
-- **Every `onSnapshot` takes an error callback** that logs with a `[StoreName]` prefix. Where a store
-  has a single listener the callback also clears `isLoading` so a permission failure cannot leave the
-  screen redacted forever. The exercise store is the exception: `isLoading` there is derived from how
-  many of its four listeners have fired, so its callbacks log only.
-- **`isLoading` drives redaction, not an early return.** Screens render the real structure with
-  plausible placeholder values and apply `redacted('placeholder')` while loading — see
-  `PLACEHOLDER_STATS` / `PLACEHOLDER_WORKOUTS` in
+- **Every `onSnapshot` has an error callback** that logs with a store-specific prefix and completes
+  that listener's loading condition. The UI currently presents a failed listener like empty data.
+- **Every snapshot crosses the decoder boundary.** Malformed documents are logged and dropped before
+  they enter Zustand; TypeScript casts are not used as runtime validation.
+- **`isLoading` drives redaction, not an early return.** Screens render their real structure with
+  plausible placeholder values and apply `redacted('placeholder')` while loading. See
   [features/home/home-content.tsx](../../features/home/home-content.tsx) and
-  `mods.listInsetGroupedRedacted` in [theme/modifiers.ts](../../theme/modifiers.ts). One code path,
-  no skeleton components, and no layout jump when data lands.
-- **Derived collections are computed in the store, not in the screen.** `recentWorkouts`,
-  `inProgressWorkout` and `activeRoutines` are produced inside the snapshot handler so every consumer
-  agrees on them.
-- **Writes live on the store that owns the document.** `updateSettings` / `updateProfile` on the user
-  store are the only writes outside auth today; both read the uid from store state (`_uid`, captured
-  by `subscribe`) rather than from a module-level variable.
+  [theme/modifiers.ts](../../theme/modifiers.ts).
+- **Derived data is computed in stores, not screens.** Localized exercise view models are published
+  centrally so consumers agree.
+- **Writes live on the owning store.** Auth creates or self-heals the user document. The user store
+  updates profile/settings and appends weigh-ins. Other data stores are read-only today.
 
-[useExerciseStore](../../features/exercises/store/use-exercise-store.ts) is the one genuinely complex
-store and is worth reading before touching the catalogue. It fans out over four collections — global
-exercises, the user's sparse overrides, the user's custom exercises, and the user's groups — keeps the
-raw snapshots in a closure rather than in store state, and republishes a single merged, sorted
-`MergedExercise[]` on every change. Only the merged result is public, so screens never re-implement
-the override rules; `isLoading` stays true until all four listeners have fired at least once, which
-is what stops the list from flashing an un-overridden catalogue.
+[useExerciseStore](../../features/exercises/store/use-exercise-store.ts) is the complex catalogue
+store. It fans out over five Firestore collections: global exercises, categories and equipment, plus
+the user's custom exercises and custom categories. It keeps raw decoded snapshots in a closure and
+recomputes localized, visibility-filtered view models when any source or relevant user setting
+changes. The details and trust boundary live in [database.md](database.md).
 
 ## Auth is a different kind of store
 
-[useAuthStore](../../features/auth/store/use-auth-store.ts) does not follow the `subscribe(uid)` /
-`reset()` shape, because it is what produces the uid. It exposes `initialize()`, which installs the
+[useAuthStore](../../features/auth/store/use-auth-store.ts) does not follow the data stores'
+`subscribe(uid)` shape because it is what produces the uid. It exposes `initialize()`, which installs the
 Firebase `onAuthStateChanged` listener and returns a teardown, plus `signInWithApple()` and
 `signOut()`.
 
@@ -149,48 +138,46 @@ redirect, the login route and the auth screen it renders), and without the guard
 overwrite the shared unsubscribe slot — leaking the previous listener and letting one component's
 cleanup tear down a listener it did not create. The comment at the guard records this.
 
-Sign-in also owns first-run provisioning: `signInWithApple` writes the user profile document and
-seeds the user's exercise groups from the global collection in a single batch, and Apple's
-name-once-only behaviour is handled by backfilling `firstName`/`lastName` when a later sign-in
-happens to carry them.
+Sign-in also owns first-run provisioning and restored-session repair. Every authenticated callback
+ensures `users/{uid}` exists before publishing the user to the protected app. Creation is one document
+write with default body/settings fields; no reference data is copied. Apple's name-once-only behavior
+is handled by filling only missing name fields, so a non-empty user-edited display name is preserved.
 
 ## Subscription orchestration
 
 [database/use-firestore-subscriptions.ts](../../database/use-firestore-subscriptions.ts) is the only
 place data subscriptions start. It reads `user` from the auth store and, in one effect keyed on that
-user, calls `subscribe(uid)` on the four data stores and returns a teardown that unsubscribes all of
-them. It is called exactly once, from [app/_layout.tsx](../../app/_layout.tsx), above the auth gate.
+user, calls `subscribe(uid)` on the two data stores and returns a teardown that unsubscribes both of
+them. It is called exactly once from [app/_layout.tsx](../../app/_layout.tsx), above the auth gate.
 
 Centralizing this buys three things a per-screen `useEffect` cannot: data is already streaming before
 any screen mounts, so tab switches are instant; sign-out tears every listener down in one place, so
 no store can keep serving the previous user's documents; and there is exactly one answer to "who
 listens to what", instead of a listener count that grows with screen mounts.
 
-The consequence to keep in mind is that every subscribed collection is loaded for the whole session.
-That is affordable because the collections are per-user and small — the global exercise catalogue is
-the only unbounded one — and it is the reason the workout store can hold every workout while exposing
-a `RECENT_WORKOUTS_LIMIT` slice ([lib/constants.ts](../../lib/constants.ts)).
+The consequence is that every subscribed collection stays live for the whole session. Workout and
+workout-template schemas remain in the database boundary, rules, and admin tooling, but the client
+does not subscribe to those collections or derive state from them.
 
 ## `database/`: the Firestore boundary
 
 Everything Firestore-shaped is consolidated under [database/](../../database) and imported through
-the barrel [database/index.ts](../../database/index.ts), which re-exports `refs.ts` and `types.ts`.
-(The subscription hook is imported by its own path, since it is a consumer of the barrel rather than
-part of it.)
+the barrel [database/index.ts](../../database/index.ts), which re-exports refs, types, and decoders.
+The subscription hook is imported by its own path because it consumes that vocabulary rather than
+defining it.
 
-[database/refs.ts](../../database/refs.ts) holds one helper per collection and per document —
-`workoutsRef(uid)`, `routineRef(uid, id)`, `exercisesRef()` and so on — and is the reason no screen
-or store contains a string like `'users'`. Path discipline matters here more than it looks: almost
-every collection is nested under `users/{uid}`, so an inline path is one typo away from reading or
-writing another user's subtree, and a schema change would otherwise mean grepping for string
-literals.
+[database/refs.ts](../../database/refs.ts) exposes helpers only for the six collections the client
+currently accesses, plus the `users/{uid}` document helper. The schema still defines nine collections;
+workout and workout-template paths can return with their future implementation. Path discipline
+matters: user-owned collections are nested under `users/{uid}`, so an inline path is one typo away
+from the wrong subtree and would scatter schema changes through feature code.
 
-[database/types.ts](../../database/types.ts) declares the document interfaces, re-exports Firestore's
-`Timestamp`, and defines `WithId<T> = { id: string; data: T }` — the shape every document takes once
-it is in a store, because Firestore keeps the id outside `data()` and the app needs both. Snapshot
-data is cast to these interfaces at the store boundary; they are the app's assertion about the
-schema, not a validated one. The schema of record is [docs/db-structure.md](../db-structure.md), and
-[scripts/db/index.ts](../../scripts/db/index.ts) seeds the global collections.
+[database/types.ts](../../database/types.ts) declares document interfaces, full `Ref` strings,
+localized maps, Firestore `Timestamp`, and `WithId<T> = { id: string; data: T }`.
+[database/decoders.ts](../../database/decoders.ts) validates unknown snapshot data and official writes;
+malformed read documents are logged and dropped. Firestore rules add owner isolation and top-level
+checks but cannot iterate nested exercise/set arrays or verify references. The schema and full trust
+boundary are in [docs/db-structure.md](../db-structure.md) and [database.md](database.md).
 
 ## The UI layer
 
@@ -217,7 +204,9 @@ stay named alike, and the ordering rule that constrains how the shared arrays ma
 in [ui.md](ui.md).
 
 Shared formatting lives in [lib/format.ts](../../lib/format.ts) — check it before writing a local
-helper, since most date, duration and volume strings already exist there.
+helper. It holds the greeting and casing helpers, the metric/imperial converters, and the calendar
+date-ID and month/day formatters. Duration and volume helpers do **not** exist: they left with the
+workout store and will be written by whoever rebuilds it.
 
 ## `packages/`: reusable workspace boundaries
 
@@ -306,13 +295,11 @@ with native code means running `pod install --project-directory=ios` and committ
 
 Stated plainly so nothing here is mistaken for shipped behavior:
 
-- **There is no workout player.** Every "Start Workout" affordance is rendered `disabled` — in
-  [features/home/home-content.tsx](../../features/home/home-content.tsx), in
-  [features/workouts/workouts-content.tsx](../../features/workouts/workouts-content.tsx) and in the
-  create panel — and `mods.primaryActionButtonDisabled` in [theme/modifiers.ts](../../theme/modifiers.ts)
-  exists so those TODOs are dropped together. The `Workout` document type and the workout store are
-  in place; nothing writes a workout yet.
-- **All three global create actions are stubs** — Start Workout, New Routine and Custom Exercise
+- **There is no workout player.** Start and Add to Workout affordances remain disabled in Home, the
+  exercise list rows, the exercise detail sheet, and the create panel — the reusable workout cards
+  that once carried them were deleted with the workout store. The `Workout` document type and
+  validation remain in place, but there is no workout store, read request, or write path.
+- **All three global create actions are stubs:** Start Workout, New Workout Template, and Custom Exercise
   each ship `enabled: false` in
   [features/navigation-dock/navigation-dock-actions.ts](../../features/navigation-dock/navigation-dock-actions.ts),
   and native swallows their touches. See [navigation.md](navigation.md) for the panel itself.

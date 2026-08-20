@@ -1,4 +1,5 @@
-import type { Timestamp } from '@/database';
+const KILOGRAMS_PER_POUND = 0.45359237;
+const CENTIMETERS_PER_INCH = 2.54;
 
 export const getGreeting = (): string => {
   const hour = new Date().getHours();
@@ -12,11 +13,8 @@ export const capitalize = (s: string): string =>
 
 /**
  * Turn a raw camelCase key into a human-readable label: `fullBody` →
- * `Full Body`, `core` → `Core`. Needed wherever a document falls back to its
- * own key for display — an exercise whose group has no user document yet
- * resolves `groupName` to the seed `groupKey` — so the UI never renders a raw
- * enum value. Values that are already spaced pass through with each word
- * capitalized, so a user-authored group name survives unchanged.
+ * `Full Body`, `core` → `Core`. Values that are already spaced pass through
+ * with each word capitalized.
  */
 export const humanizeKey = (value: string): string =>
   value
@@ -26,54 +24,17 @@ export const humanizeKey = (value: string): string =>
     .map(capitalize)
     .join(' ');
 
-export const formatDuration = (seconds: number | null): string => {
-  if (!seconds) return '--';
-  const mins = Math.round(seconds / 60);
-  if (mins < 60) return `${mins} min`;
-  const hours = Math.floor(mins / 60);
-  const remainMins = mins % 60;
-  return remainMins > 0 ? `${hours}h ${remainMins}m` : `${hours}h`;
-};
+export const kilogramsToPounds = (kilograms: number): number =>
+  kilograms / KILOGRAMS_PER_POUND;
 
-export const formatRelativeDate = (timestamp: Timestamp): string => {
-  const date = timestamp.toDate();
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+export const poundsToKilograms = (pounds: number): number =>
+  pounds * KILOGRAMS_PER_POUND;
 
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  return date.toLocaleDateString();
-};
+export const centimetersToInches = (centimeters: number): number =>
+  centimeters / CENTIMETERS_PER_INCH;
 
-export const formatShortDate = (timestamp: Timestamp): string => {
-  const date = timestamp.toDate();
-  return date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-};
-
-export const formatVolume = (volume: number | null): string => {
-  if (!volume) return '--';
-  if (volume >= 1000) return `${(volume / 1000).toFixed(1)}k kg`;
-  return `${volume} kg`;
-};
-
-export const getDifficultyValue = (difficulty: string): number => {
-  switch (difficulty) {
-    case 'beginner':
-      return 33;
-    case 'intermediate':
-      return 66;
-    case 'advanced':
-      return 100;
-    default:
-      return 0;
-  }
-};
+export const inchesToCentimeters = (inches: number): number =>
+  inches * CENTIMETERS_PER_INCH;
 
 /**
  * A **local** calendar day ID, `YYYY-MM-DD` — the day as the device reckons it.

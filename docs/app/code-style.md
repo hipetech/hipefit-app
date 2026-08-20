@@ -2,7 +2,7 @@
 type: app
 status: current
 area: code-style
-updated: 2026-08-12
+updated: 2026-08-20
 ---
 
 # Code style and authoring
@@ -20,7 +20,7 @@ know before reading anything live in [AGENTS.md](../../AGENTS.md), which links h
 **Match the file you are editing, and the files beside it** — except where this document says
 otherwise. Most conventions here were read off the existing code. Where a file deliberately diverges
 it says so in a comment, and that comment is the specification — see the "documented divergence"
-cases in [ui/avatar.tsx](../../ui/avatar.tsx) and
+cases in [features/avatar/avatar.tsx](../../features/avatar/avatar.tsx) and
 [features/exercises/row-metrics.ts](../../features/exercises/row-metrics.ts).
 
 The two decomposition rules — [one component per
@@ -76,7 +76,7 @@ export const Chip = ({ label, variant = 'secondary' }: ChipProps) => (
 
 Four things are load-bearing there, and every component in the repo follows them
 ([ui/chip.tsx](../../ui/chip.tsx), [ui/card.tsx](../../ui/card.tsx),
-[features/workouts/routine-card.tsx](../../features/workouts/routine-card.tsx),
+[features/exercises/exercise-row.tsx](../../features/exercises/exercise-row.tsx),
 [features/exercises/exercises-empty.tsx](../../features/exercises/exercises-empty.tsx)):
 
 - **Arrow function with destructured, typed props.** Not `React.FC`, not `function`, and not a
@@ -179,8 +179,9 @@ Named `export const` arrow functions with explicit return types, grouped by subj
 for feedback, [lib/constants.ts](../../lib/constants.ts) for shared values. No default exports, no
 utility grab-bag, no classes.
 
-**Check `lib/` before writing a local helper.** Most date, duration and volume strings already
-exist. Measured native constants stay beside the feature that measured them
+**Check `lib/` before writing a local helper.** Casing, greeting, unit-conversion and calendar
+date-ID helpers already exist there; duration and volume formatting does not. Measured native
+constants stay beside the feature that measured them
 ([features/exercises/row-metrics.ts](../../features/exercises/row-metrics.ts)).
 
 Wrappers get **intent names**, not implementation names — `hapticSuccess`, not
@@ -284,10 +285,10 @@ Beyond that:
 
 - **No `any`.** There are zero occurrences today; `unknown` plus a narrow is the answer.
 - **`interface` for object shapes, `type` for unions and aliases** — `ChipProps` is an interface,
-  `ChipVariant` and `Difficulty` are types.
-- **Firestore documents cross into the app as `WithId<T>`** and are cast at the store boundary.
-  Import both from `@/database` ([database/types.ts](../../database/types.ts)); the barrel is the
-  import path, not the individual files.
+  while `ChipVariant` and `ExerciseType` are types.
+- **Firestore documents cross into the app as `WithId<T>`** and are decoded at the store boundary.
+  Import document types from `@/database` ([database/types.ts](../../database/types.ts)); the barrel
+  is the import path, not the individual files.
 - **Explicit return types on exported functions and hooks.** Components are exempt — the JSX return
   is self-evident.
 - **`as const` is for value literals** — `BOUNDARY_HOURS` in `use-clock.ts`, `variantStyles` in
@@ -296,12 +297,12 @@ Beyond that:
 
 ## Naming and files
 
-- **Files and directories are lowercase-hyphenated**: `routine-card.tsx`, `use-user-store.ts`,
+- **Files and directories are lowercase-hyphenated**: `exercise-row.tsx`, `use-user-store.ts`,
   `row-metrics.ts`. [ui/Image.tsx](../../ui/Image.tsx) is the single exception — a one-line
   `expo-image` re-export named after the symbol it forwards. Do not read it as a precedent.
-- **Components are PascalCase**, matching their file: `routine-card.tsx` → `RoutineCard`.
+- **Components are PascalCase**, matching their file: `exercise-row.tsx` → `ExerciseRow`.
 - **Variables and functions are camelCase.** Module-scope constants are `SCREAMING_SNAKE`
-  (`EMPTY_STATE_HEIGHT`, `HISTORY_PAGE_SIZE`, `GROUPED_ROW_RADIUS`), and file-local modifier arrays
+  (`EMPTY_STATE_HEIGHT`, `CALENDAR_DAY_SIZE`, `GROUPED_ROW_RADIUS`), and file-local modifier arrays
   carry a `_MODIFIERS` suffix.
 - **Hooks are `use`-prefixed**, stores are `use<Domain>Store`, screen islands are `<Name>Content`.
 - **Named exports everywhere except route files.**
@@ -317,9 +318,9 @@ here do not restate the code; they record what a reader cannot recover from it. 
 their place, and all four are **required** in the situations named:
 
 **Why this and not the obvious alternative.**
-[features/workouts/routine-card.tsx](../../features/workouts/routine-card.tsx) explains why its
-three lines take no `monospacedDigit()` — they are sentence fragments, not standalone figures — so
-nobody "fixes" them into consistency with the Activity counters.
+[features/calendar/components/day.tsx](../../features/calendar/components/day.tsx) explains why the
+cell takes an `isOutsideMonth` prop rather than reading the library's metadata directly, so a
+straddling week is not dimmed against a month it does not own.
 
 **Measured values, with the conditions and a re-measure instruction.**
 [features/exercises/row-metrics.ts](../../features/exercises/row-metrics.ts) records the device, the
@@ -331,7 +332,7 @@ file and version it checked (`@expo/ui` 57.0.7) before concluding no `sensoryFee
 exists. Pin the version, or the finding cannot be rechecked after an upgrade.
 
 **Traps found the hard way.** [ui/card.tsx](../../ui/card.tsx) spends a paragraph on why `frame`
-must sit between `padding` and `background`, including the symptom that exposed it (routine cards at
+must sit between `padding` and `background`, including the symptom that exposed it (template cards at
 visibly uneven widths). The symptom is the valuable part.
 
 Two rules follow:
@@ -353,17 +354,17 @@ treat them as precedent.
 
 **File-local components** — each needs its own file:
 
-| File                                                                                   | Components                                                                     |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| [features/workouts/workouts-content.tsx](../../features/workouts/workouts-content.tsx) | `SectionHeader`, `PlaceholderRoutineCard`, `PlaceholderHistoryRow`, `EmptyRow` |
-| [app/(private)/exercises/index.tsx](<../../app/(private)/exercises/index.tsx>)         | `ItemSeparator`                                                                |
+| File                                                                                   | Components                                                                             |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [features/workouts/workouts-content.tsx](../../features/workouts/workouts-content.tsx) | `SectionHeader`, `PlaceholderWorkoutTemplateCard`, `PlaceholderHistoryRow`, `EmptyRow` |
+| [app/(private)/exercises/index.tsx](<../../app/(private)/exercises/index.tsx>)         | `ItemSeparator`                                                                        |
 
 **Inlined logic** — each needs a helper module:
 
-| File                                                                   | Functions                                |
-| ---------------------------------------------------------------------- | ---------------------------------------- |
-| [features/home/home-content.tsx](../../features/home/home-content.tsx) | `toRecentWorkoutRow`, `counterModifiers` |
-| [features/home/use-clock.ts](../../features/home/use-clock.ts)         | `msUntilNextBoundary`                    |
+| File                                                                   | Functions             |
+| ---------------------------------------------------------------------- | --------------------- |
+| [features/home/home-content.tsx](../../features/home/home-content.tsx) | `counterModifiers`    |
+| [features/home/use-clock.ts](../../features/home/use-clock.ts)         | `msUntilNextBoundary` |
 
 All of these are pure functions of their arguments — none captures component state — so each can be
 extracted mechanically. `fire` in [lib/haptics.ts](../../lib/haptics.ts) is **not** in this list: it

@@ -5,8 +5,8 @@ import type { NavigationDockAction } from '@hipefit/navigation-dock';
  * so array order is reading order.
  *
  * All three ship `enabled: false` because there is nowhere to send them: no
- * route in `app/` creates a workout, a routine, or an exercise. Going live means
- * flipping `enabled`, giving `onActionPress` a destination, and adding a
+ * route in `app/` creates a workout, workout template, or exercise. Going live
+ * means flipping `enabled`, giving `onActionPress` a destination, and adding a
  * `hapticImpact()` from `@/lib/haptics` — together with the Start Workout
  * affordances listed in `docs/app/architecture.md`.
  */
@@ -18,8 +18,8 @@ export const NAVIGATION_DOCK_ACTIONS: NavigationDockAction[] = [
     enabled: false,
   },
   {
-    id: 'new-routine',
-    label: 'New Routine',
+    id: 'new-workout-template',
+    label: 'New Workout Template',
     systemImage: 'list.bullet.rectangle',
     enabled: false,
   },

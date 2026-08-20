@@ -6,9 +6,7 @@ import {
   Button,
   Group,
   HStack,
-  ProgressView,
   RNHostView,
-  Spacer,
   Text,
   VStack,
 } from '@expo/ui/swift-ui';
@@ -22,7 +20,6 @@ import {
 
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { EXERCISE_PLACEHOLDER_IMAGE } from '@/lib/constants';
-import { capitalize, getDifficultyValue, humanizeKey } from '@/lib/format';
 import { colors } from '@/theme/colors';
 import { mods } from '@/theme/modifiers';
 import { Chip } from '@/ui/chip';
@@ -106,7 +103,7 @@ export const ExerciseDetailSheet = ({
                   {exercise.name}
                 </Text>
                 <Text modifiers={mods.footnoteSecondary}>
-                  {`${humanizeKey(exercise.groupName)} • ${
+                  {`${exercise.categoryName} • ${
                     exercise.equipment.length > 0
                       ? exercise.equipment.join(', ')
                       : 'No equipment'
@@ -126,17 +123,6 @@ export const ExerciseDetailSheet = ({
               </RNHostView>
 
               <Separator />
-
-              <HStack>
-                <Text modifiers={[foregroundStyle(colors.secondaryLabel)]}>
-                  Difficulty
-                </Text>
-                <Spacer />
-                <Chip label={capitalize(exercise.difficulty)} />
-              </HStack>
-              <ProgressView
-                value={getDifficultyValue(exercise.difficulty) / 100}
-              />
 
               {exercise.description ? (
                 <VStack alignment="leading" spacing={8}>

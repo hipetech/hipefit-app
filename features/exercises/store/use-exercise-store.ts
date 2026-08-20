@@ -1,234 +1,411 @@
 import type {
   CustomExercise,
-  Difficulty,
+  CustomExerciseCategory,
+  Equipment,
   Exercise,
-  ExerciseOverride,
+  ExerciseCategory,
   ExerciseType,
-  UserExerciseGroup,
+  Locale,
+  Ref,
+  UserSettings,
   WithId,
 } from '@/database';
-import type { QueryDocumentSnapshot } from '@react-native-firebase/firestore';
+import type { SnapshotOptions } from '@react-native-firebase/firestore';
 import { onSnapshot } from '@react-native-firebase/firestore';
 import { create } from 'zustand';
 
 import {
+  customExerciseCategoriesRef,
   customExercisesRef,
+  decodeCustomExercise,
+  decodeCustomExerciseCategory,
+  decodeEquipment,
+  decodeExercise,
+  decodeExerciseCategory,
+  equipmentRef,
+  exerciseCategoriesRef,
   exercisesRef,
-  userGroupsRef,
-  userOverridesRef,
 } from '@/database';
+import { useUserStore } from '@/features/user/store/use-user-store';
+
+import { resolveGlobalText, resolveUserText } from './localization';
+
+export interface MergedEquipment {
+  id: string;
+  ref: Ref;
+  name: string;
+  icon: string | null;
+}
+
+export interface MergedCategory {
+  id: string;
+  ref: Ref;
+  isCustom: boolean;
+  name: string;
+  order: number;
+  icon: string | null;
+  isArchived: boolean;
+  isRetired: boolean;
+}
 
 export interface MergedExercise {
   id: string;
+  ref: Ref;
   isCustom: boolean;
   name: string;
   description: string;
   type: ExerciseType;
-  groupId: string;
-  groupName: string;
+  categoryRef: Ref;
+  categoryName: string;
+  equipmentRefs: Ref[];
   equipment: string[];
-  difficulty: Difficulty;
   imageURL: string | null;
-}
-
-export interface MergedGroup {
-  id: string;
-  name: string;
-  order: number;
-  icon: string | null;
+  isRetired: boolean;
 }
 
 interface ExerciseState {
   exercises: MergedExercise[];
-  groups: MergedGroup[];
+  categories: MergedCategory[];
+  equipment: MergedEquipment[];
   isLoading: boolean;
   subscribe: (uid: string) => () => void;
-  reset: () => void;
 }
+
+type ListenerName =
+  | 'globalExercises'
+  | 'globalCategories'
+  | 'equipment'
+  | 'customExercises'
+  | 'customCategories';
 
 interface RawData {
   globalExercises: WithId<Exercise>[];
-  overrides: Map<string, ExerciseOverride>;
+  globalCategories: WithId<ExerciseCategory>[];
+  equipment: WithId<Equipment>[];
   customExercises: WithId<CustomExercise>[];
-  userGroups: Map<string, UserExerciseGroup>;
-  firedListeners: Set<string>;
+  customCategories: WithId<CustomExerciseCategory>[];
+  firedListeners: Set<ListenerName>;
 }
 
+const LISTENER_COUNT = 5;
+const globalIdPattern = /^[a-z0-9-]+$/;
+const customIdPattern = /^[A-Za-z0-9_-]{1,64}$/;
+
+const defaultSettings: UserSettings = {
+  theme: 'system',
+  language: 'en',
+  units: 'metric',
+  hiddenExerciseRefs: [],
+  hiddenCategoryRefs: [],
+};
+
+const toRef = (id: string, scope: 'global' | 'custom'): Ref | null => {
+  const pattern = scope === 'global' ? globalIdPattern : customIdPattern;
+  if (!pattern.test(id)) {
+    console.error(`[ExerciseStore] Dropped malformed ${scope} document ID`, id);
+    return null;
+  }
+  return `${scope}:${id}`;
+};
+
+const decodeDocuments = <T>(
+  documents: readonly {
+    id: string;
+    data: (options?: SnapshotOptions) => unknown;
+  }[],
+  decode: (value: unknown) => T | null
+): WithId<T>[] => {
+  const decoded: WithId<T>[] = [];
+  for (const document of documents) {
+    const data = decode(document.data({ serverTimestamps: 'estimate' }));
+    if (data) decoded.push({ id: document.id, data });
+  }
+  return decoded;
+};
+
 const buildMerged = (
-  raw: RawData
-): Pick<ExerciseState, 'exercises' | 'groups'> => {
-  const groupMap = raw.userGroups;
+  raw: RawData,
+  settings: UserSettings
+): Pick<ExerciseState, 'exercises' | 'categories' | 'equipment'> => {
+  const locale: Locale = settings.language;
+  const hiddenExerciseRefs = new Set(settings.hiddenExerciseRefs);
+  const hiddenCategoryRefs = new Set(settings.hiddenCategoryRefs);
 
-  // Build groups array
-  const groups: MergedGroup[] = [];
-  for (const [id, g] of groupMap) {
-    groups.push({ id, name: g.name, order: g.order, icon: g.icon });
-  }
-  groups.sort((a, b) => a.order - b.order);
-
-  // Build a lookup: globalGroupId → userGroup
-  const globalToUserGroup = new Map<string, { id: string; name: string }>();
-  for (const [id, g] of groupMap) {
-    if (g.globalGroupId) {
-      globalToUserGroup.set(g.globalGroupId, { id, name: g.name });
+  const globalCategories: MergedCategory[] = raw.globalCategories.flatMap(
+    ({ id, data }) => {
+      const ref = toRef(id, 'global');
+      return ref
+        ? [
+            {
+              id,
+              ref,
+              isCustom: false,
+              name: resolveGlobalText(data.name, locale),
+              order: data.order,
+              icon: data.icon,
+              isArchived: false,
+              isRetired: data.isRetired,
+            },
+          ]
+        : [];
     }
-  }
+  );
+  const customCategories: MergedCategory[] = raw.customCategories.flatMap(
+    ({ id, data }) => {
+      const ref = toRef(id, 'custom');
+      return ref
+        ? [
+            {
+              id,
+              ref,
+              isCustom: true,
+              name: resolveUserText(data.name, locale, data.defaultLocale),
+              order: data.order,
+              icon: data.icon,
+              isArchived: data.isArchived,
+              isRetired: false,
+            },
+          ]
+        : [];
+    }
+  );
+  globalCategories.sort((left, right) => left.order - right.order);
+  customCategories.sort((left, right) => left.order - right.order);
+  const allCategories = [...globalCategories, ...customCategories];
+  const categoryByRef = new Map(
+    allCategories.map((category) => [category.ref, category])
+  );
 
-  const exercises: MergedExercise[] = [];
+  const retiredEquipmentRefs = new Set<Ref>();
+  const allEquipment: MergedEquipment[] = raw.equipment.flatMap(
+    ({ id, data }) => {
+      const ref = toRef(id, 'global');
+      if (ref && data.isRetired) retiredEquipmentRefs.add(ref);
+      return ref
+        ? [
+            {
+              id,
+              ref,
+              name: resolveGlobalText(data.name, locale),
+              icon: data.icon,
+            },
+          ]
+        : [];
+    }
+  );
+  allEquipment.sort((left, right) => left.name.localeCompare(right.name));
+  const equipmentByRef = new Map(allEquipment.map((item) => [item.ref, item]));
 
-  // Merge global exercises with overrides
-  for (const { id, data: ex } of raw.globalExercises) {
-    const override = raw.overrides.get(id);
-    if (override?.isHidden) continue;
+  const globalExercises: MergedExercise[] = raw.globalExercises.flatMap(
+    ({ id, data }) => {
+      const ref = toRef(id, 'global');
+      if (!ref) return [];
+      return [
+        {
+          id,
+          ref,
+          isCustom: false,
+          name: resolveGlobalText(data.name, locale),
+          description: resolveGlobalText(data.description, locale),
+          type: data.type,
+          categoryRef: data.categoryRef,
+          categoryName:
+            categoryByRef.get(data.categoryRef)?.name ?? data.categoryRef,
+          equipmentRefs: data.equipment,
+          equipment: data.equipment.map(
+            (equipmentItemRef) =>
+              equipmentByRef.get(equipmentItemRef)?.name ?? equipmentItemRef
+          ),
+          imageURL: data.imageURL,
+          isRetired: data.isRetired,
+        },
+      ];
+    }
+  );
+  const customExercises: MergedExercise[] = raw.customExercises.flatMap(
+    ({ id, data }) => {
+      const ref = toRef(id, 'custom');
+      if (!ref) return [];
+      return [
+        {
+          id,
+          ref,
+          isCustom: true,
+          name: resolveUserText(data.name, locale, data.defaultLocale),
+          description: resolveUserText(
+            data.description,
+            locale,
+            data.defaultLocale
+          ),
+          type: data.type,
+          categoryRef: data.categoryRef,
+          categoryName:
+            categoryByRef.get(data.categoryRef)?.name ?? data.categoryRef,
+          equipmentRefs: data.equipment,
+          equipment: data.equipment.map(
+            (equipmentItemRef) =>
+              equipmentByRef.get(equipmentItemRef)?.name ?? equipmentItemRef
+          ),
+          imageURL: data.imageURL,
+          isRetired: false,
+        },
+      ];
+    }
+  );
+  const allExercises = [...globalExercises, ...customExercises];
 
-    const userGroup = globalToUserGroup.get(ex.groupKey);
-    const groupId = override?.groupId ?? userGroup?.id ?? ex.groupKey;
-    const resolvedGroup = groupMap.get(groupId);
-
-    exercises.push({
-      id,
-      isCustom: false,
-      name: override?.name ?? ex.name,
-      description: override?.description ?? ex.description,
-      type: ex.type,
-      groupId,
-      groupName: resolvedGroup?.name ?? ex.groupKey,
-      equipment: ex.equipment,
-      difficulty: ex.difficulty,
-      imageURL: ex.imageURL,
+  const categoryOrder = new Map(
+    allCategories.map((category, index) => [category.ref, index])
+  );
+  const exercises = allExercises
+    .filter(
+      (exercise) =>
+        !exercise.isRetired &&
+        !hiddenExerciseRefs.has(exercise.ref) &&
+        !hiddenCategoryRefs.has(exercise.categoryRef)
+    )
+    .sort((left, right) => {
+      const orderDifference =
+        (categoryOrder.get(left.categoryRef) ?? Number.MAX_SAFE_INTEGER) -
+        (categoryOrder.get(right.categoryRef) ?? Number.MAX_SAFE_INTEGER);
+      return orderDifference || left.name.localeCompare(right.name);
     });
-  }
-
-  // Add custom exercises
-  for (const { id, data: ex } of raw.customExercises) {
-    const resolvedGroup = groupMap.get(ex.groupId);
-    exercises.push({
-      id,
-      isCustom: true,
-      name: ex.name,
-      description: ex.description,
-      type: ex.type,
-      groupId: ex.groupId,
-      groupName: resolvedGroup?.name ?? 'Custom',
-      equipment: ex.equipment,
-      difficulty: ex.difficulty,
-      imageURL: ex.imageURL,
-    });
-  }
-
-  // Sort by group order, then alphabetically
-  const groupOrder = new Map(groups.map((g) => [g.id, g.order]));
-  exercises.sort((a, b) => {
-    const orderA = groupOrder.get(a.groupId) ?? 999;
-    const orderB = groupOrder.get(b.groupId) ?? 999;
-    if (orderA !== orderB) return orderA - orderB;
-    return a.name.localeCompare(b.name);
-  });
-
-  return { exercises, groups };
+  return {
+    exercises,
+    categories: allCategories.filter(
+      (category) =>
+        !category.isRetired &&
+        !category.isArchived &&
+        !hiddenCategoryRefs.has(category.ref)
+    ),
+    equipment: allEquipment.filter(({ ref }) => !retiredEquipmentRefs.has(ref)),
+  };
 };
 
 export const useExerciseStore = create<ExerciseState>((set) => {
   const raw: RawData = {
     globalExercises: [],
-    overrides: new Map(),
+    globalCategories: [],
+    equipment: [],
     customExercises: [],
-    userGroups: new Map(),
+    customCategories: [],
     firedListeners: new Set(),
   };
 
   const recompute = () => {
-    const allFired = raw.firedListeners.size >= 4;
-    const merged = buildMerged(raw);
-    set({ ...merged, isLoading: !allFired });
+    const userState = useUserStore.getState();
+    const settings = userState.profile?.settings ?? defaultSettings;
+    set({
+      ...buildMerged(raw, settings),
+      isLoading:
+        raw.firedListeners.size < LISTENER_COUNT || userState.isLoading,
+    });
+  };
+
+  const markFailed = (listener: ListenerName, error: Error) => {
+    console.error(`[ExerciseStore:${listener}]`, error);
+    raw.firedListeners.add(listener);
+    recompute();
   };
 
   return {
     exercises: [],
-    groups: [],
+    categories: [],
+    equipment: [],
     isLoading: true,
 
     subscribe: (uid) => {
       raw.firedListeners.clear();
 
-      const unsub1 = onSnapshot(
+      const unsubscribeGlobalExercises = onSnapshot(
         exercisesRef(),
-        (snap) => {
-          raw.globalExercises = snap.docs.map((d: QueryDocumentSnapshot) => ({
-            id: d.id,
-            data: d.data() as Exercise,
-          }));
-          raw.firedListeners.add('global');
+        (snapshot) => {
+          raw.globalExercises = decodeDocuments(snapshot.docs, decodeExercise);
+          raw.firedListeners.add('globalExercises');
           recompute();
         },
-        (error) => {
-          console.error('[ExerciseStore:global]', error);
-        }
+        (error) => markFailed('globalExercises', error)
       );
-
-      const unsub2 = onSnapshot(
-        userOverridesRef(uid),
-        (snap) => {
-          raw.overrides = new Map(
-            snap.docs.map((d: QueryDocumentSnapshot) => [
-              d.id,
-              d.data() as ExerciseOverride,
-            ])
+      const unsubscribeGlobalCategories = onSnapshot(
+        exerciseCategoriesRef(),
+        (snapshot) => {
+          raw.globalCategories = decodeDocuments(
+            snapshot.docs,
+            decodeExerciseCategory
           );
-          raw.firedListeners.add('overrides');
+          raw.firedListeners.add('globalCategories');
           recompute();
         },
-        (error) => {
-          console.error('[ExerciseStore:overrides]', error);
-        }
+        (error) => markFailed('globalCategories', error)
       );
-
-      const unsub3 = onSnapshot(
+      const unsubscribeEquipment = onSnapshot(
+        equipmentRef(),
+        (snapshot) => {
+          raw.equipment = decodeDocuments(snapshot.docs, decodeEquipment);
+          raw.firedListeners.add('equipment');
+          recompute();
+        },
+        (error) => markFailed('equipment', error)
+      );
+      const unsubscribeCustomExercises = onSnapshot(
         customExercisesRef(uid),
-        (snap) => {
-          raw.customExercises = snap.docs.map((d: QueryDocumentSnapshot) => ({
-            id: d.id,
-            data: d.data() as CustomExercise,
-          }));
-          raw.firedListeners.add('custom');
-          recompute();
-        },
-        (error) => {
-          console.error('[ExerciseStore:custom]', error);
-        }
-      );
-
-      const unsub4 = onSnapshot(
-        userGroupsRef(uid),
-        (snap) => {
-          raw.userGroups = new Map(
-            snap.docs.map((d: QueryDocumentSnapshot) => [
-              d.id,
-              d.data() as UserExerciseGroup,
-            ])
+        (snapshot) => {
+          raw.customExercises = decodeDocuments(
+            snapshot.docs,
+            decodeCustomExercise
           );
-          raw.firedListeners.add('groups');
+          raw.firedListeners.add('customExercises');
           recompute();
         },
-        (error) => {
-          console.error('[ExerciseStore:groups]', error);
-        }
+        (error) => markFailed('customExercises', error)
       );
+      const unsubscribeCustomCategories = onSnapshot(
+        customExerciseCategoriesRef(uid),
+        (snapshot) => {
+          raw.customCategories = decodeDocuments(
+            snapshot.docs,
+            decodeCustomExerciseCategory
+          );
+          raw.firedListeners.add('customCategories');
+          recompute();
+        },
+        (error) => markFailed('customCategories', error)
+      );
+      const unsubscribeSettings = useUserStore.subscribe((state, previous) => {
+        const settings = state.profile?.settings;
+        const previousSettings = previous.profile?.settings;
+        if (
+          settings?.language !== previousSettings?.language ||
+          settings?.hiddenExerciseRefs !==
+            previousSettings?.hiddenExerciseRefs ||
+          settings?.hiddenCategoryRefs !==
+            previousSettings?.hiddenCategoryRefs ||
+          state.isLoading !== previous.isLoading
+        ) {
+          recompute();
+        }
+      });
 
       return () => {
-        unsub1();
-        unsub2();
-        unsub3();
-        unsub4();
+        unsubscribeGlobalExercises();
+        unsubscribeGlobalCategories();
+        unsubscribeEquipment();
+        unsubscribeCustomExercises();
+        unsubscribeCustomCategories();
+        unsubscribeSettings();
         raw.globalExercises = [];
-        raw.overrides.clear();
+        raw.globalCategories = [];
+        raw.equipment = [];
         raw.customExercises = [];
-        raw.userGroups.clear();
+        raw.customCategories = [];
         raw.firedListeners.clear();
-        set({ exercises: [], groups: [], isLoading: true });
+        set({
+          exercises: [],
+          categories: [],
+          equipment: [],
+          isLoading: true,
+        });
       };
     },
-
-    reset: () => set({ exercises: [], groups: [], isLoading: true }),
   };
 });

@@ -52,6 +52,7 @@ app-example
 scripts/service-account*.json
 scripts/service-account.*.json
 scripts/*-firebase-adminsdk-*.json
+scripts/*-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].json
 
 # Agent tmp files
 /qa-artifacts

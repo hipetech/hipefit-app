@@ -2,174 +2,213 @@
 type: app
 status: current
 area: database
-updated: 2026-08-05
+updated: 2026-08-20
 ---
 
 # Data layer
 
-The Firestore schema itself — collections, document fields, relationships — lives in
-[`docs/db-structure.md`](../db-structure.md). This document describes the boundary the app draws
-around that schema: who is allowed to construct a path, what shape a document takes once it is in
-JavaScript, when listeners attach and detach, and which store owns which collection.
+The Firestore schema is documented in [`docs/db-structure.md`](../db-structure.md). This document
+describes the application boundary around it: path construction, runtime trust, subscription
+lifetime, store ownership, rules, and admin tooling.
 
-## The boundary
+## Boundary
 
-`database/` is the only module that knows Firestore's shape. It has three parts and a barrel:
+[`database/`](../../database) is the only application module that defines Firestore paths and
+persisted shapes.
 
-| File                                                                                       | Owns                                                   |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
-| [`database/refs.ts`](../../database/refs.ts)                                               | Every collection and document path                     |
-| [`database/types.ts`](../../database/types.ts)                                             | Every document type, plus `WithId<T>` and `Timestamp`  |
-| [`database/use-firestore-subscriptions.ts`](../../database/use-firestore-subscriptions.ts) | The lifetime of every listener, tied to auth state     |
-| [`database/index.ts`](../../database/index.ts)                                             | Barrel — re-exports `refs` and `types` as `@/database` |
+| File                                                                                       | Owns                                                                    |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| [`database/refs.ts`](../../database/refs.ts)                                               | Currently accessed collection paths and the `users/{uid}` document path |
+| [`database/types.ts`](../../database/types.ts)                                             | Document interfaces, embedded shapes, `Ref`, localization, and `WithId` |
+| [`database/decoders.ts`](../../database/decoders.ts)                                       | Runtime read decoders and pre-write assertions                          |
+| [`database/use-firestore-subscriptions.ts`](../../database/use-firestore-subscriptions.ts) | Auth-scoped lifetime of the two live domain stores                      |
+| [`database/index.ts`](../../database/index.ts)                                             | The `@/database` barrel for refs, types, and decoders                   |
 
-The barrel deliberately does not re-export the subscriptions hook: it is a React hook with a single
-call site, not a piece of the data vocabulary, so [`app/_layout.tsx`](../../app/_layout.tsx) imports
-it by its full path.
+There is no repository or service layer. Feature stores import Firebase operations directly and
+pass them refs from `@/database`. The boundary centralizes where data lives and what is trusted;
+stores retain ownership of queries, derived state, and writes.
 
-There is no repository, service, or API layer between the stores and Firebase. Feature stores import
-`onSnapshot`, `query`, `orderBy` and `updateDoc` from `@react-native-firebase/firestore` directly and
-pass them a ref from `@/database`. That is the whole design: the boundary owns _where_ data lives and
-_what shape_ it has, not _how_ it is read. Adding a wrapper around `onSnapshot` would buy nothing
-that the ref helpers and the store's own subscribe function do not already provide.
+### Path helpers
 
-Only two Firebase products are imported by app code: `auth` and `firestore`. The
-`@react-native-firebase/analytics`, `crashlytics` and `ai` packages are installed dependencies with
-no call sites anywhere in `app/`, `features/`, `lib/`, `hooks/` or `database/`.
+[`database/refs.ts`](../../database/refs.ts) holds exactly the helpers with current callers:
 
-## `refs.ts` builds every path, and nothing else does
+- global collections: `exerciseCategoriesRef()`, `equipmentRef()`, and `exercisesRef()`;
+- the user document: `userRef(uid)`;
+- user collections: `customExerciseCategoriesRef(uid)`, `customExercisesRef(uid)`, and
+  `bodyMeasurementsRef(uid)`.
 
-The rule is: never write a Firestore path inline. If you need a ref, add a helper to
-[`database/refs.ts`](../../database/refs.ts) or use the one that is there.
+There are no workout or workout-template helpers because the current client does not access those
+collections. No feature constructs a Firestore path inline, and
+[`database/refs.ts`](../../database/refs.ts) owns the app's single `getFirestore()` handle.
 
-The helpers come in pairs — a plural helper for the collection and a singular helper for one
-document — and split into two families. The global family (`exercises`, `exerciseGroups`) takes no
-arguments because it is shared, read-only reference data. The user family takes `uid` as its first
-argument, always, so it is not possible to produce a user-scoped ref without having said whose it is.
-The module also holds the single `getFirestore()` handle at module scope; nothing else in the app
-needs one.
+Persisted pointers do not use Firestore `DocumentReference` values. They use the schema's full string
+`Ref` convention, `global:<slug>` or `custom:<documentId>`, documented in
+[`docs/db-structure.md`](../db-structure.md#full-references).
 
-Two things worth knowing before you read the file and draw conclusions from it:
+## Types and runtime trust
 
-- **There is one live violation.** [`features/auth/store/use-auth-store.ts`](../../features/auth/store/use-auth-store.ts)
-  calls `getFirestore()` a second time and hand-builds `doc(db, 'users', uid, 'exerciseGroups', id)`
-  inside the sign-up batch, assigning it to a local `const userGroupRef` that shadows the exported
-  helper of the same name. It should call `userGroupRef(uid, groupDoc.id)`. Do not treat it as
-  precedent.
-- **About half the singular helpers have no call sites.** `exerciseRef`, `globalGroupRef`,
-  `userOverrideRef`, `customExerciseRef`, `routineRef`, `workoutRef`, `exerciseHistoryRef` and
-  `exerciseHistoryEntryRef` are unused today. They exist ahead of the write paths that would use them
-  (see [What the app actually writes](#what-the-app-actually-writes)), not because something reads
-  through them.
+TypeScript interfaces are not a trust boundary. Firestore data enters JavaScript as unknown values,
+so every snapshot passes through a decoder from
+[`database/decoders.ts`](../../database/decoders.ts). The decoder validates exact keys, scalar types,
+enums, bounds, timestamps, full-ref syntax, localization invariants, nested exercise/set arrays, and
+document-specific relationships such as a completed workout requiring `completedAt`.
 
-## `types.ts` and the `WithId<T>` shape
+Malformed documents are logged as `[Database] Dropped malformed ... document` and return `null`.
+Collection stores omit those documents instead of rendering a partially trusted shape. A malformed
+or missing user document becomes `profile: null`. The exercise store additionally validates global
+slug IDs and custom document IDs before creating refs.
 
-[`database/types.ts`](../../database/types.ts) mirrors the schema one interface per document, plus
-the embedded shapes (`UserSettings`, `UserStats`, `RoutineSet`, `WorkoutSet`, `BestSet`, …) and the
-three shared unions (`ExerciseType`, `Difficulty`, `WorkoutStatus`). It also re-exports `Timestamp`,
-which is the only sanctioned way to name a Firestore timestamp in app code —
-[`lib/format.ts`](../../lib/format.ts) takes it from `@/database` rather than from the Firebase
-package.
+`WithId<T> = { id: string; data: T }` remains the in-app document shape. Firestore owns the ID outside
+`data()`, so stores keep it separate rather than injecting an `id` field into the persisted payload.
+Exercise catalogue entries are the exception: `MergedExercise`, `MergedCategory`, and
+`MergedEquipment` are flat computed view models, not Firestore documents.
 
-`WithId<T> = { id: string; data: T }` is the shape every document takes once it is in the app.
-Firestore keeps a document's id outside its fields, and `snapshot.data()` drops it. The alternative —
-spreading the id into the payload — would make the in-app type permanently diverge from the stored
-document and would collide the day a schema grows its own `id` field. Carrying the pair keeps `data`
-exactly equal to what is in Firestore. Every list-shaped store state is therefore `WithId<T>[]`, and
-components destructure `{ id, data }`.
+The same validators expose `assert...Write` functions. Every shipped client write validates the
+complete prospective shape before sending it:
 
-The deliberate exception is [`features/exercises/store/use-exercise-store.ts`](../../features/exercises/store/use-exercise-store.ts),
-whose `MergedExercise` and `MergedGroup` are flat objects with an `id` field. They are computed view
-models assembled from four documents, not documents themselves, so there is no stored shape for
-`data` to be faithful to.
+- auth validates a new or self-healed `UserProfile` before replacing validation timestamps with
+  server timestamps;
+- user settings and profile updates validate the merged next profile before issuing dotted-field
+  updates;
+- a weigh-in validates its `BodyMeasurement` before `addDoc`.
 
-Types are **asserted, not validated**: snapshot handlers do `d.data() as Workout`. Nothing checks a
-document against `types.ts` at runtime, so a document that has drifted from the schema fails at the
-point it is rendered, not at the point it is read.
+Write assertions also exist for the other document types, but those collections have no shipped
+client writers yet. A modified client can bypass all application assertions, which is why Firestore
+rules still matter.
 
 ## Subscription lifecycle
 
-[`database/use-firestore-subscriptions.ts`](../../database/use-firestore-subscriptions.ts) is called
-once, from [`app/_layout.tsx`](../../app/_layout.tsx), _above_ the auth gate. That placement is the
-point: listeners attach the moment a user exists, not when some protected screen mounts, so the first
-private screen renders against data that is already arriving.
+[`database/use-firestore-subscriptions.ts`](../../database/use-firestore-subscriptions.ts) is mounted
+once from [`app/_layout.tsx`](../../app/_layout.tsx), above the protected route tree. When auth
+publishes a user, it starts two stores with `subscribe(uid)`; effect cleanup calls each returned
+teardown when the user changes or signs out.
 
-The hook is a single effect keyed on the auth store's `user`. When a user appears it calls
-`subscribe(uid)` on the four data stores and keeps the returned unsubscribe functions; when the user
-changes or disappears it calls all four. Each store's `subscribe` returns a closure that detaches its
-own listeners _and_ resets that store's state to empty with `isLoading: true`, so signing out or
-switching accounts cannot leave the previous user's data visible.
+Every teardown detaches its listeners and clears the store to its initial loading state. The stores
+do not expose separate `reset()` actions. Auth is intentionally separate: it owns
+`onAuthStateChanged` through its app-lifetime, idempotent `initialize()` method because it produces
+the UID that starts the other subscriptions.
 
-Two consequences follow, and both are easy to get wrong:
+The two stores own seven Firestore snapshot listeners:
 
-- **`reset()` has no call sites.** Every data store exposes one, and nothing in the app calls it.
-  Teardown is done entirely by the closure returned from `subscribe`. Adding cleanup logic to
-  `reset()` will not run it.
-- **The auth store is not one of these stores.** [`features/auth/store/use-auth-store.ts`](../../features/auth/store/use-auth-store.ts)
-  owns `onAuthStateChanged` itself through `initialize()`, which is app-lifetime and idempotent (four
-  components call it; the guard and the leak it fixed are documented in the file). It has no
-  `subscribe` and no `reset`. Where `AGENTS.md` says every store exposes `subscribe(uid)` and
-  `reset()`, it means the four data stores.
+| Store                                                                      | Firestore sources                                                                                   | Derived state                                        |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [`useUserStore`](../../features/user/store/use-user-store.ts)              | `users/{uid}` and `bodyMeasurements` ordered by `recordedAt desc`, `limit(1)`                       | `profile`, `currentBodyMeasurement`, `currentWeight` |
+| [`useExerciseStore`](../../features/exercises/store/use-exercise-store.ts) | Five listeners: global exercises, global categories, equipment, custom exercises, custom categories | Localized visible catalogue and category/equipment   |
 
-Each data store starts `isLoading: true` and clears it in its snapshot handler. Error callbacks log
-with a `[StoreName]` prefix. One store diverges: the exercise store's four error callbacks log
-(`[ExerciseStore:global]`, `:overrides`, `:custom`, `:groups`) but do **not** clear `isLoading`, so a
-listener that fails leaves the exercises screen in its loading state indefinitely.
+The exercise store also subscribes to the user Zustand store, not Firestore, so a language or
+hidden-ref change reruns its merge immediately. It reports loading until all five Firestore listeners
+have either produced a snapshot or failed and the user store has finished both of its listeners.
 
-## Collection ownership
+All collection snapshots are decoded before state publication. Listener errors are logged with a
+store-specific prefix and clear that listener's loading condition, leaving the previous or empty
+state. The UI therefore cannot currently distinguish a permission/network failure from an empty
+collection.
 
-| Store                                                                      | Firestore source                                                                                                                 | Derived state                                            |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| [`useUserStore`](../../features/user/store/use-user-store.ts)              | `users/{uid}` (document listener)                                                                                                | `profile`. Also the app's only writer of profile fields. |
-| [`useExerciseStore`](../../features/exercises/store/use-exercise-store.ts) | Four listeners: global `exercises`, `users/{uid}/exerciseOverrides`, `users/{uid}/customExercises`, `users/{uid}/exerciseGroups` | `exercises: MergedExercise[]`, `groups: MergedGroup[]`   |
-| [`useWorkoutStore`](../../features/workouts/store/use-workout-store.ts)    | `users/{uid}/workouts`, ordered by `startedAt` desc                                                                              | `workouts`, `recentWorkouts`, `inProgressWorkout`        |
-| [`useRoutineStore`](../../features/routines/store/use-routine-store.ts)    | `users/{uid}/routines`                                                                                                           | `routines`, `activeRoutines`                             |
+### Exercise merge
 
-Notes that matter when reading or extending these:
+The exercise store keeps five raw inputs in its subscription closure and republishes only computed
+view models. On every source, language, or hidden-ref change it:
 
-- **The exercise merge is four listeners, and the global `exerciseGroups` collection is not one of
-  them.** The store resolves a group through the user's own copy, which is seeded from the global
-  collection at sign-up; the global collection is read exactly once, with `getDocs`, in that seeding
-  batch. Because four independent listeners feed one derived list, the store keeps its raw inputs in
-  a closure, recomputes the merged arrays after every snapshot, and holds `isLoading` true until all
-  four have fired at least once (tracked in a `firedListeners` set). The merge itself — overrides
-  patching a global exercise, hidden exercises dropping out, custom exercises appended, sort by group
-  order then name — is in `buildMerged`.
-- **`recentWorkouts` is not just a slice.** It excludes anything `in_progress` before taking
-  `RECENT_WORKOUTS_LIMIT` (5, in [`lib/constants.ts`](../../lib/constants.ts)); the in-progress
-  workout is surfaced separately as `inProgressWorkout`, which is what
-  [`features/workouts/active-workout-banner.tsx`](../../features/workouts/active-workout-banner.tsx)
-  renders.
-- **Routines are unordered.** The routines listener has no `orderBy`, so display order is whatever
-  Firestore returns. `activeRoutines` is `routines` minus `isArchived`.
-- **Nothing owns `users/{uid}/exerciseHistory`.** It is defined in the schema and typed as
-  `ExerciseHistoryEntry`, and no store subscribes to it and nothing writes it.
+1. resolves global and custom category names for `settings.language`;
+2. orders global categories by `order`, then custom categories by `order`;
+3. resolves equipment refs to localized labels;
+4. concatenates global and custom exercises;
+5. removes retired exercises plus exercises hidden directly or through a hidden category;
+6. publishes visible categories and non-retired equipment.
 
-## What the app actually writes
+Browse and search use the visible `exercises` list. Workout-oriented picker and canonical-ref
+resolution views are intentionally absent until the workout behavior is rebuilt.
 
-The shipped app performs exactly three kinds of write, all of them against the user document:
+### Preserved workout contracts
 
-1. Sign-up — a batch in [`features/auth/store/use-auth-store.ts`](../../features/auth/store/use-auth-store.ts)
-   that creates `users/{uid}` with default settings and zeroed stats, and copies the global exercise
-   groups into the user's subcollection with `isDefault: true`.
-2. `updateSettings` — a partial `UserSettings` patch, converted to `settings.<key>` dot-notation so
-   Firestore merges fields instead of replacing the object.
-3. `updateProfile` — `displayName` only.
+Workout and workout-template document interfaces, decoders, write assertions, rules, indexes, and
+seed/wipe compatibility remain in the repository. The current client has no collection refs,
+listeners, stores, or screen-level Firestore requests for either collection.
 
-Nothing in the app creates or mutates a routine, a workout, a custom exercise, an exercise override,
-or a history entry. The three actions in the global create panel ship `enabled: false` in
-[`features/navigation-dock/navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts)
-until they have a destination. Every read path in the table above is real and shipped; the
-corresponding write paths are not. Any document that describes creating a routine or logging a
-workout is describing intended work, not current behavior.
+Home therefore displays zero workout counts and streaks plus empty template/history sections.
+Workouts displays empty template and history sections immediately. Documents inserted outside the app
+are not requested, decoded, derived, or rendered. There is no persisted history or stats collection,
+and [`firestore.indexes.json`](../../firestore.indexes.json) remains empty.
 
-## Seeding the global collections
+## Current writes
 
-The global `exercises` and `exerciseGroups` collections are populated out-of-band by
-[`scripts/db/`](../../scripts/db/index.ts) — `bun run db:seed --seed exercises`, with `--dry-run`,
-`--clean` and `--env <development|staging|production>`. It runs on Node with `firebase-admin` and a
-per-environment service-account file kept outside the repository, which is why it carries its own
-[`scripts/db/types.ts`](../../scripts/db/types.ts) rather than importing `database/types.ts`: it is
-not React Native code and does not share the client SDK's types. Groups are written at fixed document
-ids (so `groupKey` on an exercise stays a stable reference) and exercises at generated ids. Full
-usage is in [`scripts/db/docs/instructions.md`](../../scripts/db/docs/instructions.md).
+The shipped client has five write operations across two stores:
+
+| Owner                                                         | Write                                                                                                                |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| [`useAuthStore`](../../features/auth/store/use-auth-store.ts) | Create one `users/{uid}` document when missing; fill missing Apple name fields; bump an older `schemaVersion` marker |
+| [`useUserStore`](../../features/user/store/use-user-store.ts) | Update `settings.<key>` fields; update profile/body fields; append a `bodyMeasurements` document                     |
+
+Profile creation is one `setDoc`, not a batch. No category or exercise data is copied at sign-up.
+The auth listener runs `ensureUserProfile` for new sign-ins and restored sessions before it publishes
+the authenticated user to the rest of the app. A missing profile therefore self-heals before domain
+subscriptions start. The current schema-version branch only advances the numeric marker; there is no
+field transform because version `1` is the only live shape. An existing malformed document is logged
+and not repaired automatically.
+
+There is no client write to custom categories, custom exercises, workout templates, or workouts. The
+client also does not read workout templates or workouts. Their schemas remain available for a later
+implementation, but the app cannot create, read, edit, archive, complete, or delete them.
+
+The Edit Profile sheet is the only measurement entry point. Saving it updates profile fields first
+and then appends a current-time weigh-in when the optional weight field is populated. These are two
+separate writes, not an atomic batch. There is no measurement-history query beyond the newest entry,
+and no edit or delete action.
+
+## Firestore rules
+
+[`firestore.rules`](../../firestore.rules) is the current prototype ruleset:
+
+- authenticated users can read the three global collections and cannot write them;
+- a user can read, create, update, and delete only their own document and five subcollections;
+- user, custom-category, custom-exercise, template, and workout creates/updates validate allowed and
+  required top-level keys, scalar bounds, selected enums, and timestamps;
+- `createdAt` is server-set and immutable where present, `updatedAt` advances with server time, and
+  `Workout.startedAt` is immutable;
+- workout status may remain unchanged or move from `in_progress` to `completed`/`abandoned`, but not
+  move back;
+- body measurements require a non-future `recordedAt` and weight greater than `0` and less than
+  `500` kg.
+
+The rules are intentionally not described as complete validation. Firestore rules cannot iterate
+embedded `exercises[]` and `sets[]`, equipment arrays, or hidden-ref arrays. They cap list sizes but
+cannot validate each member. They also cannot verify reference existence, an exercise snapshot's
+accuracy, a real IANA time zone, or every calendar-date semantic that the decoder checks. A modified
+client can therefore write malformed nested data into its own subtree; the official client will later
+log and drop the malformed document.
+
+There are also prototype-level differences between rules and decoders. For example, rules accept any
+syntactically valid `templateRef` while the workout decoder requires a custom ref, and some nullable
+or required-field details are stricter in the decoder. Treat the runtime decoder as the official app
+contract and the rules as owner isolation plus reachable top-level checks, not as a duplicate schema
+engine.
+
+No rules emulator test harness is installed. The repository verifies TypeScript and linting, not the
+behavior of deployed Firestore rules, and the checked-in file alone does not prove which environment
+has received it.
+
+## Seed and wipe safety
+
+The admin scripts use Bun and `firebase-admin`, with service-account files outside source control.
+They bypass client rules.
+
+[`scripts/db/index.ts`](../../scripts/db/index.ts) requires both `--seed` and an explicit
+`--env development|staging|production`; there is no production default. The only seeder validates
+all data before any delete or write: exact `en`/`uk` maps, deterministic slugs, unique IDs, enums,
+bounds, and resolvable category/equipment refs. `--dry-run` performs the complete validation and
+prints deletes/writes without initializing Firebase.
+
+Normal seeding overwrites deterministic documents in `exerciseCategories`, `equipment`, and
+`exercises`. `--clean` recursively deletes those three global collections first. Production writes
+require typing `production`; a production clean also requires `--allow-production-clean`.
+
+[`scripts/db/wipe.ts`](../../scripts/db/wipe.ts) requires an explicit development or staging
+environment and requires typing the environment name. `--env production` is refused outright; unlike
+the seeder there is no override flag, so wiping production would mean editing the script. It
+counts all Firestore documents recursively and all Auth users, recursively deletes every top-level
+collection, deletes every Auth user, and then verifies both counts are zero. It deliberately has no
+dry-run mode.
+
+Once an environment contains data worth preserving, an export and tested restore are prerequisites
+for `--clean` or wipe. Full commands and service-account filenames are maintained in
+[`scripts/db/docs/instructions.md`](../../scripts/db/docs/instructions.md).

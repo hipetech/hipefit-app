@@ -2,7 +2,7 @@
 type: app
 status: current
 area: ui
-updated: 2026-08-12
+updated: 2026-08-20
 ---
 
 # The UI system
@@ -319,7 +319,7 @@ Three consequences:
   [ui/card.tsx](../../ui/card.tsx) documents at length why `frame` must sit after `padding` (so
   `width` is the card's outer width) and before `background` (because `.background` reports the
   primary content size, and a `VStack` hugs its widest child rather than filling a proposed width —
-  which is what made fixed-width routine cards render at visibly uneven widths).
+  which is what made fixed-width workout-template cards render at visibly uneven widths).
 - **Font-refining modifiers must follow the modifier that sets the font.** `monospacedDigit()` after
   `font(...)` refines the resolved font; the other order overwrites it. Motion modifiers go after
   both, outermost.

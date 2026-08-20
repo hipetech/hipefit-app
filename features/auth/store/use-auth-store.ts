@@ -8,18 +8,16 @@ import {
   signOut,
 } from '@react-native-firebase/auth';
 import {
-  doc,
   getDoc,
-  getDocs,
-  getFirestore,
   serverTimestamp,
+  setDoc,
+  Timestamp,
   updateDoc,
-  writeBatch,
 } from '@react-native-firebase/firestore';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { create } from 'zustand';
 
-import { globalGroupsRef, userRef } from '@/database';
+import { assertUserProfileWrite, decodeUserProfile, userRef } from '@/database';
 
 interface AuthState {
   user: User | null;
@@ -35,126 +33,175 @@ interface AppleName {
   lastName: string | null;
 }
 
+const CURRENT_SCHEMA_VERSION = 1;
+const noAppleName: AppleName = { firstName: null, lastName: null };
+
 const buildDisplayName = (
   firstName: string | null,
   lastName: string | null
-): string => {
-  return [firstName, lastName].filter(Boolean).join(' ');
-};
+): string => [firstName, lastName].filter(Boolean).join(' ');
 
 const createUserProfile = async (
   firebaseUser: User,
   appleName: AppleName
 ): Promise<void> => {
-  const db = getFirestore();
-  const batch = writeBatch(db);
-  const uid = firebaseUser.uid;
-  const now = serverTimestamp();
-
   const firstName = appleName.firstName ?? '';
   const lastName = appleName.lastName ?? '';
   const displayName =
     buildDisplayName(appleName.firstName, appleName.lastName) ||
     firebaseUser.displayName ||
     '';
-
-  const profileData: Omit<UserProfile, 'createdAt' | 'updatedAt'> & {
-    createdAt: ReturnType<typeof serverTimestamp>;
-    updatedAt: ReturnType<typeof serverTimestamp>;
-  } = {
+  const validationTimestamp = Timestamp.now();
+  const profile: UserProfile = {
     firstName,
     lastName,
     displayName,
     email: firebaseUser.email ?? null,
     photoURL: firebaseUser.photoURL ?? null,
+    body: {
+      birthDate: null,
+      heightCm: null,
+    },
+    purpose: null,
     settings: {
-      units: 'metric',
       theme: 'system',
       language: 'en',
-      notificationsEnabled: true,
-      workoutRemindersEnabled: false,
-      autoPauseEnabled: true,
+      units: 'metric',
+      hiddenExerciseRefs: [],
+      hiddenCategoryRefs: [],
     },
-    stats: {
-      totalWorkouts: 0,
-      currentStreak: 0,
-      longestStreak: 0,
-      lastWorkoutAt: null,
-    },
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    createdAt: validationTimestamp,
+    updatedAt: validationTimestamp,
+  };
+  assertUserProfileWrite(profile);
+
+  const now = serverTimestamp();
+  await setDoc(userRef(firebaseUser.uid), {
+    ...profile,
     createdAt: now,
     updatedAt: now,
-  };
-
-  batch.set(userRef(uid), profileData);
-
-  // Seed default exercise groups from global collection
-  const globalGroupsSnapshot = await getDocs(globalGroupsRef());
-
-  for (const groupDoc of globalGroupsSnapshot.docs) {
-    const groupData = groupDoc.data();
-    const userGroupRef = doc(db, 'users', uid, 'exerciseGroups', groupDoc.id);
-
-    batch.set(userGroupRef, {
-      name: groupData.name,
-      order: groupData.order,
-      icon: groupData.icon ?? null,
-      isDefault: true,
-      globalGroupId: groupDoc.id,
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
-
-  await batch.commit();
+  });
 };
 
 const ensureUserProfile = async (
   firebaseUser: User,
   appleName: AppleName
 ): Promise<void> => {
-  const userDocSnap = await getDoc(userRef(firebaseUser.uid));
+  const reference = userRef(firebaseUser.uid);
+  const snapshot = await getDoc(reference);
 
-  if (!userDocSnap.exists()) {
+  if (!snapshot.exists()) {
     await createUserProfile(firebaseUser, appleName);
-  } else if (appleName.firstName || appleName.lastName) {
-    const updates: Record<string, unknown> = {
-      updatedAt: serverTimestamp(),
-    };
-    if (appleName.firstName) updates.firstName = appleName.firstName;
-    if (appleName.lastName) updates.lastName = appleName.lastName;
-    updates.displayName = buildDisplayName(
-      appleName.firstName,
-      appleName.lastName
-    );
-    await updateDoc(userRef(firebaseUser.uid), updates);
+    return;
   }
+
+  let data = snapshot.data({ serverTimestamps: 'previous' });
+  if (snapshot.metadata.hasPendingWrites) {
+    const pendingTimestamp = Timestamp.now();
+    data = {
+      ...data,
+      createdAt: data.createdAt ?? pendingTimestamp,
+      updatedAt: data.updatedAt ?? pendingTimestamp,
+    };
+  }
+  const profile = decodeUserProfile(data);
+  if (!profile) {
+    throw new Error('Existing user profile is malformed');
+  }
+
+  const updates: Record<string, unknown> = {};
+  let firstName = profile.firstName;
+  let lastName = profile.lastName;
+  if (!firstName && appleName.firstName) {
+    firstName = appleName.firstName;
+    updates.firstName = firstName;
+  }
+  if (!lastName && appleName.lastName) {
+    lastName = appleName.lastName;
+    updates.lastName = lastName;
+  }
+  let displayName = profile.displayName;
+  if (!displayName.trim()) {
+    const appleDisplayName = buildDisplayName(firstName, lastName);
+    if (appleDisplayName) {
+      displayName = appleDisplayName;
+      updates.displayName = displayName;
+    }
+  }
+  const schemaVersion =
+    profile.schemaVersion < CURRENT_SCHEMA_VERSION
+      ? CURRENT_SCHEMA_VERSION
+      : profile.schemaVersion;
+  if (schemaVersion !== profile.schemaVersion) {
+    updates.schemaVersion = schemaVersion;
+  }
+  if (Object.keys(updates).length === 0) return;
+
+  assertUserProfileWrite({
+    ...profile,
+    firstName,
+    lastName,
+    displayName,
+    schemaVersion,
+    updatedAt: profile.updatedAt,
+  });
+  await updateDoc(reference, {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
 };
 
 export const useAuthStore = create<AuthState>((set) => {
   let unsubscribe: (() => void) | null = null;
+  let authChangeSequence = 0;
+  let pendingAppleName: AppleName | null = null;
+  const profileEnsures = new Map<string, Promise<void>>();
+
+  const ensureProfileOnce = (
+    user: User,
+    appleName: AppleName
+  ): Promise<void> => {
+    const existing = profileEnsures.get(user.uid);
+    if (existing) return existing;
+
+    const pending = ensureUserProfile(user, appleName).finally(() => {
+      if (profileEnsures.get(user.uid) === pending) {
+        profileEnsures.delete(user.uid);
+      }
+    });
+    profileEnsures.set(user.uid, pending);
+    return pending;
+  };
 
   const initialize = () => {
-    // Idempotent by design. Four components call this (app/_layout, app/index,
-    // (public)/login, and AuthScreen — and login renders AuthScreen, so that
-    // route calls it twice). The listener is app-lifetime, so only the first
-    // call installs it; later callers get a no-op teardown.
-    //
-    // Without this guard every call overwrote the shared `unsubscribe` slot:
-    // the previous listener leaked for the process lifetime, and a component's
-    // cleanup tore down whichever listener happened to be in the slot rather
-    // than the one it created.
+    // The auth listener is app-lifetime and initialize has several callers.
     if (unsubscribe) return () => {};
 
-    const auth = getAuth();
-    unsubscribe = onAuthStateChanged(auth, (user) => {
-      set({
-        user,
-        isLoggedIn: !!user,
-        isLoading: false,
-      });
+    unsubscribe = onAuthStateChanged(getAuth(), (user) => {
+      const sequence = ++authChangeSequence;
+      if (!user) {
+        set({ user: null, isLoggedIn: false, isLoading: false });
+        return;
+      }
+
+      set({ user: null, isLoggedIn: false, isLoading: true });
+      void ensureProfileOnce(user, pendingAppleName ?? noAppleName)
+        .then(() => {
+          if (sequence === authChangeSequence) {
+            set({ user, isLoggedIn: true, isLoading: false });
+          }
+        })
+        .catch((error: unknown) => {
+          console.error('[AuthStore] ensure profile', error);
+          if (sequence === authChangeSequence) {
+            set({ user: null, isLoggedIn: false, isLoading: false });
+          }
+        });
     });
 
     return () => {
+      authChangeSequence += 1;
       if (unsubscribe) {
         unsubscribe();
         unsubscribe = null;
@@ -185,14 +232,26 @@ export const useAuthStore = create<AuthState>((set) => {
         firstName: credential.fullName?.givenName ?? null,
         lastName: credential.fullName?.familyName ?? null,
       };
+      pendingAppleName = appleName;
 
       const provider = new OAuthProvider('apple.com');
       const appleCredential = provider.credential({
         idToken: credential.identityToken,
       });
-
       const { user } = await signInWithCredential(getAuth(), appleCredential);
-      await ensureUserProfile(user, appleName);
+      const sequence = ++authChangeSequence;
+      set({ user: null, isLoggedIn: false, isLoading: true });
+      try {
+        await ensureProfileOnce(user, appleName);
+        if (sequence === authChangeSequence) {
+          set({ user, isLoggedIn: true, isLoading: false });
+        }
+      } catch (error) {
+        if (sequence === authChangeSequence) {
+          set({ user: null, isLoggedIn: false, isLoading: false });
+        }
+        throw error;
+      }
     } catch (error) {
       const code =
         typeof error === 'object' && error !== null && 'code' in error
@@ -205,6 +264,8 @@ export const useAuthStore = create<AuthState>((set) => {
         console.error('Apple Sign-In Error:', error);
       }
       throw error;
+    } finally {
+      pendingAppleName = null;
     }
   };
 

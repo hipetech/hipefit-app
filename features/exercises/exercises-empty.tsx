@@ -16,7 +16,7 @@ const styles = StyleSheet.create({
 });
 
 export interface ExercisesEmptyProps {
-  /** Whether the emptiness is caused by a search / difficulty filter. */
+  /** Whether the emptiness is caused by the current search. */
   isFiltered: boolean;
 }
 
@@ -35,7 +35,7 @@ export const ExercisesEmpty = ({ isFiltered }: ExercisesEmptyProps) => {
         systemImage={isFiltered ? 'magnifyingglass' : 'dumbbell'}
         description={
           isFiltered
-            ? 'Try a different search term or difficulty filter.'
+            ? 'Try a different search term.'
             : 'Your exercise catalogue is empty.'
         }
       />

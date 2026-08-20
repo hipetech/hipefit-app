@@ -2,7 +2,7 @@
 type: template
 status: current
 area: documentation
-updated: 2026-08-04
+updated: 2026-08-20
 ---
 
 # Template: flow document
@@ -42,7 +42,7 @@ Rules that matter more than the headings:
 type: flow
 status: current
 area: workouts
-updated: 2026-08-04
+updated: 2026-08-20
 ---
 ```
 
@@ -76,10 +76,10 @@ enforces it. The pilot's set is representative:
 Every affordance that advertises this journey, and where it lives. A table pays for itself once
 there are more than two:
 
-| Entry point            | Where                                                                            | Notes                                           |
-| ---------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **<button label>**     | [`features/workouts/routine-card.tsx`](../../features/workouts/routine-card.tsx) | Any condition that gates it, or why it is inert |
-| **<other affordance>** | [`features/home/home-content.tsx`](../../features/home/home-content.tsx)         | …                                               |
+| Entry point            | Where                                                                                                | Notes                                           |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **<button label>**     | [`features/exercises/exercise-detail-sheet.tsx`](../../features/exercises/exercise-detail-sheet.tsx) | Any condition that gates it, or why it is inert |
+| **<other affordance>** | [`features/home/home-content.tsx`](../../features/home/home-content.tsx)                             | …                                               |
 
 Follow the table with prose when the entry points share a convention worth naming — the pilot
 records that a control with no destination is rendered inert rather than hidden, which is a

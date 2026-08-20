@@ -55,7 +55,7 @@ built.
 ## Approach
 
 The shape of the change: what gets added, what gets modified, what the boundaries are. Reference
-real paths — `features/workouts/store/use-workout-store.ts`, `database/refs.ts` — rather than
+real paths — `features/exercises/store/use-exercise-store.ts`, `database/refs.ts` — rather than
 describing files abstractly.
 
 Record the alternatives you rejected and why. That is the part of a plan that stays valuable after

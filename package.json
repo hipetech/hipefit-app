@@ -16,7 +16,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "prepare": "husky",
-    "db:seed": "bun run scripts/db/index.ts"
+    "db:seed": "bun run scripts/db/index.ts",
+    "db:wipe": "bun run scripts/db/wipe.ts"
   },
   "dependencies": {
     "@expo/ui": "~57.0.7",

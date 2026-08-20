@@ -38,8 +38,8 @@ export interface CardProps {
   /** Horizontal alignment of children. @default 'leading' */
   alignment?: 'leading' | 'center' | 'trailing';
   /**
-   * Fixed **outer** width, padding included (e.g. horizontally-scrolled routine
-   * cards) — i.e. border-box semantics, where the painted card is exactly
+   * Fixed **outer** width, padding included (e.g. horizontally-scrolled workout
+   * template cards) — i.e. border-box semantics, where the painted card is exactly
    * `width` wide and the padding eats into it.
    */
   width?: number;
@@ -63,7 +63,7 @@ export interface CardProps {
  *   size. A `VStack` does not stretch to fill a proposed width — it hugs its
  *   widest child — so with `frame` on the outside the fill was painted at the
  *   hugged width and merely centered inside the `width` slot. That is what made
- *   fixed-width routine cards render at visibly uneven widths.
+ *   fixed-width workout-template cards render at visibly uneven widths.
  *
  * When no `width` is passed no `frame` is emitted at all, so the chain is
  * byte-for-byte the previous one and auto-width cards are unaffected.

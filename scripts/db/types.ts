@@ -1,21 +1,39 @@
-export interface ExerciseGroupSeed {
-  name: string;
+export type Environment = 'development' | 'staging' | 'production';
+
+export interface LocalizedTextSeed {
+  en: string;
+  uk: string;
+}
+
+export interface ExerciseCategorySeed {
+  slug: string;
+  name: LocalizedTextSeed;
   order: number;
+  icon: string;
+  isRetired: boolean;
+}
+
+export interface EquipmentSeed {
+  slug: string;
+  name: LocalizedTextSeed;
   icon: string | null;
+  isRetired: boolean;
 }
 
 export interface ExerciseSeed {
-  name: string;
-  description: string;
+  slug: string;
+  name: LocalizedTextSeed;
+  description: LocalizedTextSeed;
   type: 'strength' | 'cardio' | 'bodyweight';
-  groupKey: string;
+  categoryRef: string;
   equipment: string[];
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
   imageURL: string | null;
+  isRetired: boolean;
 }
 
 export interface SeedOptions {
   dryRun: boolean;
   clean: boolean;
-  env: 'development' | 'staging' | 'production';
+  env: Environment;
+  allowProductionClean: boolean;
 }

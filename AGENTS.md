@@ -32,7 +32,8 @@ bun run ios:development     # also ios:staging, ios:production
 bun run type-check          # required first for code
 bun run lint                # required after type-check
 bunx prettier --write <files-touched>
-bun run db:seed
+bun run db:seed --seed exercises --env development   # both flags required; --env has no default
+bun run db:wipe --env development                    # destructive; prompts for the env name
 ```
 
 Adding or removing a native dependency also requires `pod install --project-directory=ios` and the
@@ -58,6 +59,8 @@ Read only the documents triggered by the task:
 - **Substantial feature:** read `docs/README.md`; create `docs/plans/<initiative>/plan.md` from
   `docs/templates/plan.md`. Substantial means a material change to a journey, shared system,
   persistent model, native integration, or multiple implementation areas.
+- **Any code change:** `docs/app/code-style.md` is the authority on module shapes, naming, the
+  comment policy, and the one-component-per-file standard the codebase is being moved to.
 - **UI:** read `docs/app/ui.md` before editing. It overrides conflicting bundled Expo skills.
 - **Navigation:** read `docs/app/navigation.md`.
 - **Data or schema:** read `docs/app/database.md` and, when relevant, `docs/db-structure.md`.
