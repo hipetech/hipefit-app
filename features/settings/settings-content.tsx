@@ -40,6 +40,10 @@ import { layout } from '@/theme/styles';
 /** Placeholder text shown behind `redacted('placeholder')` while the profile loads. */
 const PLACEHOLDER_NAME = 'Placeholder Name';
 const PLACEHOLDER_EMAIL = 'placeholder@example.com';
+const SETTINGS_ERROR_MESSAGE =
+  "Couldn't save this setting. Check your connection and try again.";
+
+type SettingPicker = 'theme' | 'language' | 'units';
 
 /**
  * Apple private-relay addresses are long and unbreakable; a tail/word wrap
@@ -96,6 +100,12 @@ export const SettingsContent = () => {
   const { profile, isLoading, updateSettings } = useUserStore();
 
   const [isLogoutAlertPresented, setLogoutAlertPresented] = useState(false);
+  const [settingsError, setSettingsError] = useState(false);
+  const [pickerRevisions, setPickerRevisions] = useState({
+    theme: 0,
+    language: 0,
+    units: 0,
+  });
 
   const displayName = isLoading
     ? PLACEHOLDER_NAME
@@ -103,15 +113,49 @@ export const SettingsContent = () => {
   const email = isLoading ? PLACEHOLDER_EMAIL : (profile?.email ?? 'No email');
   const photoURL = isLoading ? null : profile?.photoURL;
   const theme: UserSettings['theme'] = profile?.settings?.theme ?? 'system';
+  const language: UserSettings['language'] =
+    profile?.settings?.language ?? 'en';
+  const units: UserSettings['units'] = profile?.settings?.units ?? 'metric';
   const memberSince = profile?.createdAt
     ? `Member since ${profile.createdAt.toDate().getFullYear()}`
     : null;
 
-  const handleThemeChange = useCallback(
-    (value: UserSettings['theme']) => {
-      updateSettings({ theme: value });
+  const saveSettings = useCallback(
+    async (partial: Partial<UserSettings>, picker: SettingPicker) => {
+      setSettingsError(false);
+      try {
+        await updateSettings(partial);
+      } catch (error) {
+        console.error('[Settings] update setting', error);
+        setSettingsError(true);
+        setPickerRevisions((revisions) => ({
+          ...revisions,
+          [picker]: revisions[picker] + 1,
+        }));
+      }
     },
     [updateSettings]
+  );
+
+  const handleThemeChange = useCallback(
+    (value: UserSettings['theme']) => {
+      void saveSettings({ theme: value }, 'theme');
+    },
+    [saveSettings]
+  );
+
+  const handleLanguageChange = useCallback(
+    (value: UserSettings['language']) => {
+      void saveSettings({ language: value }, 'language');
+    },
+    [saveSettings]
+  );
+
+  const handleUnitsChange = useCallback(
+    (value: UserSettings['units']) => {
+      void saveSettings({ units: value }, 'units');
+    },
+    [saveSettings]
   );
 
   const handleLogout = useCallback(async () => {
@@ -164,9 +208,24 @@ export const SettingsContent = () => {
           </Button>
         </Section>
 
-        <Section title="App">
+        <Section
+          title="App"
+          footer={
+            settingsError ? (
+              <Text
+                modifiers={[
+                  font({ textStyle: 'footnote' }),
+                  foregroundStyle(colors.systemRed),
+                ]}
+              >
+                {SETTINGS_ERROR_MESSAGE}
+              </Text>
+            ) : undefined
+          }
+        >
           {/* A menu Picker in a List row is the native label + value + chevron row. */}
           <Picker
+            key={`theme-${pickerRevisions.theme}`}
             label="Theme"
             systemImage="paintpalette"
             selection={theme}
@@ -176,6 +235,28 @@ export const SettingsContent = () => {
             <Text modifiers={[tag('system')]}>System</Text>
             <Text modifiers={[tag('light')]}>Light</Text>
             <Text modifiers={[tag('dark')]}>Dark</Text>
+          </Picker>
+          <Picker
+            key={`language-${pickerRevisions.language}`}
+            label="Language"
+            systemImage="globe"
+            selection={language}
+            onSelectionChange={handleLanguageChange}
+            modifiers={[pickerStyle('menu')]}
+          >
+            <Text modifiers={[tag('en')]}>English</Text>
+            <Text modifiers={[tag('uk')]}>Ukrainian</Text>
+          </Picker>
+          <Picker
+            key={`units-${pickerRevisions.units}`}
+            label="Units"
+            systemImage="ruler"
+            selection={units}
+            onSelectionChange={handleUnitsChange}
+            modifiers={[pickerStyle('menu')]}
+          >
+            <Text modifiers={[tag('metric')]}>Metric</Text>
+            <Text modifiers={[tag('imperial')]}>Imperial</Text>
           </Picker>
         </Section>
 

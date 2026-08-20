@@ -2,7 +2,7 @@
 type: index
 status: current
 area: documentation
-updated: 2026-08-05
+updated: 2026-08-20
 ---
 
 # Documentation
@@ -47,9 +47,8 @@ Four rules follow from that split:
 
 There is deliberately **no per-feature tier** (`docs/features/<name>/`). For an app this size a
 feature document and its flow document would restate each other and only one would stay updated;
-see [Deferred: per-feature documentation](plans/documentation-system/plan.md#deferred-per-feature-documentation)
-in the plan that set this system up. Revisit only when a specific flow document has grown too
-crowded to read.
+the flow is the durable product unit and shared systems belong under `docs/app/`. Revisit only when a
+specific flow document has grown too crowded to read.
 
 ## Feature development lifecycle
 
@@ -157,23 +156,27 @@ is how a document turns into an agent implementing the wrong thing.
 - [`app/database.md`](app/database.md) — the boundary the app draws around Firestore.
 - [`db-structure.md`](db-structure.md) — the schema itself. Still at the repository root of `docs/`
   because `AGENTS.md` already references it there.
+- [`db-diagram.md`](db-diagram.md) — the same schema as an entity–relationship diagram: collections,
+  document fields, embedded shapes, and every ID reference between them.
 
 ### Flows
 
 Each flow opens with a callout stating how much of it ships. Read that callout before assuming any
-step is reachable — four of the five below document journeys that stop partway or do not start.
+step is reachable: three of the five below do not ship end to end, and the calendar flow uses mock
+markers even though its interactions ship.
 
 - [`flows/authentication.md`](flows/authentication.md) — Apple Sign-In, first-run profile creation,
   the auth guard, and logging out. The one flow here that ships end to end.
 - [`flows/browse-home-calendar.md`](flows/browse-home-calendar.md) — paging, expanding, and
   selecting a day in Home's calendar. Every interaction ships; the **markers are mock data** and
   selecting a day filters nothing.
-- [`flows/start-workout.md`](flows/start-workout.md) — starting a workout from a routine or ad hoc.
+- [`flows/start-workout.md`](flows/start-workout.md) — starting a workout from a template or ad hoc.
   The entry points ship **disabled**.
 - [`flows/log-workout.md`](flows/log-workout.md) — finishing a session and the writes that would
   record it. The **write** half does not ship; the read half renders correctly.
-- [`flows/create-routine.md`](flows/create-routine.md) — building a reusable template. **Does not
-  ship**; the only affordance is a disabled action in the native create panel.
+- [`flows/create-routine.md`](flows/create-routine.md) — building a reusable workout template.
+  **Does not ship**; the filename is retained for stable links, and the only affordance is a disabled
+  action in the native create panel.
 
 ### Templates
 
@@ -183,22 +186,12 @@ step is reachable — four of the five below document journeys that stop partway
 
 ### Plans
 
-Historical and proposed work, never current behavior. New plans use an initiative directory:
+Historical and proposed work, never current behavior. Plans currently present in the workspace:
 
-- [`plans/documentation-system/plan.md`](plans/documentation-system/plan.md) — the plan this
-  structure implements.
-- [`plans/agent-documentation-structure/plan.md`](plans/agent-documentation-structure/plan.md) — the
-  plan that split `AGENTS.md` from the durable documents and defined the lifecycle above.
-- [`plans/native-navigation-dock/plan.md`](plans/native-navigation-dock/plan.md) — the iOS-native
-  create panel that ships today, its parallel ownership model, manual approval gate, and
-  post-approval mobile QA.
-- [`plans/maestro-e2e/plan.md`](plans/maestro-e2e/plan.md) — the proposed local iOS Maestro harness,
-  development Firebase boundary, AI-assisted authoring, and optional AI assertions.
-  calendar's current engine: Flash Calendar for dates, Reanimated for the clip, and the Reduce
-  Motion question the previous attempt left open.
-- [`plans/weekly-calendar/plan.md`](plans/weekly-calendar/plan.md) — the first calendar initiative,
-  built on Wix `react-native-calendars` and **superseded** by the plan above. Its contract and its
-  runtime acceptance matrix survived the rewrite; its engine and its drag gesture did not.
-
-Older plans remain as loose files directly under [`plans/`](plans/). They were not migrated, and
-several describe work that was never built — verify anything you take from them against the code.
+- [`plans/active-workout-accessory/plan.md`](plans/active-workout-accessory/plan.md) — historical
+  intent for an active-workout accessory. Verify its completed-status claims against current source
+  before treating them as shipped behavior.
+- [`plans/db-redesign/`](plans/db-redesign/) — the rationale and execution proposals behind the
+  current nine-collection Firestore redesign. [`schema.md`](plans/db-redesign/schema.md),
+  [`plan.md`](plans/db-redesign/plan.md), and [`ui-plan.md`](plans/db-redesign/ui-plan.md) remain plan
+  artifacts; the durable database and flow documents above describe what is actually implemented.

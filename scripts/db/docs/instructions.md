@@ -1,80 +1,94 @@
 # Hipefit DB Scripts
 
-Scripts for seeding and manipulating Firestore data. All commands use the `bun run db:seed` shorthand defined in `package.json`.
+Admin-only Bun scripts for seeding global Firestore reference data and wiping disposable
+environments. Neither command has a default environment.
 
 ## Prerequisites
 
-Download a service account key for each environment you want to target:
-
-1. Go to **Firebase Console → Project Settings → Service Accounts → Generate New Private Key**
-2. Save the file in `scripts/` using the filename matching the environment:
+Download a service account key for each environment you intend to target from
+**Firebase Console > Project Settings > Service Accounts > Generate New Private Key**.
 
 | Environment   | Expected filename                          |
 | ------------- | ------------------------------------------ |
-| `production`  | `scripts/service-account.json`             |
-| `staging`     | `scripts/service-account.staging.json`     |
 | `development` | `scripts/service-account.development.json` |
+| `staging`     | `scripts/service-account.staging.json`     |
+| `production`  | `scripts/service-account.json`             |
 
-> All service account files are gitignored. Never commit them.
+Service account files are gitignored. Never commit them.
 
-## Usage
+## Destructive Runs
+
+Before any `--clean` seed or wipe against an environment containing data worth preserving, export
+Firestore and Auth data and verify that the export can be restored. This is mandatory from the first
+real user onward. A clean seed recursively deletes only the three global datasets; a wipe recursively
+deletes every Firestore document and then every Auth user.
+
+`db:wipe` refuses production under all circumstances. A production seed requires an interactive
+confirmation. A production clean additionally requires `--allow-production-clean`.
+
+## Seed
+
+The `exercises` seeder validates all slugs, localized fields, category references, and equipment
+references before opening a destructive phase. It writes deterministic document IDs to
+`exerciseCategories`, `equipment`, and `exercises`.
 
 ```bash
-# Basic seed (targets production by default)
-bun run db:seed --seed exercises
+# Validate everything and report every planned delete/write without connecting to Firebase
+bun run db:seed --seed exercises --env development --dry-run
 
-# Dry run — prints what would be written, no Firebase connection needed
-bun run db:seed --seed exercises --dry-run
-
-# Target a specific environment
-bun run db:seed --seed exercises --env staging
+# Idempotently overwrite deterministic documents
 bun run db:seed --seed exercises --env development
 
-# Delete existing data before seeding
-bun run db:seed --seed exercises --clean
+# Recursively delete the three datasets, then recreate them
+bun run db:seed --seed exercises --env staging --clean
 
-# Combine flags
-bun run db:seed --seed exercises --clean --env staging
+# Production requires typing "production" at the prompt
+bun run db:seed --seed exercises --env production
+
+# Production clean requires both the flag and the typed confirmation
+bun run db:seed --seed exercises --env production --clean --allow-production-clean
 ```
 
-## Flags
+| Flag                       | Default      | Description                                                |
+| -------------------------- | ------------ | ---------------------------------------------------------- |
+| `--seed`                   | _(required)_ | Seeder name; currently only `exercises`                    |
+| `--env`                    | _(required)_ | `development`, `staging`, or `production`                  |
+| `--dry-run`                | `false`      | Fully validate and print planned changes without Firebase  |
+| `--clean`                  | `false`      | Delete all three global datasets before writing            |
+| `--allow-production-clean` | `false`      | Second explicit production-clean guard; confirmation stays |
 
-| Flag        | Default      | Description                                                |
-| ----------- | ------------ | ---------------------------------------------------------- |
-| `--seed`    | _(required)_ | Name of the seeder to run (see available below)            |
-| `--env`     | `production` | Target environment: `development`, `staging`, `production` |
-| `--dry-run` | `false`      | Print what would be written without connecting to Firebase |
-| `--clean`   | `false`      | Delete existing collection data before seeding             |
+## Wipe
 
-## Available Seeders
+The wipe requires an explicit non-production environment and an interactive confirmation that
+exactly names it. It inventories Firestore and Auth, recursively deletes all top-level Firestore
+collections (including every subcollection), deletes all Auth users, and verifies both counts are zero.
 
-| Name        | Collections written           | Source files                                   |
-| ----------- | ----------------------------- | ---------------------------------------------- |
-| `exercises` | `exerciseGroups`, `exercises` | `data/exercise-groups.ts`, `data/exercises.ts` |
-
-## Adding a New Seeder
-
-1. Add dataset files in `data/` (e.g. `data/routines.ts`)
-2. Create `seed-routines.ts` exporting `async function seedRoutines(db, opts)`
-3. Register it in `index.ts` under `SEEDERS`:
-   ```ts
-   const SEEDERS = {
-     exercises: seedExercises,
-     routines: seedRoutines, // add here
-   };
-   ```
-
-## File Structure
-
+```bash
+bun run db:wipe --env development
+bun run db:wipe --env staging
 ```
+
+There is intentionally no dry-run wipe and no production override.
+
+## Rules Limitation
+
+Firestore rules enforce owner isolation, top-level document shape, enums, scalar bounds, string
+limits, and list sizes. Rules cannot iterate `exercises[]`, `sets[]`, equipment refs, or hidden-ref
+lists, so they cannot validate each nested map or string. Those contents require runtime validation at
+the application boundary; a list-size rule must not be treated as item validation.
+
+## Files
+
+```text
 scripts/db/
-├── data/
-│   ├── exercise-groups.ts   # ExerciseGroup dataset
-│   └── exercises.ts         # Exercise dataset
-├── docs/
-│   └── instructions.md      # This file
-├── types.ts                 # Shared interfaces (ExerciseSeed, SeedOptions, …)
-├── utils.ts                 # initFirebase(), deleteCollection(), chunkedBatch()
-├── seed-exercises.ts        # exercises seeder function
-└── index.ts                 # CLI entry point
+|-- data/
+|   |-- exercise-categories.ts
+|   |-- equipment.ts
+|   `-- exercises.ts
+|-- docs/instructions.md
+|-- index.ts
+|-- seed-exercises.ts
+|-- types.ts
+|-- utils.ts
+`-- wipe.ts
 ```

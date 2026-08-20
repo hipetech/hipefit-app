@@ -2,7 +2,7 @@
 type: app
 status: current
 area: navigation
-updated: 2026-08-12
+updated: 2026-08-20
 ---
 
 # Navigation
@@ -133,9 +133,8 @@ the avatar, display name, greeting, and today's date in the body. The greeting i
 noon/18:00 and the date across midnight, both on one timer plus an `AppState` resume, by
 [`features/home/use-clock.ts`](../../features/home/use-clock.ts) — iOS suspends timers in the
 background, so a resume has to re-read them.
-Exercises' toolbar icon reflects whether a difficulty filter is active, and its search bar writes
-into the same `useState` that filters the list. Configuring either from the layout would mean lifting
-that state above the screen that owns it for no benefit.
+Exercises' search bar writes into the same `useState` that filters the list. Configuring it from the
+layout would mean lifting that state above the screen that owns it for no benefit.
 
 The pattern also keeps route files thin. A route is normally a title plus one island from
 `features/` — [`features/home/home-content.tsx`](../../features/home/home-content.tsx),
@@ -144,10 +143,8 @@ The pattern also keeps route files thin. A route is normally a title plus one is
 is the deliberate exception: the route file owns the `LegendList`, the search and filter state, and
 the detail sheet, because all four are the same state.
 
-Two sharp edges, both recorded in the Exercises screen:
+One sharp edge is recorded in the Exercises screen:
 
-- **`Stack.Toolbar.*` children must be literal JSX.** A `.map()` or a wrapper component does not
-  render. The four difficulty options are written out one by one for that reason.
 - **`Stack.SearchBar` needs `hideWhenScrolling={false}` here.** UIKit's default hides the bar until
   the user drags past the top, and that drag never arrives because the SwiftUI rows swallow the
   upward pan — the search bar would simply never appear.
@@ -318,9 +315,9 @@ pre-iOS-26 rendering noted above.
 
 ### The actions are stubs
 
-**The panel's three actions — Start Workout, New Routine, Custom Exercise — are disabled stubs.**
+**The panel's three actions — Start Workout, New Template, Custom Exercise — are disabled stubs.**
 They render, they are unreachable, and there is nowhere to send them: no route in `app/` creates a
-workout, a routine, or an exercise. Each descriptor in
+workout, a template, or an exercise. Each descriptor in
 [`features/navigation-dock/navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts)
 ships `enabled: false`, and the native control is disabled with `isEnabled = false` rather than by
 switching off user interaction — so a disabled action **swallows** its touch instead of dropping it
@@ -329,9 +326,7 @@ the seam stays visible: an unhandled event is how a stub quietly becomes a navig
 place later.
 
 Going live means flipping `enabled` and giving `onActionPress` a destination, which is a state change
-and so also earns a haptic. Same for the Resume button in
-[`features/workouts/active-workout-banner.tsx`](../../features/workouts/active-workout-banner.tsx),
-which is disabled until a workout player exists.
+and so also earns a haptic.
 
 ## Sheets
 

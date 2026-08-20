@@ -13,6 +13,7 @@ import {
   listRowInsets,
   listRowSeparator,
   listSectionMargins,
+  redacted,
 } from '@expo/ui/swift-ui/modifiers';
 
 import { Avatar } from '@/features/avatar/avatar';
@@ -90,6 +91,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
     ),
     accessibilityAddTraits(['isHeader']),
     accessibilityHidden(isLoading),
+    ...(isLoading ? [redacted('placeholder')] : []),
   ];
 
   return (

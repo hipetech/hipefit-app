@@ -2,14 +2,15 @@
  * Hipefit DB CLI
  *
  * Usage:
- *   bun run db:seed --seed exercises
- *   bun run db:seed --seed exercises --dry-run
+ *   bun run db:seed --seed exercises --env development
+ *   bun run db:seed --seed exercises --env development --dry-run
  *   bun run db:seed --seed exercises --clean --env staging
  *
  * See scripts/db/docs/instructions.md for full documentation.
  */
 
-import type { SeedOptions } from './types';
+import { createInterface } from 'node:readline/promises';
+import type { Environment, SeedOptions } from './types';
 
 import { seedExercises } from './seed-exercises';
 import { initFirebase } from './utils';
@@ -17,7 +18,7 @@ import { initFirebase } from './utils';
 // ─── Seeders registry ────────────────────────────────────────────────────────
 
 type Seeder = (
-  db: FirebaseFirestore.Firestore,
+  db: FirebaseFirestore.Firestore | null,
   opts: SeedOptions
 ) => Promise<void>;
 
@@ -41,15 +42,16 @@ function parseArgs(): { seed: string; opts: SeedOptions } {
   const seed = args[seedIndex + 1]!;
 
   const envIndex = args.indexOf('--env');
-  const rawEnv = envIndex !== -1 ? args[envIndex + 1] : 'production';
-  const validEnvs: SeedOptions['env'][] = [
-    'development',
-    'staging',
-    'production',
-  ];
+  if (envIndex === -1 || !args[envIndex + 1]) {
+    console.error('Missing required flag: --env <environment>');
+    process.exit(1);
+  }
+
+  const rawEnv = args[envIndex + 1];
+  const validEnvs: Environment[] = ['development', 'staging', 'production'];
   if (!validEnvs.includes(rawEnv as SeedOptions['env'])) {
     console.error(
-      `❌ Invalid --env value: "${rawEnv}". Must be one of: ${validEnvs.join(', ')}`
+      `Invalid --env value: "${rawEnv}". Must be one of: ${validEnvs.join(', ')}`
     );
     process.exit(1);
   }
@@ -59,9 +61,33 @@ function parseArgs(): { seed: string; opts: SeedOptions } {
     opts: {
       dryRun: args.includes('--dry-run'),
       clean: args.includes('--clean'),
-      env: rawEnv as SeedOptions['env'],
+      env: rawEnv as Environment,
+      allowProductionClean: args.includes('--allow-production-clean'),
     },
   };
+}
+
+async function confirmProduction(opts: SeedOptions): Promise<void> {
+  if (opts.env !== 'production' || opts.dryRun) return;
+
+  if (opts.clean && !opts.allowProductionClean) {
+    throw new Error(
+      'Production clean requires the second explicit flag --allow-production-clean.'
+    );
+  }
+
+  const prompt = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  const answer = await prompt.question(
+    'Production seed requested. Type "production" to continue: '
+  );
+  prompt.close();
+
+  if (answer !== 'production') {
+    throw new Error('Production confirmation did not match; no changes made.');
+  }
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
@@ -77,16 +103,11 @@ async function main() {
     process.exit(1);
   }
 
-  if (opts.dryRun) {
-    await seeder(null as unknown as FirebaseFirestore.Firestore, opts);
-    console.log('🎉 Dry run complete!\n');
-    process.exit(0);
-  }
+  await confirmProduction(opts);
 
-  const db = initFirebase(opts.env);
+  const db = opts.dryRun ? null : initFirebase(opts.env).db;
   await seeder(db, opts);
-  console.log('🎉 Done!\n');
-  process.exit(0);
+  console.log(opts.dryRun ? 'Dry run complete.\n' : 'Done.\n');
 }
 
 main().catch((err) => {

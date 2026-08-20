@@ -1,55 +1,285 @@
-rules_version = '1';
+rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
 
-    // ─── Global exercises (read-only for authenticated users) ─────────────
-    match /exercises/{exerciseId} {
-      allow read: if request.auth != null;
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function validRef(value) {
+      return value is string
+        && value.matches('^(global:[a-z0-9-]+|custom:[A-Za-z0-9_-]{1,64})$');
+    }
+
+    function validCustomRef(value) {
+      return value is string
+        && value.matches('^custom:[A-Za-z0-9_-]{1,64}$');
+    }
+
+    function validExerciseType(value) {
+      return value in ['strength', 'cardio', 'bodyweight'];
+    }
+
+    function validUserLocalizedText(value, maxLength) {
+      return value is map
+        && value.keys().hasOnly(['en', 'uk'])
+        && value.size() >= 1
+        && (!('en' in value) || (value.en is string && value.en.size() > 0 && value.en.size() <= maxLength))
+        && (!('uk' in value) || (value.uk is string && value.uk.size() > 0 && value.uk.size() <= maxLength));
+    }
+
+    function validDefaultLocale(value, localizedText) {
+      return value in ['en', 'uk'] && localizedText.keys().hasAny([value]);
+    }
+
+    function validCreatedTimestamps(data) {
+      return data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    function validUpdatedTimestamps(data) {
+      return data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && data.createdAt == resource.data.createdAt
+        && data.updatedAt == request.time
+        && data.updatedAt >= resource.data.updatedAt;
+    }
+
+    function validUser(data) {
+      return data.keys().hasOnly([
+          'firstName', 'lastName', 'displayName', 'email', 'photoURL', 'body',
+          'purpose', 'settings', 'schemaVersion', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'firstName', 'lastName', 'displayName', 'email', 'photoURL', 'body',
+          'purpose', 'settings', 'schemaVersion', 'createdAt', 'updatedAt'
+        ])
+        && data.firstName is string && data.firstName.size() <= 100
+        && data.lastName is string && data.lastName.size() <= 100
+        && data.displayName is string && data.displayName.size() <= 100
+        && (data.email == null || (data.email is string && data.email.size() <= 320))
+        && (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 2048))
+        && (data.purpose == null || (data.purpose is string && data.purpose.size() <= 2000))
+        && data.schemaVersion is int && data.schemaVersion >= 1 && data.schemaVersion <= 1000
+        && data.body is map
+        && data.body.keys().hasOnly(['birthDate', 'heightCm'])
+        && data.body.keys().hasAll(['birthDate', 'heightCm'])
+        && (data.body.birthDate == null
+          || (data.body.birthDate is string
+            && data.body.birthDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && (data.body.heightCm == null
+          || (data.body.heightCm is number
+            && data.body.heightCm >= 0
+            && data.body.heightCm <= 300))
+        && data.settings is map
+        && data.settings.keys().hasOnly([
+          'theme', 'language', 'units', 'hiddenExerciseRefs', 'hiddenCategoryRefs'
+        ])
+        && data.settings.keys().hasAll([
+          'theme', 'language', 'units', 'hiddenExerciseRefs', 'hiddenCategoryRefs'
+        ])
+        && data.settings.theme in ['light', 'dark', 'system']
+        && data.settings.language in ['en', 'uk']
+        && data.settings.units in ['metric', 'imperial']
+        && data.settings.hiddenExerciseRefs is list
+        && data.settings.hiddenExerciseRefs.size() <= 500
+        && data.settings.hiddenCategoryRefs is list
+        && data.settings.hiddenCategoryRefs.size() <= 500;
+    }
+
+    function validCustomExerciseCategory(data) {
+      return data.keys().hasOnly([
+          'name', 'defaultLocale', 'order', 'icon', 'isArchived', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'name', 'defaultLocale', 'order', 'icon', 'isArchived', 'createdAt', 'updatedAt'
+        ])
+        && validUserLocalizedText(data.name, 100)
+        && validDefaultLocale(data.defaultLocale, data.name)
+        && data.order is int && data.order >= 0 && data.order <= 100000
+        && (data.icon == null
+          || (data.icon is string && data.icon.size() <= 100))
+        && data.isArchived is bool;
+    }
+
+    function validCustomExercise(data) {
+      return data.keys().hasOnly([
+          'categoryRef', 'forkedFromRef', 'name', 'description', 'defaultLocale',
+          'type', 'equipment', 'imageURL', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'categoryRef', 'forkedFromRef', 'name', 'description', 'defaultLocale',
+          'type', 'equipment', 'imageURL', 'createdAt', 'updatedAt'
+        ])
+        && validRef(data.categoryRef)
+        && (data.forkedFromRef == null
+          || (data.forkedFromRef is string
+            && data.forkedFromRef.matches('^global:[a-z0-9-]+$')))
+        && validUserLocalizedText(data.name, 100)
+        && validUserLocalizedText(data.description, 2000)
+        && validDefaultLocale(data.defaultLocale, data.name)
+        && validDefaultLocale(data.defaultLocale, data.description)
+        && validExerciseType(data.type)
+        && data.equipment is list && data.equipment.size() <= 20
+        && (data.imageURL == null || (data.imageURL is string && data.imageURL.size() <= 2048));
+    }
+
+    // Rules can bound these lists, but cannot iterate through their maps or nested set lists.
+    function validWorkoutTemplate(data) {
+      return data.keys().hasOnly([
+          'name', 'description', 'exercises', 'estimatedDuration', 'isArchived',
+          'lastPerformedAt', 'timesPerformed', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'name', 'description', 'exercises', 'estimatedDuration', 'isArchived',
+          'lastPerformedAt', 'timesPerformed', 'createdAt', 'updatedAt'
+        ])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && (data.description == null
+          || (data.description is string && data.description.size() <= 2000))
+        && data.exercises is list && data.exercises.size() <= 50
+        && (data.estimatedDuration == null
+          || (data.estimatedDuration is int
+            && data.estimatedDuration >= 0
+            && data.estimatedDuration <= 1440))
+        && data.isArchived is bool
+        && (data.lastPerformedAt == null || data.lastPerformedAt is timestamp)
+        && data.timesPerformed is int
+        && data.timesPerformed >= 0
+        && data.timesPerformed <= 1000000;
+    }
+
+    function validWorkout(data) {
+      return data.keys().hasOnly([
+          'templateRef', 'templateName', 'status', 'startedAt', 'completedAt',
+          'activeSeconds', 'localDate', 'timeZone', 'bodyweightKg', 'notes',
+          'exercises', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'templateRef', 'templateName', 'status', 'startedAt', 'completedAt',
+          'activeSeconds', 'localDate', 'timeZone', 'bodyweightKg', 'notes',
+          'exercises', 'createdAt', 'updatedAt'
+        ])
+        && (data.templateRef == null || validCustomRef(data.templateRef))
+        && (data.templateName == null
+          || (data.templateName is string && data.templateName.size() <= 100))
+        && data.status in ['in_progress', 'completed', 'abandoned']
+        && data.startedAt is timestamp && data.startedAt <= request.time
+        && (data.completedAt == null
+          || (data.completedAt is timestamp
+            && data.completedAt >= data.startedAt
+            && data.completedAt <= request.time))
+        && (data.status != 'completed' || data.completedAt is timestamp)
+        && (data.activeSeconds == null
+          || (data.activeSeconds is int
+            && data.activeSeconds >= 0
+            && data.activeSeconds <= 31536000))
+        && data.localDate is string
+        && data.localDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.timeZone is string
+        && data.timeZone.size() > 0
+        && data.timeZone.size() <= 100
+        && (data.bodyweightKg == null
+          || (data.bodyweightKg is number
+            && data.bodyweightKg > 0
+            && data.bodyweightKg < 500))
+        && (data.notes == null || (data.notes is string && data.notes.size() <= 2000))
+        && data.exercises is list && data.exercises.size() <= 50;
+    }
+
+    function validWorkoutStatusTransition(data) {
+      return data.status == resource.data.status
+        || (resource.data.status == 'in_progress'
+          && data.status in ['completed', 'abandoned']);
+    }
+
+    function validBodyMeasurement(data) {
+      return data.keys().hasOnly(['recordedAt', 'weightKg', 'note'])
+        && data.keys().hasAll(['recordedAt', 'weightKg'])
+        && data.recordedAt is timestamp
+        && data.recordedAt <= request.time + duration.value(5, 'm')
+        && data.weightKg is number
+        && data.weightKg > 0
+        && data.weightKg < 500
+        && (!('note' in data) || (data.note is string && data.note.size() <= 2000));
+    }
+
+    match /exerciseCategories/{slug} {
+      allow read: if isAuthenticated();
       allow write: if false;
     }
 
-    // ─── Global exercise groups (read-only for authenticated users) ───────
-    match /exerciseGroups/{groupId} {
-      allow read: if request.auth != null;
+    match /equipment/{slug} {
+      allow read: if isAuthenticated();
       allow write: if false;
     }
 
-    // ─── User profile ────────────────────────────────────────────────────
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    match /exercises/{slug} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
 
-      // ─── User exercise groups ────────────────────────────────────────
-      match /exerciseGroups/{groupId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+    match /users/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && validUser(request.resource.data)
+        && validCreatedTimestamps(request.resource.data);
+      allow update: if isOwner(uid)
+        && validUser(request.resource.data)
+        && validUpdatedTimestamps(request.resource.data);
+
+      match /customExerciseCategories/{categoryId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && validCustomExerciseCategory(request.resource.data)
+          && validCreatedTimestamps(request.resource.data);
+        allow update: if isOwner(uid)
+          && validCustomExerciseCategory(request.resource.data)
+          && validUpdatedTimestamps(request.resource.data);
       }
 
-      // ─── Exercise overrides ──────────────────────────────────────────
-      match /exerciseOverrides/{exerciseId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-
-      // ─── Custom exercises ────────────────────────────────────────────
       match /customExercises/{exerciseId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && validCustomExercise(request.resource.data)
+          && validCreatedTimestamps(request.resource.data);
+        allow update: if isOwner(uid)
+          && validCustomExercise(request.resource.data)
+          && validUpdatedTimestamps(request.resource.data);
       }
 
-      // ─── Routines ───────────────────────────────────────────────────
-      match /routines/{routineId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /workoutTemplates/{templateId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && validWorkoutTemplate(request.resource.data)
+          && validCreatedTimestamps(request.resource.data);
+        allow update: if isOwner(uid)
+          && validWorkoutTemplate(request.resource.data)
+          && validUpdatedTimestamps(request.resource.data);
       }
 
-      // ─── Workouts ───────────────────────────────────────────────────
       match /workouts/{workoutId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && validWorkout(request.resource.data)
+          && validCreatedTimestamps(request.resource.data);
+        allow update: if isOwner(uid)
+          && validWorkout(request.resource.data)
+          && validUpdatedTimestamps(request.resource.data)
+          && request.resource.data.startedAt == resource.data.startedAt
+          && validWorkoutStatusTransition(request.resource.data);
       }
 
-      // ─── Exercise history (immutable: create + delete only) ─────────
-      match /exerciseHistory/{entryId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow create: if request.auth != null && request.auth.uid == userId;
-        allow delete: if request.auth != null && request.auth.uid == userId;
-        allow update: if false;
+      match /bodyMeasurements/{measurementId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && validBodyMeasurement(request.resource.data);
       }
     }
   }

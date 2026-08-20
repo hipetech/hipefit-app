@@ -1,4 +1,4 @@
-import type { WithId, Workout } from '@/database';
+import type { CalendarDateMarkers } from '@/features/calendar';
 import { useCallback, useState } from 'react';
 import { Host } from '@expo/ui';
 import {
@@ -29,17 +29,14 @@ import {
 
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { ExpandableWeeklyCalendar } from '@/features/calendar';
-import { useRoutineStore } from '@/features/routines/store/use-routine-store';
 import { useUserStore } from '@/features/user/store/use-user-store';
-import { useWorkoutStore } from '@/features/workouts/store/use-workout-store';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
-import { formatDuration, formatRelativeDate } from '@/lib/format';
+import { toLocalDateId } from '@/lib/format';
 import { colors } from '@/theme/colors';
 import { mods } from '@/theme/modifiers';
 import { layout } from '@/theme/styles';
 
-import { buildHomeCalendarMocks } from './home-calendar-mocks';
 import { HomeHeader } from './home-header';
 
 /** One row of the "Recent Workouts" section, already formatted for display. */
@@ -52,21 +49,13 @@ interface RecentWorkoutRow {
   isCompleted: boolean;
 }
 
-/** The single highlighted routine, already formatted for display. */
-interface FeaturedRoutine {
+/** The single highlighted workout template, formatted for display. */
+interface FeaturedWorkoutTemplate {
   name: string;
   description: string | null;
   /** "6 exercises · 45 min" */
   meta: string;
 }
-
-const toRecentWorkoutRow = (workout: WithId<Workout>): RecentWorkoutRow => ({
-  id: workout.id,
-  title: workout.data.routineName ?? 'Quick Workout',
-  meta: `${formatDuration(workout.data.duration)} · ${workout.data.totalExercises} exercises`,
-  dateLabel: formatRelativeDate(workout.data.startedAt),
-  isCompleted: workout.data.status === 'completed',
-});
 
 /**
  * How an Activity figure rolls to its new value.
@@ -94,7 +83,7 @@ const COUNTER_BASE_MODIFIERS = [font({ textStyle: 'body' }), monospacedDigit()];
  * text as a rolling odometer, and `animation` supplies the transaction that
  * actually drives it — without the latter the transition never runs.
  *
- * `animated` is false while the stores load and whenever Reduce Motion is on,
+ * `animated` is false while workout data loads and whenever Reduce Motion is on,
  * which drops both modifiers entirely rather than animating to zero duration.
  * Gating on load matters for more than taste: applying `.animation(_:value:)`
  * for the first time never animates, so introducing it at the moment redaction
@@ -113,7 +102,7 @@ const counterModifiers = (value: number, animated: boolean) =>
 
 /**
  * Realistic stand-ins rendered behind `redacted('placeholder')` while the
- * stores load. Redaction needs real structure with plausible string lengths —
+ * data loads. Redaction needs real structure with plausible string lengths —
  * there is deliberately no separate skeleton tree and no early return.
  */
 const PLACEHOLDER_STATS = {
@@ -122,9 +111,9 @@ const PLACEHOLDER_STATS = {
   longestStreak: 9,
 };
 
-const PLACEHOLDER_ROUTINE: FeaturedRoutine = {
-  name: 'Placeholder Routine',
-  description: 'A short routine description',
+const PLACEHOLDER_TEMPLATE: FeaturedWorkoutTemplate = {
+  name: 'Placeholder Template',
+  description: 'A short workout-template description',
   meta: '6 exercises · 45 min',
 };
 
@@ -173,11 +162,14 @@ const FEATURED_STACK_MODIFIERS = [padding({ vertical: 4 })];
 
 const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
 
+const EMPTY_DATE_MARKERS: CalendarDateMarkers[] = [];
+
 /**
  * Body of the Home screen.
  *
- * The component reads its stores itself and takes no props, so the route file
- * stays thin (title + this island).
+ * The component reads the live user store itself and takes no props, so the
+ * route file stays thin (title + this island). Workout persistence is
+ * intentionally disconnected and those sections render honest empty values.
  *
  * **One `Host` around a SwiftUI `List`, with the calendar inside it.** The
  * screen is a single screen-filling `Host` (`flex: 1`, deliberately **no**
@@ -201,21 +193,13 @@ const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
  */
 export const HomeContent = () => {
   const colorScheme = useAppColorScheme();
-  // Built once, from the day the screen first mounted: the mock is relative to
-  // today, and rebuilding it on every render would hand the calendar a fresh
-  // array identity each time.
-  const [calendarMocks] = useState(() => buildHomeCalendarMocks(new Date()));
-  const [selectedDateId, setSelectedDateId] = useState(
-    calendarMocks.selectedDateId
+  const [selectedDateId, setSelectedDateId] = useState(() =>
+    toLocalDateId(new Date())
   );
   const reduceMotion = useReduceMotion();
   const user = useAuthStore((state) => state.user);
   const { profile, isLoading: userLoading } = useUserStore();
-  const { recentWorkouts, isLoading: workoutsLoading } = useWorkoutStore();
-  const { activeRoutines, isLoading: routinesLoading } = useRoutineStore();
-
-  const isLoading = userLoading || workoutsLoading || routinesLoading;
-  const stats = profile?.stats;
+  const isWorkoutDataLoading = false;
   const profileDisplayName = profile?.displayName.trim();
   const displayName = userLoading
     ? 'Placeholder User'
@@ -225,49 +209,36 @@ export const HomeContent = () => {
   // Each figure is kept as a number and formatted at the call site, because
   // `animation` is driven by the value itself (the native side accepts only a
   // number or a boolean) and it has to be the *same* number the label shows.
-  const totalWorkouts = isLoading
+  const totalWorkouts = isWorkoutDataLoading
     ? PLACEHOLDER_STATS.totalWorkouts
-    : (stats?.totalWorkouts ?? 0);
-  const currentStreak = isLoading
+    : 0;
+  const currentStreak = isWorkoutDataLoading
     ? PLACEHOLDER_STATS.currentStreak
-    : (stats?.currentStreak ?? 0);
-  const longestStreak = isLoading
+    : 0;
+  const longestStreak = isWorkoutDataLoading
     ? PLACEHOLDER_STATS.longestStreak
-    : (stats?.longestStreak ?? 0);
+    : 0;
 
-  const animateCounters = !isLoading && !reduceMotion;
+  const animateCounters = !isWorkoutDataLoading && !reduceMotion;
 
   // Selecting a day moves the circle and nothing else. Activity, the featured
-  // routine and recent workouts are not filtered by it — day summaries need
+  // template and recent workouts are not filtered by it — day summaries need
   // real workout data, and this initiative deliberately ships none.
   const handleDatePress = useCallback((dateId: string) => {
     setSelectedDateId(dateId);
   }, []);
 
-  const routine = activeRoutines[0];
-  const featuredRoutine: FeaturedRoutine | null = isLoading
-    ? PLACEHOLDER_ROUTINE
-    : routine
-      ? {
-          name: routine.data.name,
-          description: routine.data.description,
-          meta: routine.data.estimatedDuration
-            ? `${routine.data.exercises.length} exercises · ${formatDuration(routine.data.estimatedDuration * 60)}`
-            : `${routine.data.exercises.length} exercises`,
-        }
-      : null;
+  const featuredTemplate: FeaturedWorkoutTemplate | null = isWorkoutDataLoading
+    ? PLACEHOLDER_TEMPLATE
+    : null;
 
-  const recentRows: RecentWorkoutRow[] = isLoading
+  const recentRows: RecentWorkoutRow[] = isWorkoutDataLoading
     ? PLACEHOLDER_WORKOUTS
-    : recentWorkouts.map(toRecentWorkoutRow);
+    : [];
 
   return (
     <Host style={layout.groupedScreen} colorScheme={colorScheme}>
-      <List
-        modifiers={
-          isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
-        }
-      >
+      <List modifiers={mods.listInsetGrouped}>
         <HomeHeader
           displayName={displayName}
           photoURL={photoURL}
@@ -278,7 +249,7 @@ export const HomeContent = () => {
           <RNHostView matchContents>
             <ExpandableWeeklyCalendar
               selectedDateId={selectedDateId}
-              dateMarkers={calendarMocks.dateMarkers}
+              dateMarkers={EMPTY_DATE_MARKERS}
               onDatePress={handleDatePress}
             />
           </RNHostView>
@@ -288,14 +259,9 @@ export const HomeContent = () => {
           numbers already render this way in Settings, and a full-bleed grid row
           would reintroduce the width math `List` exists to delete.
 
-          These three values are the screen's only true counters: they are
-          standalone figures, they stack in one trailing column, and they change
-          in place as workouts are logged — the store is a live Firestore
-          subscription, so finishing a workout moves all three while this screen
-          is on top. `monospacedDigit()` stops the column from twitching as the
-          digits swap; `numericText` + `animation` (see `counterModifiers`) rolls
-          the new digit in the way Fitness and Activity do rather than hard-
-          cutting it. This is the only place in the app that gets that treatment.
+          These values retain the counter styling they will use when workout
+          behavior returns. They currently remain at zero because workout
+          persistence is intentionally disconnected.
         */}
         <Section title="Activity">
           <LabeledContent
@@ -338,17 +304,17 @@ export const HomeContent = () => {
           footer is for.
         */}
         <Section
-          title="Featured Routine"
+          title="Featured Workout Template"
           footer={
-            featuredRoutine ? undefined : (
+            featuredTemplate ? undefined : (
               <Text>
-                Create a routine in the Workouts tab and it will be featured
-                here.
+                Create a workout template in the Workouts tab and it will be
+                featured here.
               </Text>
             )
           }
         >
-          {featuredRoutine ? (
+          {featuredTemplate ? (
             <>
               <VStack
                 alignment="leading"
@@ -356,11 +322,11 @@ export const HomeContent = () => {
                 modifiers={FEATURED_STACK_MODIFIERS}
               >
                 <Text modifiers={mods.headlineLabel}>
-                  {featuredRoutine.name}
+                  {featuredTemplate.name}
                 </Text>
-                {featuredRoutine.description ? (
+                {featuredTemplate.description ? (
                   <Text modifiers={mods.subheadlineSecondary}>
-                    {featuredRoutine.description}
+                    {featuredTemplate.description}
                   </Text>
                 ) : null}
                 {/*
@@ -371,7 +337,7 @@ export const HomeContent = () => {
                   a typographic mistake — reserve them for standalone figures.
                 */}
                 <Text modifiers={mods.footnoteSecondary}>
-                  {featuredRoutine.meta}
+                  {featuredTemplate.meta}
                 </Text>
               </VStack>
               {/*
@@ -389,7 +355,9 @@ export const HomeContent = () => {
               />
             </>
           ) : (
-            <Text modifiers={mods.bodySecondary}>No Active Routines</Text>
+            <Text modifiers={mods.bodySecondary}>
+              No Active Workout Templates
+            </Text>
           )}
         </Section>
 
@@ -420,7 +388,7 @@ export const HomeContent = () => {
                 />
                 <VStack alignment="leading" spacing={2}>
                   <Text modifiers={mods.bodyLabel}>{row.title}</Text>
-                  {/* Same reasoning as the Featured Routine meta line: a
+                  {/* Same reasoning as the Featured Template meta line: a
                       subtitle sentence, not a figure. */}
                   <Text modifiers={mods.footnoteSecondary}>{row.meta}</Text>
                 </VStack>

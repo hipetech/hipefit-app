@@ -41,7 +41,7 @@ const labelColor: Record<ChipVariant, ColorValue> = {
 };
 
 /**
- * Small capsule label (status / count / difficulty badges), in SwiftUI.
+ * Small capsule label (status / count badges), in SwiftUI.
  * Host-less — compose inside a screen's `Host`.
  */
 export const Chip = ({ label, variant = 'secondary' }: ChipProps) => (

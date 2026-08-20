@@ -1,4 +1,3 @@
-import type { Difficulty } from '@/database';
 import type { MergedExercise } from '@/features/exercises/store/use-exercise-store';
 import type {
   NativeSyntheticEvent,
@@ -21,8 +20,6 @@ import { hapticImpact, hapticSelection } from '@/lib/haptics';
 import { colors } from '@/theme/colors';
 import { layout } from '@/theme/styles';
 
-type DifficultyFilterValue = Difficulty | 'all';
-
 /**
  * Six redacted rows stand in for the catalogue while it loads: the real row
  * structure, disabled and `redacted('placeholder')` on iOS. One code path, no
@@ -32,15 +29,17 @@ const PLACEHOLDER_EXERCISES: MergedExercise[] = Array.from(
   { length: 6 },
   (_, index) => ({
     id: `placeholder-${index}`,
+    ref: `global:placeholder-${index}`,
     isCustom: false,
     name: 'Barbell Bench Press',
     description: 'Loading the exercise description.',
     type: 'strength',
-    groupId: 'placeholder',
-    groupName: 'Chest',
-    equipment: ['barbell'],
-    difficulty: 'intermediate',
+    categoryRef: 'global:placeholder',
+    categoryName: 'Chest',
+    equipmentRefs: ['global:barbell'],
+    equipment: ['Barbell'],
     imageURL: null,
+    isRetired: false,
   })
 );
 
@@ -81,25 +80,18 @@ const ItemSeparator = () => (
 export default function Exercises() {
   const { exercises, isLoading } = useExerciseStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [difficultyFilter, setDifficultyFilter] =
-    useState<DifficultyFilterValue>('all');
   const [selectedExercise, setSelectedExercise] =
     useState<MergedExercise | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const dialogOpen = selectedExercise !== null;
 
-  const filteredExercises = exercises.filter((exercise) => {
-    const matchesSearch = exercise.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesDifficulty =
-      difficultyFilter === 'all' || exercise.difficulty === difficultyFilter;
-    return matchesSearch && matchesDifficulty;
-  });
+  const filteredExercises = exercises.filter((exercise) =>
+    exercise.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const rows = isLoading ? PLACEHOLDER_EXERCISES : filteredExercises;
-  const isFiltered = searchQuery.length > 0 || difficultyFilter !== 'all';
+  const isFiltered = searchQuery.length > 0;
 
   // Collapse any expanded row when the visible list changes
   const handleSearchChange = useCallback(
@@ -108,19 +100,6 @@ export default function Exercises() {
       setExpandedId(null);
     },
     []
-  );
-
-  const handleDifficultyChange = useCallback(
-    (value: DifficultyFilterValue) => {
-      // Re-picking the option that already has the checkmark changes nothing,
-      // so it earns no tick — haptics mark state changes, not taps.
-      if (value !== difficultyFilter) {
-        hapticSelection();
-      }
-      setDifficultyFilter(value);
-      setExpandedId(null);
-    },
-    [difficultyFilter]
   );
 
   const renderExerciseItem = useCallback(
@@ -174,49 +153,6 @@ export default function Exercises() {
         keyboardDismissMode="on-drag"
       />
       <Stack.Screen.Title large>Exercises</Stack.Screen.Title>
-      {/*
-        Difficulty filter, moved out of its hand-drawn labeled card into the
-        native place for a list filter (the Files / Photos idiom): a trailing
-        header menu with a checkmark on the active option. Every
-        `Stack.Toolbar.*` child must be declared inline, not via a wrapper
-        component, so the four options are written out rather than mapped.
-      */}
-      <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Menu
-          icon={
-            difficultyFilter === 'all'
-              ? 'line.3.horizontal.decrease.circle'
-              : 'line.3.horizontal.decrease.circle.fill'
-          }
-          title="Difficulty"
-          accessibilityLabel="Filter by difficulty"
-        >
-          <Stack.Toolbar.MenuAction
-            isOn={difficultyFilter === 'all'}
-            onPress={() => handleDifficultyChange('all')}
-          >
-            All
-          </Stack.Toolbar.MenuAction>
-          <Stack.Toolbar.MenuAction
-            isOn={difficultyFilter === 'beginner'}
-            onPress={() => handleDifficultyChange('beginner')}
-          >
-            Beginner
-          </Stack.Toolbar.MenuAction>
-          <Stack.Toolbar.MenuAction
-            isOn={difficultyFilter === 'intermediate'}
-            onPress={() => handleDifficultyChange('intermediate')}
-          >
-            Intermediate
-          </Stack.Toolbar.MenuAction>
-          <Stack.Toolbar.MenuAction
-            isOn={difficultyFilter === 'advanced'}
-            onPress={() => handleDifficultyChange('advanced')}
-          >
-            Advanced
-          </Stack.Toolbar.MenuAction>
-        </Stack.Toolbar.Menu>
-      </Stack.Toolbar>
       {/*
         `hideWhenScrolling` must be false. UIKit's default (true) hides the
         search bar on first appearance and only reveals it when the user drags

@@ -1,316 +1,317 @@
-# Firestore Database Structure
-
-## Overview
-
-The database is split into **global collections** (read-only, shared across all users) and **user subcollections** (per-user data under `users/{uid}`).
-
-All documents use the `WithId<T>` pattern: `{ id: string; data: T }` when consumed in the app.
-
+---
+type: app
+status: current
+area: database
+updated: 2026-08-20
 ---
 
-## Global Collections (read-only)
+# Firestore database structure
 
-### `exerciseGroups/{groupId}`
+This is the schema of record for the current client. For the same shape as an entity-relationship
+diagram, see [`db-diagram.md`](db-diagram.md). Data access, decoding, listener ownership, rules, and
+admin scripts are documented in [`app/database.md`](app/database.md).
 
-Default exercise categories seeded via `scripts/db/seed-exercises.ts`. Copied into each user's subcollection on sign-up.
+## Collection hierarchy
 
-| Field   | Type             | Description              |
-| ------- | ---------------- | ------------------------ |
-| `name`  | `string`         | Group display name       |
-| `order` | `number`         | Sort order               |
-| `icon`  | `string \| null` | Optional icon identifier |
+The schema has nine collections: four top-level collections and five user subcollections.
 
-**Default groups:** Chest, Back, Shoulders, Arms, Legs, Core, Cardio, Full Body
+```text
+exerciseCategories/{slug}                  global reference data
+equipment/{slug}                           global reference data
+exercises/{slug}                           global reference data
 
-### `exercises/{exerciseId}`
+users/{uid}
+|-- customExerciseCategories/{id}
+|-- customExercises/{id}
+|-- workoutTemplates/{id}
+|-- workouts/{id}
+`-- bodyMeasurements/{id}
+```
 
-Global exercise library. Referenced by `groupKey` which matches an `exerciseGroups` doc ID.
+The three global collections are readable by authenticated clients and have no client write path.
+Everything under `users/{uid}` is owner-scoped. The app currently writes only the user document and
+new body-measurement documents; custom exercises, custom categories, workout templates, and workouts
+have no shipped creation or mutation journey. Workout templates and workouts also have no current
+client read path; their schemas are retained for later implementation.
 
-| Field         | Type             | Description                                     |
-| ------------- | ---------------- | ----------------------------------------------- |
-| `name`        | `string`         | Exercise name                                   |
-| `description` | `string`         | How to perform the exercise                     |
-| `type`        | `ExerciseType`   | `'strength' \| 'cardio' \| 'bodyweight'`        |
-| `groupKey`    | `string`         | References `exerciseGroups/{groupKey}`          |
-| `equipment`   | `string[]`       | Required equipment (e.g. `['barbell','bench']`) |
-| `difficulty`  | `Difficulty`     | `'beginner' \| 'intermediate' \| 'advanced'`    |
-| `imageURL`    | `string \| null` | Optional exercise image                         |
-| `createdAt`   | `Timestamp`      | Creation timestamp                              |
+## Shared conventions
 
----
+### Document identity
 
-## User Document
+Firestore document IDs are not repeated inside document data. Stores carry a read document as
+`WithId<T> = { id: string; data: T }`, keeping the ID separate from the persisted shape. Global IDs
+are deterministic lowercase slugs. User-subcollection IDs are Firestore IDs; the current weigh-in
+writer uses an auto ID.
+
+### Full references
+
+Every persisted pointer uses one `Ref` string rather than a bare ID plus a discriminator:
+
+```text
+global:<slug>
+custom:<documentId>
+```
+
+Global refs match lowercase slug IDs. Custom refs may contain letters, digits, `_`, and `-`, with a
+maximum ID length of 64 characters. The prefix selects the global or user-owned collection family;
+the containing field determines the entity type. For example, `global:barbell` in `equipment[]`
+means `equipment/barbell`, while `global:chest` in `categoryRef` means
+`exerciseCategories/chest`.
+
+The current field rules are:
+
+| Field                               | Allowed refs                                                  |
+| ----------------------------------- | ------------------------------------------------------------- |
+| `UserSettings.hiddenExerciseRefs[]` | global or custom exercise                                     |
+| `UserSettings.hiddenCategoryRefs[]` | global or custom exercise category                            |
+| `Exercise.categoryRef`              | global category                                               |
+| `Exercise.equipment[]`              | global equipment                                              |
+| `CustomExercise.categoryRef`        | global or custom category                                     |
+| `CustomExercise.forkedFromRef`      | global exercise or `null`                                     |
+| `CustomExercise.equipment[]`        | global equipment                                              |
+| `TemplateExercise.exerciseRef`      | global or custom exercise                                     |
+| `Workout.templateRef`               | custom workout-template ref or `null` at the runtime boundary |
+| `WorkoutExercise.exerciseRef`       | global or custom exercise                                     |
+
+Reference syntax is validated, but Firestore does not enforce foreign keys. A syntactically valid
+ref may still point at a missing document. Exercise and template/workout snapshots keep displayable
+history when that happens.
+
+### Localization
+
+Database localization covers exercise-library content only. App chrome such as picker labels,
+buttons, and enum labels is still authored directly in English.
+
+`GlobalLocalizedText` is an embedded `{ en, uk? }` map. The runtime decoder requires `en`; the seed
+data supplies both `en` and `uk`. Global text resolves as the selected language and then English.
+
+`UserLocalizedText` allows either locale but requires at least one value. Each custom document has a
+`defaultLocale`, and every localized map on that document must contain that key. User text resolves
+as the selected language, then `defaultLocale`, then the remaining supported locale. No custom
+exercise or category editor ships yet, so these write conventions are represented by types,
+decoders, and rules rather than a user journey.
+
+Changing `settings.language` recomputes exercise, category, and equipment view models from the
+already-subscribed locale maps. It does not refetch the collections. Never query or sort by a
+localized map key: documents without that locale would be omitted by Firestore. Lists resolve and
+sort names in memory instead.
+
+### Units and calendar values
+
+Stored weight, distance, duration, height, and template duration use kilograms, meters, seconds,
+centimeters, and minutes respectively. `settings.units` is a display preference and never rewrites
+stored values. Profile height and weight entry/display and workout volume convert to inches, pounds,
+and pound-volume when the preference is `imperial`.
+
+Calendar days are strings, not timestamps. `body.birthDate` and `Workout.localDate` use
+`YYYY-MM-DD`; `Workout.timeZone` records the IANA zone for the session. Instants such as
+`startedAt`, `completedAt`, and `recordedAt` are Firestore timestamps.
+
+## Global collections
+
+### `exerciseCategories/{slug}`
+
+Seeded category vocabulary. Published IDs are stable; retiring a category keeps its document
+resolvable while removing it from the current visible category list.
+
+| Field       | Type                  | Meaning                                   |
+| ----------- | --------------------- | ----------------------------------------- |
+| `name`      | `GlobalLocalizedText` | Localized category name                   |
+| `order`     | `number`              | Non-negative global-category order        |
+| `icon`      | `string`              | SF Symbol name                            |
+| `isRetired` | `boolean`             | Hidden from current selection when `true` |
+
+### `equipment/{slug}`
+
+Seeded equipment vocabulary referenced by both exercise collections.
+
+| Field       | Type                  | Meaning                             |
+| ----------- | --------------------- | ----------------------------------- |
+| `name`      | `GlobalLocalizedText` | Localized equipment name            |
+| `icon`      | `string \| null`      | Optional SF Symbol name             |
+| `isRetired` | `boolean`             | Hidden from current equipment lists |
+
+### `exercises/{slug}`
+
+Seeded global exercise library. Difficulty is not stored; the list, detail sheet, and search UI no
+longer expose it.
+
+| Field         | Type                  | Meaning                                                  |
+| ------------- | --------------------- | -------------------------------------------------------- |
+| `categoryRef` | `Ref`                 | Global category ref                                      |
+| `name`        | `GlobalLocalizedText` | Localized display name                                   |
+| `description` | `GlobalLocalizedText` | Localized instructions                                   |
+| `type`        | `ExerciseType`        | `strength`, `cardio`, or `bodyweight`                    |
+| `equipment`   | `Ref[]`               | Global equipment refs                                    |
+| `imageURL`    | `string \| null`      | Optional remote artwork                                  |
+| `isRetired`   | `boolean`             | Keeps old refs resolvable while hiding current selection |
+
+## User document
 
 ### `users/{uid}`
 
-Created on first Apple Sign-In via `ensureUserProfile()`. Contains profile info, settings, and aggregated stats.
+The document ID is the Firebase Auth UID. First sign-in creates this one document; no global data is
+copied into the user's subtree.
 
-| Field         | Type             | Description              |
-| ------------- | ---------------- | ------------------------ |
-| `firstName`   | `string`         | From Apple Sign-In       |
-| `lastName`    | `string`         | From Apple Sign-In       |
-| `displayName` | `string`         | Combined first + last    |
-| `email`       | `string \| null` | User email               |
-| `photoURL`    | `string \| null` | Profile photo URL        |
-| `settings`    | `UserSettings`   | App preferences (below)  |
-| `stats`       | `UserStats`      | Aggregated workout stats |
-| `createdAt`   | `Timestamp`      | Account creation time    |
-| `updatedAt`   | `Timestamp`      | Last profile update      |
+| Field                     | Type             | Meaning                                           |
+| ------------------------- | ---------------- | ------------------------------------------------- |
+| `firstName` / `lastName`  | `string`         | Apple name components when available              |
+| `displayName`             | `string`         | Editable app-facing name                          |
+| `email`                   | `string \| null` | Firebase/Apple email                              |
+| `photoURL`                | `string \| null` | Optional avatar URI; no upload UI ships           |
+| `body`                    | `Body`           | Embedded birth date and height                    |
+| `purpose`                 | `string \| null` | Free-text training purpose                        |
+| `settings`                | `UserSettings`   | Embedded display and exercise-visibility settings |
+| `schemaVersion`           | `number`         | Current profile shape marker; currently `1`       |
+| `createdAt` / `updatedAt` | `Timestamp`      | Creation and last profile/settings update         |
 
-#### `settings` (embedded object)
+#### `Body`
 
-| Field                     | Type      | Default    |
-| ------------------------- | --------- | ---------- |
-| `units`                   | `string`  | `'metric'` |
-| `theme`                   | `string`  | `'system'` |
-| `language`                | `string`  | `'en'`     |
-| `notificationsEnabled`    | `boolean` | `true`     |
-| `workoutRemindersEnabled` | `boolean` | `false`    |
-| `autoPauseEnabled`        | `boolean` | `true`     |
+| Field       | Type             | Meaning                          |
+| ----------- | ---------------- | -------------------------------- |
+| `birthDate` | `string \| null` | Valid `YYYY-MM-DD` calendar date |
+| `heightCm`  | `number \| null` | Height in centimeters            |
 
-#### `stats` (embedded object)
+Current weight is deliberately absent. It is the newest `bodyMeasurements` document by
+`recordedAt`, read through a descending `limit(1)` listener, so backdating a measurement cannot
+replace a newer value.
 
-| Field           | Type                | Default |
-| --------------- | ------------------- | ------- |
-| `totalWorkouts` | `number`            | `0`     |
-| `currentStreak` | `number`            | `0`     |
-| `longestStreak` | `number`            | `0`     |
-| `lastWorkoutAt` | `Timestamp \| null` | `null`  |
+#### `UserSettings`
 
----
+| Field                | Type                      | Default  | Meaning                                         |
+| -------------------- | ------------------------- | -------- | ----------------------------------------------- |
+| `theme`              | `light \| dark \| system` | `system` | App color scheme                                |
+| `language`           | `en \| uk`                | `en`     | Exercise-library content locale                 |
+| `units`              | `metric \| imperial`      | `metric` | Display preference; stored data stays canonical |
+| `hiddenExerciseRefs` | `Ref[]`                   | `[]`     | Full refs omitted from browse/search/picker     |
+| `hiddenCategoryRefs` | `Ref[]`                   | `[]`     | Full refs whose categories and exercises hide   |
 
-## User Subcollections
+There is no stored `stats` map, and the current client does not calculate workout totals or streaks.
+No current screen writes either hidden-ref array; the fields and visibility behavior are live in the
+exercise store, but hide/unhide controls are not shipped.
 
-### `users/{uid}/exerciseGroups/{groupId}`
+## User subcollections
 
-User's exercise groups. Seeded from global `exerciseGroups` on sign-up, fully editable by user. Users can also create custom groups.
+### `users/{uid}/customExerciseCategories/{id}`
 
-| Field           | Type             | Description                                   |
-| --------------- | ---------------- | --------------------------------------------- |
-| `name`          | `string`         | Group display name                            |
-| `order`         | `number`         | Sort order                                    |
-| `icon`          | `string \| null` | Optional icon identifier                      |
-| `isDefault`     | `boolean`        | `true` if seeded from global defaults         |
-| `globalGroupId` | `string \| null` | Reference to original `exerciseGroups` doc ID |
-| `createdAt`     | `Timestamp`      | Creation timestamp                            |
-| `updatedAt`     | `Timestamp`      | Last update timestamp                         |
+| Field                     | Type                | Meaning                                         |
+| ------------------------- | ------------------- | ----------------------------------------------- |
+| `name`                    | `UserLocalizedText` | Localized user-authored name                    |
+| `defaultLocale`           | `Locale`            | Required key in `name`                          |
+| `order`                   | `number`            | Order within the custom-category block          |
+| `icon`                    | `string \| null`    | Optional SF Symbol name                         |
+| `isArchived`              | `boolean`           | Soft deletion while keeping category refs valid |
+| `createdAt` / `updatedAt` | `Timestamp`         | Creation and last update                        |
 
-### `users/{uid}/exerciseOverrides/{exerciseId}`
+Global categories sort by their `order`, followed by custom categories sorted by their `order`.
+Archived categories are absent from the visible category list. Exercise browse rows are filtered by
+retirement and user hidden refs, not by the archive flag.
 
-Sparse overrides on global exercises. Document ID matches the global `exercises/{exerciseId}`. Only non-null fields override the global values.
+### `users/{uid}/customExercises/{id}`
 
-| Field         | Type             | Description                           |
-| ------------- | ---------------- | ------------------------------------- |
-| `name`        | `string \| null` | Custom name (overrides global)        |
-| `description` | `string \| null` | Custom description (overrides global) |
-| `groupId`     | `string \| null` | Reassign to different user group      |
-| `isHidden`    | `boolean`        | Hide exercise from user's library     |
-| `updatedAt`   | `Timestamp`      | Last update timestamp                 |
+| Field                     | Type                | Meaning                                          |
+| ------------------------- | ------------------- | ------------------------------------------------ |
+| `categoryRef`             | `Ref`               | Global or custom category                        |
+| `forkedFromRef`           | `Ref \| null`       | Global exercise ref when this document is a fork |
+| `name`                    | `UserLocalizedText` | User-localized display name                      |
+| `description`             | `UserLocalizedText` | User-localized instructions                      |
+| `defaultLocale`           | `Locale`            | Required key in both localized maps              |
+| `type`                    | `ExerciseType`      | `strength`, `cardio`, or `bodyweight`            |
+| `equipment`               | `Ref[]`             | Global equipment refs                            |
+| `imageURL`                | `string \| null`    | Optional remote artwork                          |
+| `createdAt` / `updatedAt` | `Timestamp`         | Creation and last update                         |
 
-### `users/{uid}/customExercises/{exerciseId}`
+`forkedFromRef` is retained as schema metadata. The current exercise store does not build fork aliases
+or resolve workout/template references. Hidden exercise and category refs remove current catalogue
+entries; they do not alter stored documents.
 
-User-created exercises (not in the global library).
+### `users/{uid}/workoutTemplates/{id}`
 
-| Field         | Type             | Description                                  |
-| ------------- | ---------------- | -------------------------------------------- |
-| `name`        | `string`         | Exercise name                                |
-| `description` | `string`         | How to perform the exercise                  |
-| `type`        | `ExerciseType`   | `'strength' \| 'cardio' \| 'bodyweight'`     |
-| `groupId`     | `string`         | References user's `exerciseGroups/{groupId}` |
-| `equipment`   | `string[]`       | Required equipment                           |
-| `difficulty`  | `Difficulty`     | `'beginner' \| 'intermediate' \| 'advanced'` |
-| `imageURL`    | `string \| null` | Optional exercise image                      |
-| `createdAt`   | `Timestamp`      | Creation timestamp                           |
-| `updatedAt`   | `Timestamp`      | Last update timestamp                        |
+This collection replaces the old routine vocabulary. Its contract remains defined, but the current
+app does not request, render, create, or edit its documents.
 
-### `users/{uid}/routines/{routineId}`
+| Field                     | Type                 | Meaning                         |
+| ------------------------- | -------------------- | ------------------------------- |
+| `name`                    | `string`             | Template name                   |
+| `description`             | `string \| null`     | Optional description            |
+| `exercises`               | `TemplateExercise[]` | Ordered embedded exercise array |
+| `estimatedDuration`       | `number \| null`     | Estimated minutes               |
+| `isArchived`              | `boolean`            | Soft-deletion/archive marker    |
+| `lastPerformedAt`         | `Timestamp \| null`  | Cached last-use instant         |
+| `timesPerformed`          | `number`             | Cached use count                |
+| `createdAt` / `updatedAt` | `Timestamp`          | Creation and last update        |
 
-Workout templates that can be reused.
+#### `TemplateExercise` and `TemplateSet`
 
-| Field               | Type                | Description                       |
-| ------------------- | ------------------- | --------------------------------- |
-| `name`              | `string`            | Routine name                      |
-| `description`       | `string \| null`    | Optional description              |
-| `exercises`         | `RoutineExercise[]` | Ordered list of exercises (below) |
-| `estimatedDuration` | `number \| null`    | Estimated minutes                 |
-| `isArchived`        | `boolean`           | Soft-delete flag                  |
-| `lastPerformedAt`   | `Timestamp \| null` | Last time this routine was used   |
-| `timesPerformed`    | `number`            | Usage counter                     |
-| `createdAt`         | `Timestamp`         | Creation timestamp                |
-| `updatedAt`         | `Timestamp`         | Last update timestamp             |
+| Shape              | Fields                                                                    |
+| ------------------ | ------------------------------------------------------------------------- |
+| `TemplateExercise` | `exerciseRef`, `nameSnapshot`, `type`, ordered `sets[]`                   |
+| `TemplateSet`      | Optional `weight` (kg), `reps`, `duration` (seconds), `distance` (meters) |
 
-#### `exercises[]` items (`RoutineExercise`)
+Array position is the exercise and set order; no ordinal field is stored. `nameSnapshot` is a
+fallback when the live exercise ref cannot resolve.
 
-| Field          | Type           | Description                                             |
-| -------------- | -------------- | ------------------------------------------------------- |
-| `exerciseId`   | `string`       | Global or custom exercise ID                            |
-| `exerciseName` | `string`       | Denormalized name for quick display                     |
-| `exerciseType` | `ExerciseType` | Denormalized type                                       |
-| `isCustom`     | `boolean`      | `true` if from `customExercises`                        |
-| `order`        | `number`       | Position in the routine                                 |
-| `sets`         | `RoutineSet[]` | Target sets with optional weight/reps/duration/distance |
+### `users/{uid}/workouts/{id}`
 
-### `users/{uid}/workouts/{workoutId}`
+| Field                     | Type                | Meaning                                                   |
+| ------------------------- | ------------------- | --------------------------------------------------------- |
+| `templateRef`             | `Ref \| null`       | Custom workout-template ref; `null` for freestyle         |
+| `templateName`            | `string \| null`    | Template-name snapshot                                    |
+| `status`                  | `WorkoutStatus`     | `in_progress`, `completed`, or `abandoned`                |
+| `startedAt`               | `Timestamp`         | Session start                                             |
+| `completedAt`             | `Timestamp \| null` | Required by the decoder for completed sessions            |
+| `activeSeconds`           | `number \| null`    | Measured active duration, excluding pauses when available |
+| `localDate`               | `string`            | Start day as `YYYY-MM-DD` for streak calculation          |
+| `timeZone`                | `string`            | IANA zone in which `localDate` was recorded               |
+| `bodyweightKg`            | `number \| null`    | Session snapshot used for bodyweight volume               |
+| `notes`                   | `string \| null`    | Workout notes                                             |
+| `exercises`               | `WorkoutExercise[]` | Ordered embedded exercise array                           |
+| `createdAt` / `updatedAt` | `Timestamp`         | Creation and last update                                  |
 
-Recorded workout sessions.
+#### `WorkoutExercise` and `WorkoutSet`
 
-| Field            | Type                | Description                                   |
-| ---------------- | ------------------- | --------------------------------------------- |
-| `routineId`      | `string \| null`    | Source routine (null if freestyle)            |
-| `routineName`    | `string \| null`    | Denormalized routine name                     |
-| `status`         | `WorkoutStatus`     | `'in_progress' \| 'completed' \| 'abandoned'` |
-| `startedAt`      | `Timestamp`         | When the workout began                        |
-| `completedAt`    | `Timestamp \| null` | When the workout ended                        |
-| `duration`       | `number \| null`    | Total duration in seconds                     |
-| `notes`          | `string \| null`    | User notes                                    |
-| `exercises`      | `WorkoutExercise[]` | Performed exercises (below)                   |
-| `totalVolume`    | `number \| null`    | Sum of weight x reps across all sets          |
-| `totalSets`      | `number`            | Total completed sets                          |
-| `totalExercises` | `number`            | Number of exercises performed                 |
-| `createdAt`      | `Timestamp`         | Creation timestamp                            |
-| `updatedAt`      | `Timestamp`         | Last update timestamp                         |
+| Shape             | Fields                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------ |
+| `WorkoutExercise` | `exerciseRef`, `nameSnapshot`, `type`, ordered `sets[]`                              |
+| `WorkoutSet`      | `isCompleted`; optional `weight`, `reps`, `duration`, `distance`, `rpe`, and `notes` |
 
-#### `exercises[]` items (`WorkoutExercise`)
+No totals or ordinal fields are persisted. A future workout read model must decide whether to derive
+or persist values such as:
 
-| Field          | Type           | Description                      |
-| -------------- | -------------- | -------------------------------- |
-| `exerciseId`   | `string`       | Global or custom exercise ID     |
-| `exerciseName` | `string`       | Denormalized name                |
-| `exerciseType` | `ExerciseType` | Denormalized type                |
-| `isCustom`     | `boolean`      | `true` if from `customExercises` |
-| `order`        | `number`       | Position in the workout          |
-| `sets`         | `WorkoutSet[]` | Actual performed sets (below)    |
+- `totalSets`: completed sets only;
+- `totalExercises`: exercises with at least one completed set;
+- `totalVolume`: completed strength sets use `weight * reps`; completed bodyweight sets use
+  `(bodyweightKg + added weight) * reps`; cardio sets do not contribute volume.
 
-#### `sets[]` items (`WorkoutSet`)
+The schema has no persisted totals, streaks, per-exercise history, or personal-record collection. The
+current app does not request workouts or calculate any of those projections.
 
-| Field         | Type      | Description                  |
-| ------------- | --------- | ---------------------------- |
-| `setNumber`   | `number`  | Set index (1-based)          |
-| `isCompleted` | `boolean` | Whether the set was finished |
-| `weight`      | `number?` | Weight lifted                |
-| `reps`        | `number?` | Repetitions performed        |
-| `duration`    | `number?` | Duration in seconds (cardio) |
-| `distance`    | `number?` | Distance (cardio)            |
-| `rpe`         | `number?` | Rate of perceived exertion   |
-| `notes`       | `string?` | Per-set notes                |
+### `users/{uid}/bodyMeasurements/{id}`
 
-### `users/{uid}/exerciseHistory/{entryId}`
+| Field        | Type        | Meaning                                                   |
+| ------------ | ----------- | --------------------------------------------------------- |
+| `recordedAt` | `Timestamp` | Measurement instant; may be older than the latest entry   |
+| `weightKg`   | `number`    | Weight in kilograms, greater than `0` and less than `500` |
+| `note`       | `string?`   | Optional note; the current UI does not collect one        |
 
-Flattened per-exercise log entries for history and personal records.
+The Edit Profile sheet can append one measurement for the current time. It displays the newest
+measurement through `orderBy('recordedAt', 'desc')` plus `limit(1)`. There is no chart, full history
+listener, edit action, or delete action in the app.
 
-| Field          | Type             | Description                       |
-| -------------- | ---------------- | --------------------------------- |
-| `exerciseId`   | `string`         | Global or custom exercise ID      |
-| `isCustom`     | `boolean`        | `true` if from `customExercises`  |
-| `exerciseName` | `string`         | Denormalized name                 |
-| `exerciseType` | `ExerciseType`   | Denormalized type                 |
-| `workoutId`    | `string`         | References `workouts/{workoutId}` |
-| `performedAt`  | `Timestamp`      | When the exercise was performed   |
-| `sets`         | `WorkoutSet[]`   | All sets for this exercise        |
-| `bestSet`      | `BestSet`        | Best set metrics (below)          |
-| `totalVolume`  | `number \| null` | Total volume for this exercise    |
-| `createdAt`    | `Timestamp`      | Creation timestamp                |
+## Current read and write status
 
-#### `bestSet` (embedded object)
+| Collection                 | Current read behavior                | Current client writes                         |
+| -------------------------- | ------------------------------------ | --------------------------------------------- |
+| `users`                    | One profile listener                 | Create/self-heal; profile and settings update |
+| `exerciseCategories`       | One exercise-store listener          | None                                          |
+| `equipment`                | One exercise-store listener          | None                                          |
+| `exercises`                | One exercise-store listener          | None                                          |
+| `customExerciseCategories` | One exercise-store listener          | None                                          |
+| `customExercises`          | One exercise-store listener          | None                                          |
+| `workoutTemplates`         | None                                 | None                                          |
+| `workouts`                 | None                                 | None                                          |
+| `bodyMeasurements`         | One newest-first `limit(1)` listener | Append weigh-in only                          |
 
-| Field      | Type      | Description               |
-| ---------- | --------- | ------------------------- |
-| `weight`   | `number?` | Heaviest weight           |
-| `reps`     | `number?` | Most reps                 |
-| `duration` | `number?` | Longest duration          |
-| `distance` | `number?` | Longest distance          |
-| `volume`   | `number?` | Highest single-set volume |
-
----
-
-## Relationships
-
-Firestore has no foreign keys or joins. Relations are maintained through document ID references and denormalized data.
-
-### Reference Map
-
-```
-exerciseGroups/{groupId}
-       │
-       ├──← exercises.groupKey                        global exercise → global group
-       └──← users/{uid}/exerciseGroups.globalGroupId   user group → original global group
-
-users/{uid}/exerciseGroups/{groupId}
-       │
-       ├──← customExercises.groupId                    custom exercise → user group
-       └──← exerciseOverrides.groupId                  override reassigns to user group
-
-exercises/{exerciseId}
-       │
-       ├──← exerciseOverrides/{exerciseId}             same doc ID = implicit link
-       ├──← routines.exercises[].exerciseId            routine references exercise
-       ├──← workouts.exercises[].exerciseId            workout references exercise
-       └──← exerciseHistory.exerciseId                 history references exercise
-
-users/{uid}/customExercises/{exerciseId}
-       │
-       ├──← routines.exercises[].exerciseId            with isCustom=true
-       ├──← workouts.exercises[].exerciseId            with isCustom=true
-       └──← exerciseHistory.exerciseId                 with isCustom=true
-
-users/{uid}/routines/{routineId}
-       │
-       └──← workouts.routineId                         workout started from routine
-
-users/{uid}/workouts/{workoutId}
-       │
-       └──← exerciseHistory.workoutId                  history entry → source workout
-```
-
-### Relationship Patterns
-
-1. **Same-ID linking** — `exerciseOverrides/{id}` uses the same document ID as `exercises/{id}`. No separate reference field needed; the document ID itself is the link.
-
-2. **`isCustom` discriminator** — Exercises can come from global `exercises` or user `customExercises`. The `isCustom` boolean on routines, workouts, and history entries disambiguates which collection an `exerciseId` points to.
-
-3. **Denormalization** — Fields like `exerciseName`, `exerciseType`, and `routineName` are copied into workouts, routines, and history entries to avoid extra reads. Tradeoff: renames don't propagate automatically to existing records.
-
-4. **Global → User copy** — Global `exerciseGroups` are copied into `users/{uid}/exerciseGroups` on sign-up. The `globalGroupId` field links back to the original, and `isDefault: true` marks seeded groups vs user-created ones.
-
----
-
-## Data Flow
-
-### On Sign-Up
-
-1. Firebase Auth creates user via Apple Sign-In
-2. `ensureUserProfile()` creates `users/{uid}` document with default settings/stats
-3. Global `exerciseGroups` are copied into `users/{uid}/exerciseGroups` with `isDefault: true`
-
-### Real-Time Subscriptions
-
-`useFirestoreSubscriptions()` hook (called in root layout) subscribes to all user data when authenticated:
-
-- `useUserStore` → `users/{uid}` document
-- `useExerciseStore` → 4 collections merged: global `exercises` + global `exerciseGroups` + user `exerciseOverrides` + user `customExercises` + user `exerciseGroups`
-- `useWorkoutStore` → `users/{uid}/workouts` (sorted by `startedAt` desc)
-- `useRoutineStore` → `users/{uid}/routines` (filters active vs archived)
-
-### Exercise Resolution
-
-The exercise store merges 4 sources into a unified `MergedExercise` list:
-
-1. **Global exercises** — base data from `exercises` collection
-2. **User overrides** — sparse patches from `exerciseOverrides` (custom name, hidden, re-grouped)
-3. **Custom exercises** — user-created exercises from `customExercises`
-4. **User groups** — user's copy of exercise groups from `exerciseGroups`
-
----
-
-## Source Files
-
-Everything Firestore-shaped lives in `database/` and is imported through the barrel `@/database`.
-
-| File                                      | Purpose                                          |
-| ----------------------------------------- | ------------------------------------------------ |
-| `database/types.ts`                       | All Firestore type definitions, `WithId<T>`      |
-| `database/refs.ts`                        | Collection/document reference helpers            |
-| `database/use-firestore-subscriptions.ts` | Real-time subscription orchestration             |
-| `database/index.ts`                       | Barrel — import from `@/database`, not the files |
-| `features/auth/store/use-auth-store.ts`   | User creation and auth flow                      |
-| `scripts/db/seed-exercises.ts`            | Global exercise/group seed script                |
+The three global collections are seeded by [`scripts/db/seed-exercises.ts`](../scripts/db/seed-exercises.ts).
+The app's schema interfaces and runtime validators live in
+[`database/types.ts`](../database/types.ts) and [`database/decoders.ts`](../database/decoders.ts).

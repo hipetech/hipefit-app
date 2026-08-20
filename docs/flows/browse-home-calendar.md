@@ -2,36 +2,30 @@
 type: flow
 status: current
 area: calendar
-updated: 2026-08-12
+updated: 2026-08-20
 ---
 
 # Flow: browse the Home calendar
 
-> **This journey is presentation only.** Everything below happens, and it happens against
-> **demonstration data**: the workout dots come from
-> [`features/home/home-calendar-mocks.ts`](../../features/home/home-calendar-mocks.ts), which builds
-> them relative to today and touches no Firestore. **Selecting a day filters nothing** — Activity,
-> the featured routine and Recent Workouts are unaffected, and the selection is local component
-> state that does not survive unmount. There is no calendar store, no Firestore read, and no
-> `Timestamp` → local-date-ID conversion anywhere in the app.
+> **This journey is presentation only.** The calendar receives an empty marker list and touches no
+> Firestore. **Selecting a day filters nothing** — Activity, the featured workout template and Recent
+> Workouts are unaffected, and the selection is local component state that does not survive unmount.
+> There is no calendar store or workout read path.
 
 ## User goal
 
-Look at the current week on Home, move around the calendar to see which days carry workouts, and
-pick a day.
+Look at the current week on Home, move around the calendar, and pick a day.
 
 The looking and moving are fully reachable. **Picking a day gets the user a moved selection circle
-and nothing else** — no day summary, no filtered history — because the dots that would motivate the
-pick are demonstration data.
+and nothing else** — no day summary or filtered history.
 
 ## Prerequisites
 
 - **Signed in.** Home lives under `(private)`, which `app/_layout.tsx` wraps in `<Stack.Protected>`;
   see [`features/auth/store/use-auth-store.ts`](../../features/auth/store/use-auth-store.ts).
 - **Nothing else.** This is the one flow in `docs/flows/` with no data prerequisite. The calendar
-  reads no store and subscribes to nothing: its markers arrive as props from Home's mock builder and
-  its dates come from the device clock, so it renders identically on a brand-new account and a
-  populated one.
+  reads no store and subscribes to nothing: its empty markers arrive as props from Home and its dates
+  come from the device clock, so it renders identically on a brand-new account and a populated one.
 
 ## Entry points
 
@@ -60,9 +54,8 @@ a vertical pan with a `UIScrollView` across the bridge. The button competes with
 ## Main path
 
 1. **The user opens Home.** The calendar renders collapsed, on the week containing today, with today
-   accented and selected. Home seeds its selection from `buildHomeCalendarMocks(new Date())` once, in
-   a `useState` initializer, so the mock array keeps one identity for the life of the screen; the
-   calendar derives its own opening week and month from that date in
+   accented and selected. Home seeds its selection from `toLocalDateId(new Date())` once in a
+   `useState` initializer; the calendar derives its own opening week and month from that date in
    [`index.tsx`](../../features/calendar/index.tsx).
 2. **The user swipes the strip sideways.** One swipe advances exactly one week, in either direction.
    Each pager renders three pages — previous, current, next — and recentres on the middle one every
@@ -103,14 +96,10 @@ the contract states this as a promise in
 
 ## What is missing
 
-The dots are the affordance that makes a day worth pressing, and they are fabricated. Concretely,
-what does not exist:
+Workout markers and their data path do not exist. Concretely, what is missing:
 
-- **No Firestore read.** `MOCK_WORKOUT_TONES` in
-  [`home-calendar-mocks.ts`](../../features/home/home-calendar-mocks.ts) is a fixed list of day
-  offsets from today, chosen to exercise every case the cell can draw — zero, one, two, three and
-  overflow markers, plus markers under the selection circle. `useWorkoutStore` is on the same screen
-  and the calendar is not connected to it.
+- **No Firestore read.** Home passes one stable empty marker array. The app has no workout store or
+  workout read path to populate it.
 - **No `Timestamp` → local-date-ID adapter.** The contract is stated in local calendar IDs shaped
   `YYYY-MM-DD`, and [`lib/format.ts`](../../lib/format.ts)'s `toLocalDateId` converts a JS `Date`.
   Turning a Firestore `Timestamp` into one is deliberately unbuilt: it has timezone and
@@ -129,7 +118,7 @@ oversight.
 - **Route:** `(private)/(home)` — [`app/(private)/(home)/index.tsx`](<../../app/(private)/(home)/index.tsx>),
   which mounts one island and declares its own screen options.
 - **Islands:** [`features/home/home-content.tsx`](../../features/home/home-content.tsx) owns the
-  screen and the mock props;
+  screen, selection, and empty marker props;
   [`features/calendar/index.tsx`](../../features/calendar/index.tsx)
   orchestrates the calendar. Under it: the title
   ([`components/month-header.tsx`](../../features/calendar/components/month-header.tsx)), the `Sun`–`Sat`
@@ -153,8 +142,8 @@ What is read, and where it lives:
 
 - **`selectedDateId`** — `useState` in [`home-content.tsx`](../../features/home/home-content.tsx),
   seeded with today. Controlled: it is passed down and only `onDatePress` changes it.
-- **`dateMarkers`** — built once on mount by `buildHomeCalendarMocks(new Date())`, relative to that
-  day.
+- **`dateMarkers`** — one module-level empty array in
+  [`home-content.tsx`](../../features/home/home-content.tsx).
 - **The visible week and the visible month** — two `useState` values in
   [`index.tsx`](../../features/calendar/index.tsx),
   deliberately not derived from one another.
@@ -174,17 +163,16 @@ than keeping the accent ring on yesterday.
 
 ## Alternative, empty, and error paths
 
-- **No loading state.** The calendar takes no `isLoading` input and awaits nothing. Home's other
-  sections render redacted placeholders while their stores load; the calendar is fully drawn from the
-  first frame.
+- **No loading state.** The calendar takes no `isLoading` input and awaits nothing. Home redacts only
+  its profile header while user data loads; the calendar and workout empty states are fully drawn from
+  the first frame.
 - **No error state.** There is no subscription and no async call, so there is no failure to report.
-- **A day with no workouts** draws an empty marker row of the same fixed height as a marked one — so
-  the day numbers never shift as markers appear — and announces "no workouts"
+- **Every day has no workouts** and draws an empty marker row of the same fixed height as a marked one,
+  so the day numbers will not shift when real markers return. Each day announces "no workouts"
   ([`components/marker-dots.tsx`](../../features/calendar/components/marker-dots.tsx),
   `describeCalendarDay` in [`helpers/dates.ts`](../../features/calendar/helpers/dates.ts)).
-- **More than three workouts on a day** draws two dots plus an overflow lozenge in the third
-  position, which keeps the cell's width — and therefore the column grid — unchanged. The
-  **untruncated** count still reaches VoiceOver.
+- **Marker overflow presentation remains implemented but unreachable** until a real marker source is
+  connected.
 - **Days from the adjacent month** are dimmed inside an expanded month grid and **not** dimmed in the
   collapsed strip. The surface decides rather than the cell: a straddling week has no anchor month,
   and dimming five of its seven days while the header names the other month is the failure that
@@ -198,8 +186,7 @@ than keeping the accent ring on yesterday.
   what the expansion animation interpolates over, so it has to be known before the first frame. The
   weekday labels and the month title sit outside the clip and scale freely.
 - **VoiceOver** reaches one element per day — role `button`, label "Wednesday, 12 August 2026, today,
-  2 workouts", `accessibilityState.selected` — and skips the weekday labels and the dots, which are
-  hidden as decorative because the cell already announces both.
+  no workouts", `accessibilityState.selected` — and skips the weekday labels and marker row.
 
 ## Completion state
 

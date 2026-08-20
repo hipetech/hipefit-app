@@ -25,7 +25,6 @@ import {
 } from '@expo/ui/swift-ui/modifiers';
 
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
-import { capitalize, humanizeKey } from '@/lib/format';
 import { colors } from '@/theme/colors';
 import { mods } from '@/theme/modifiers';
 
@@ -66,7 +65,7 @@ const TITLE_COLUMN_MODIFIERS = [FILL_LEADING];
 /** Exercise name. */
 const NAME_MODIFIERS = [...mods.bodyLabel, FILL_LEADING];
 
-/** Muscle group • difficulty line under the name. */
+/** Resolved category name under the exercise name. */
 const SUBTITLE_MODIFIERS = [...mods.footnoteSecondaryOneLine, FILL_LEADING];
 
 /** The disclosure's revealed content, spaced off the label above it. */
@@ -211,9 +210,7 @@ export const ExerciseRow = ({
               >
                 <Text modifiers={NAME_MODIFIERS}>{exercise.name}</Text>
                 <Text modifiers={SUBTITLE_MODIFIERS}>
-                  {`${humanizeKey(exercise.groupName)} • ${capitalize(
-                    exercise.difficulty
-                  )}`}
+                  {exercise.categoryName}
                 </Text>
               </VStack>
             </HStack>
