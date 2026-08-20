@@ -83,3 +83,30 @@ plan claims against code and durable docs.
   for files/directories.
 - Check `lib/format.ts`, `lib/constants.ts`, `lib/haptics.ts`, `theme/styles.ts`,
   `theme/modifiers.ts`, and `hooks/` before adding local equivalents.
+
+## Writing style
+
+For all user-facing prose, apply the Humanizer writing principles.
+
+Avoid common AI-writing patterns:
+
+- unnecessary sectioning
+- repetitive conclusions
+- generic filler and throat-clearing
+- excessive "Additionally", "Furthermore", "It's important to note"
+- artificial rule-of-three phrasing
+- overuse of em dashes
+- exaggerated adjectives such as "crucial", "robust", "comprehensive"
+- repeating the user's question before answering
+- generic closing summaries
+
+Prefer:
+
+- direct answers
+- natural sentence-length variation
+- concrete wording
+- appropriate technical terminology
+- concise explanations
+- an experienced engineer's conversational tone
+
+Do not change code, facts, citations, identifiers, API names, or technical terminology merely to make prose sound more natural.
