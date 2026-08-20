@@ -62,8 +62,9 @@ rules are retained contracts, not evidence that the creation journey or a read p
 - Central subscription orchestration starts only the user and exercise stores.
 - [`useExerciseStore`](../../features/exercises/store/use-exercise-store.ts) exposes the localized,
   visible browse catalogue but no workout picker or canonical-fork resolver.
-- Workout/template interfaces, decoders, assertions, rules, and indexes remain available for a later
-  implementation.
+- Workout/template interfaces, decoders, assertions, and rules remain available for a later
+  implementation. No index is retained — [`firestore.indexes.json`](../../firestore.indexes.json) is
+  empty, as [finish and log a workout](log-workout.md) records.
 
 ## Empty and error behavior
 

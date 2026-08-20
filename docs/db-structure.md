@@ -100,8 +100,8 @@ sort names in memory instead.
 
 Stored weight, distance, duration, height, and template duration use kilograms, meters, seconds,
 centimeters, and minutes respectively. `settings.units` is a display preference and never rewrites
-stored values. Profile height and weight entry/display and workout volume convert to inches, pounds,
-and pound-volume when the preference is `imperial`.
+stored values. Profile height and weight entry and display convert to inches and pounds when the
+preference is `imperial`. Workout volume has no converter because no shipped code computes volume.
 
 Calendar days are strings, not timestamps. `body.birthDate` and `Workout.localDate` use
 `YYYY-MM-DD`; `Workout.timeZone` records the IANA zone for the session. Instants such as

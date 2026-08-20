@@ -120,7 +120,8 @@ Settings now includes native menu pickers for Theme, Language, and Units:
 - Language writes `settings.language` as `en` or `uk`. Exercise, category, and equipment names
   recompute immediately from subscribed locale maps. The surrounding app chrome remains English.
 - Units writes `settings.units` as `metric` or `imperial`. Stored values remain canonical in
-  kilograms and centimeters; profile entry/display and workout volume convert at the UI boundary.
+  kilograms and centimeters; Edit Profile converts height and weight at the UI boundary. Nothing
+  else converts, because no other screen displays a stored measurement.
 - A failed settings write displays an error footer in the App section.
 
 ## Signing out

@@ -80,7 +80,7 @@ the flattening — the directory already says it. Nothing outside the feature re
 `@/features/calendar`.
 
 Copy it only when a feature reaches a comparable size. Below that the flat layout is easier to read,
-which is why the other nine features keep it, and a half-populated `components/` directory is worse
+which is why the other eight features keep it, and a half-populated `components/` directory is worse
 than no directory at all.
 
 One feature directory has no route of its own. `features/navigation-dock/` is mounted by the tab
@@ -204,7 +204,9 @@ stay named alike, and the ordering rule that constrains how the shared arrays ma
 in [ui.md](ui.md).
 
 Shared formatting lives in [lib/format.ts](../../lib/format.ts) — check it before writing a local
-helper, since most date, duration and volume strings already exist there.
+helper. It holds the greeting and casing helpers, the metric/imperial converters, and the calendar
+date-ID and month/day formatters. Duration and volume helpers do **not** exist: they left with the
+workout store and will be written by whoever rebuilds it.
 
 ## `packages/`: the local native boundary
 
@@ -290,8 +292,9 @@ with native code means running `pod install --project-directory=ios` and committ
 
 Stated plainly so nothing here is mistaken for shipped behavior:
 
-- **There is no workout player.** Start and Add to Workout affordances remain disabled in Home,
-  reusable workout cards, exercise details, and the create panel. The `Workout` document type and
+- **There is no workout player.** Start and Add to Workout affordances remain disabled in Home, the
+  exercise list rows, the exercise detail sheet, and the create panel — the reusable workout cards
+  that once carried them were deleted with the workout store. The `Workout` document type and
   validation remain in place, but there is no workout store, read request, or write path.
 - **All three global create actions are stubs:** Start Workout, New Workout Template, and Custom Exercise
   each ship `enabled: false` in

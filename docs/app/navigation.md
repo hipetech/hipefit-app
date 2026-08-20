@@ -40,8 +40,9 @@ app/
         └── edit-profile.tsx
 ```
 
-That is the whole route surface. Eight screens, one of which is a sheet, plus `create.tsx`, which is
-not a screen at all — it exists because a tab trigger must name a route, and it redirects. There is
+That is the whole route surface. Eight route files: seven screens, one of which is a sheet, plus
+`create.tsx`, which is not a screen at all — it exists because a tab trigger must name a route, and
+it redirects. There is
 no
 `app/+not-found.tsx`, so an unmatched path falls through to Expo Router's built-in unmatched
 screen rather than anything this app authored.

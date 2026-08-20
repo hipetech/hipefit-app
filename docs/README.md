@@ -153,6 +153,8 @@ is how a document turns into an agent implementing the wrong thing.
 - [`app/navigation.md`](app/navigation.md) — Expo Router structure, tabs, and screen chrome.
 - [`app/ui.md`](app/ui.md) — SwiftUI through `@expo/ui`: hosts, primitives, color, styling, and
   motion.
+- [`app/code-style.md`](app/code-style.md) — module shapes, authoring recipes, naming, the comment
+  policy, and the decomposition standard the codebase is being moved to.
 - [`app/database.md`](app/database.md) — the boundary the app draws around Firestore.
 - [`db-structure.md`](db-structure.md) — the schema itself. Still at the repository root of `docs/`
   because `AGENTS.md` already references it there.
@@ -162,14 +164,14 @@ is how a document turns into an agent implementing the wrong thing.
 ### Flows
 
 Each flow opens with a callout stating how much of it ships. Read that callout before assuming any
-step is reachable: three of the five below do not ship end to end, and the calendar flow uses mock
-markers even though its interactions ship.
+step is reachable: three of the five below do not ship end to end, and the calendar flow renders an
+empty marker array even though its interactions ship.
 
 - [`flows/authentication.md`](flows/authentication.md) — Apple Sign-In, first-run profile creation,
   the auth guard, and logging out. The one flow here that ships end to end.
 - [`flows/browse-home-calendar.md`](flows/browse-home-calendar.md) — paging, expanding, and
-  selecting a day in Home's calendar. Every interaction ships; the **markers are mock data** and
-  selecting a day filters nothing.
+  selecting a day in Home's calendar. Every interaction ships; the **marker array is empty** —
+  there is no workout read path to fill it — and selecting a day filters nothing.
 - [`flows/start-workout.md`](flows/start-workout.md) — starting a workout from a template or ad hoc.
   The entry points ship **disabled**.
 - [`flows/log-workout.md`](flows/log-workout.md) — finishing a session and the writes that would

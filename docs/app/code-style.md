@@ -20,7 +20,7 @@ know before reading anything live in [AGENTS.md](../../AGENTS.md), which links h
 **Match the file you are editing, and the files beside it** — except where this document says
 otherwise. Most conventions here were read off the existing code. Where a file deliberately diverges
 it says so in a comment, and that comment is the specification — see the "documented divergence"
-cases in [ui/avatar.tsx](../../ui/avatar.tsx) and
+cases in [features/avatar/avatar.tsx](../../features/avatar/avatar.tsx) and
 [features/exercises/row-metrics.ts](../../features/exercises/row-metrics.ts).
 
 The two decomposition rules — [one component per
@@ -179,8 +179,9 @@ Named `export const` arrow functions with explicit return types, grouped by subj
 for feedback, [lib/constants.ts](../../lib/constants.ts) for shared values. No default exports, no
 utility grab-bag, no classes.
 
-**Check `lib/` before writing a local helper.** Most date, duration and volume strings already
-exist. Measured native constants stay beside the feature that measured them
+**Check `lib/` before writing a local helper.** Casing, greeting, unit-conversion and calendar
+date-ID helpers already exist there; duration and volume formatting does not. Measured native
+constants stay beside the feature that measured them
 ([features/exercises/row-metrics.ts](../../features/exercises/row-metrics.ts)).
 
 Wrappers get **intent names**, not implementation names — `hapticSuccess`, not
@@ -360,10 +361,10 @@ treat them as precedent.
 
 **Inlined logic** — each needs a helper module:
 
-| File                                                                   | Functions                                |
-| ---------------------------------------------------------------------- | ---------------------------------------- |
-| [features/home/home-content.tsx](../../features/home/home-content.tsx) | `toRecentWorkoutRow`, `counterModifiers` |
-| [features/home/use-clock.ts](../../features/home/use-clock.ts)         | `msUntilNextBoundary`                    |
+| File                                                                   | Functions             |
+| ---------------------------------------------------------------------- | --------------------- |
+| [features/home/home-content.tsx](../../features/home/home-content.tsx) | `counterModifiers`    |
+| [features/home/use-clock.ts](../../features/home/use-clock.ts)         | `msUntilNextBoundary` |
 
 All of these are pure functions of their arguments — none captures component state — so each can be
 extracted mechanically. `fire` in [lib/haptics.ts](../../lib/haptics.ts) is **not** in this list: it

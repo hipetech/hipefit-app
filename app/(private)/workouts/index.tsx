@@ -8,8 +8,8 @@ import { WorkoutsContent } from '@/features/workouts/workouts-content';
  * navigation stack, never in the body.
  *
  * There is no `+` toolbar menu here any more — the create actions moved to the
- * tab bar accessory in `app/(private)/_layout.tsx`, so they are reachable from
- * every tab rather than this one screen.
+ * detached Create item on the tab bar in `app/(private)/_layout.tsx`, so they are
+ * reachable from every tab rather than this one screen. See `docs/app/navigation.md`.
  */
 export default function Workouts() {
   return (

@@ -203,7 +203,8 @@ Normal seeding overwrites deterministic documents in `exerciseCategories`, `equi
 require typing `production`; a production clean also requires `--allow-production-clean`.
 
 [`scripts/db/wipe.ts`](../../scripts/db/wipe.ts) requires an explicit development or staging
-environment, refuses production without an override, and requires typing the environment name. It
+environment and requires typing the environment name. `--env production` is refused outright; unlike
+the seeder there is no override flag, so wiping production would mean editing the script. It
 counts all Firestore documents recursively and all Auth users, recursively deletes every top-level
 collection, deletes every Auth user, and then verifies both counts are zero. It deliberately has no
 dry-run mode.
