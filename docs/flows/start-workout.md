@@ -2,7 +2,7 @@
 type: flow
 status: current
 area: workouts
-updated: 2026-08-20
+updated: 2026-08-21
 ---
 
 # Flow: start a workout
@@ -22,16 +22,17 @@ No step after choosing an affordance is reachable today.
 
 - The user is signed in. The user and exercise stores are subscribed.
 - The exercise catalogue can be read from the three seeded global collections and optional custom
-  collections. There is no workout-specific picker projection.
+  collections. Firebase listeners live in the mobile exercise service; catalogue merging and
+  localization live in `@hipefit/domain`. There is no workout-specific picker projection.
 
 ## Disabled entry points
 
-| Entry point                                  | Location                                                                                  | Current stop                                           |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Start Workout in the create panel            | [`navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts) | Action ships `enabled: false`                          |
-| Start Workout below Home's featured template | [`home-content.tsx`](../../features/home/home-content.tsx)                                | Button has the shared disabled modifier and no handler |
-| Add to Workout in an expanded exercise row   | [`exercise-row.tsx`](../../features/exercises/exercise-row.tsx)                           | Button has no action and is disabled                   |
-| Add to Workout in the exercise detail sheet  | [`exercise-detail-sheet.tsx`](../../features/exercises/exercise-detail-sheet.tsx)         | `onAdd` would dismiss, but the button is disabled      |
+| Entry point                                  | Location                                                                                                  | Current stop                                           |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Start Workout in the create panel            | [`navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts) | Action ships `enabled: false`                          |
+| Start Workout below Home's featured template | [`home-content.tsx`](../../apps/mobile/src/features/home/home-content.tsx)                                | Button has the shared disabled modifier and no handler |
+| Add to Workout in an expanded exercise row   | [`exercise-row.tsx`](../../apps/mobile/src/features/exercises/exercise-row.tsx)                           | Button has no action and is disabled                   |
+| Add to Workout in the exercise detail sheet  | [`exercise-detail-sheet.tsx`](../../apps/mobile/src/features/exercises/exercise-detail-sheet.tsx)         | `onAdd` would dismiss, but the button is disabled      |
 
 The convention remains: an unavailable destination is shown inert rather than hidden. Enabling any
 one of these controls without the missing route and write lifecycle would create a false affordance.
@@ -52,19 +53,26 @@ one of these controls without the missing route and write lifecycle would create
 - A template-selection or freestyle exercise-picker surface.
 - The completion behavior documented in [finish and log a workout](log-workout.md).
 
-The current `Workout` shape already carries template refs/snapshots, status, local date/time zone,
-measured active duration, bodyweight snapshot, notes, and nested exercises/sets. Its decoder and
-rules are retained contracts, not evidence that the creation journey or a read path exists.
+The current `Workout` shape in
+[`@hipefit/schemas`](../../packages/schemas/src/workout.ts) already carries template refs/snapshots,
+status, local date/time zone, measured active duration, bodyweight snapshot, notes, and nested
+exercises/sets. Its decoder and rules are retained contracts, not evidence that the creation journey
+or a read path exists.
 
 ## State and read behavior
 
 - No workout or workout-template Zustand store exists.
-- Central subscription orchestration starts only the user and exercise stores.
-- [`useExerciseStore`](../../features/exercises/store/use-exercise-store.ts) exposes the localized,
-  visible browse catalogue but no workout picker or canonical-fork resolver.
+- Central subscription orchestration in
+  [`apps/mobile/src/hooks/use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts)
+  starts only the user and exercise stores. Those stores delegate Firebase operations to services.
+- [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts) exposes the localized,
+  visible browse catalogue built by
+  [`@hipefit/domain`](../../packages/domain/src/exercises/catalogue.ts), but no workout picker or
+  canonical-fork resolver.
 - Workout/template interfaces, decoders, assertions, and rules remain available for a later
-  implementation. No index is retained — [`firestore.indexes.json`](../../firestore.indexes.json) is
-  empty, as [finish and log a workout](log-workout.md) records.
+  implementation. No index is retained —
+  [`firebase/firestore.indexes.json`](../../firebase/firestore.indexes.json) is empty, as
+  [finish and log a workout](log-workout.md) records.
 
 ## Empty and error behavior
 

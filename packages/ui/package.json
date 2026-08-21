@@ -1,0 +1,14 @@
+{
+  "name": "@hipefit/ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Native SwiftUI primitives and semantic colors for Hipefit iOS surfaces.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "peerDependencies": {
+    "@expo/ui": "~57.0.7",
+    "expo-router": "~57.0.8",
+    "react": "19.2.3",
+    "react-native": "0.86.0"
+  }
+}

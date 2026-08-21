@@ -1,0 +1,8 @@
+{
+  "name": "@hipefit/schemas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared Firestore document shapes, validation, and paths for Hipefit consumers.",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}

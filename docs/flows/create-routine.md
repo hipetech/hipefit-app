@@ -2,7 +2,7 @@
 type: flow
 status: current
 area: workout-templates
-updated: 2026-08-20
+updated: 2026-08-21
 ---
 
 # Flow: create a workout template
@@ -22,7 +22,7 @@ None of the creation steps are reachable. There is no client read side.
 ## Entry point
 
 The global create panel declares **New Workout Template** in
-[`features/navigation-dock/navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts).
+[`apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts).
 It ships with `enabled: false`, so native UI swallows the touch and no handler runs.
 
 There is no second entry point. The Workouts route has no add toolbar item, empty-state button, card
@@ -52,9 +52,9 @@ but no current client path reads, renders, or updates them.
 - Validation and write use of `TemplateExercise` / `TemplateSet` from the UI.
 - A start-workout destination for the resulting template.
 
-The schema and runtime decoder define the stored shape: ordered embedded exercises with full exercise
-refs, name/type snapshots, and ordered optional set targets. Retaining that contract does not make a
-read or write journey shipped.
+[`@hipefit/schemas`](../../packages/schemas/src/workout.ts) and its runtime decoder define the stored
+shape: ordered embedded exercises with full exercise refs, name/type snapshots, and ordered optional
+set targets. Retaining that contract does not make a read or write journey shipped.
 
 ## Empty, loading, and error behavior
 

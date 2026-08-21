@@ -2,7 +2,7 @@
 type: template
 status: current
 area: documentation
-updated: 2026-08-04
+updated: 2026-08-21
 ---
 
 # Template: task note
@@ -16,8 +16,8 @@ these notes or derives its view from them; it does not become a second place whe
 
 `context:` is the primary discovery mechanism in this system. The `AGENTS.md` rule telling agents
 to read relevant flow documents is soft and competes with everything else in that file; an explicit
-list of paths in the work item is not. Name the exact files to read first — durable documents
-before source — and keep the list short enough that it is actually read.
+list of paths in the work item is not. Name the exact files to read first, durable documents before
+source, and keep the list short enough that it is actually read.
 
 A task that ships a behavior change ships the documentation for it. **Definition of done** names
 the durable documents this task edits and what each one has to say afterwards — a generic "docs
@@ -43,8 +43,8 @@ context: # REQUIRED, non-empty. Nothing enforces this — check each path
   # resolves on disk yourself before handing the note to an agent.
   # Exact paths the agent must read before writing code, durable docs first.
   - ../../../flows/start-workout.md
-  - ../../../../features/workouts/store/use-workout-store.ts
-  - ../../../../database/refs.ts
+  - ../../../../apps/mobile/src/stores/use-user-store.ts
+  - ../../../../apps/mobile/src/services/user-service.ts
 verify: # commands that prove the work landed
   - bun run type-check
   - bun run lint

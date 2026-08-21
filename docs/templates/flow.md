@@ -2,7 +2,7 @@
 type: template
 status: current
 area: documentation
-updated: 2026-08-20
+updated: 2026-08-21
 ---
 
 # Template: flow document
@@ -10,16 +10,16 @@ updated: 2026-08-20
 Copy the body below into `docs/flows/<flow-name>.md` and replace the example content. The shape is
 extracted from [`docs/flows/start-workout.md`](../flows/start-workout.md), the pilot: every section
 here earned its place by carrying information that could not be recovered by reading one directory
-under `features/`.
+under `apps/mobile/src/features/`.
 
 Rules that matter more than the headings:
 
 - **Delete a section rather than filling it ceremonially.** An empty "Alternative paths" heading is
   worse than no heading, because the next reader assumes it was considered.
 - **Link inline, in the sentence that makes the claim** — there is no "source links" section. Use
-  standard Markdown links with repository-relative paths (`../../features/…`), never wikilinks. A
-  path containing parentheses must be wrapped in angle brackets:
-  `[…](<../../app/(private)/workouts/index.tsx>)`.
+  standard Markdown links with repository-relative paths
+  (`../../apps/mobile/src/features/...`), never wikilinks. A path containing parentheses must be
+  wrapped in angle brackets: `[…](<../../apps/mobile/app/(private)/workouts/index.tsx>)`.
 - **Verify every claim against the code before writing it.** If a plan under `docs/plans/` says
   otherwise, the code wins and the plan is historical.
 - **Say plainly when something does not ship.** The pilot's most useful property is that it names
@@ -64,22 +64,22 @@ If only part of that goal is reachable today, say which part here rather than bu
 What must already be true before the first step can run. Bullets, each linked to the thing that
 enforces it. The pilot's set is representative:
 
-- **Signed in.** `app/_layout.tsx` wraps `(private)` in `<Stack.Protected>`; see
-  [`features/auth/store/use-auth-store.ts`](../../features/auth/store/use-auth-store.ts).
+- **Signed in.** `apps/mobile/app/_layout.tsx` wraps `(private)` in `<Stack.Protected>`; see
+  [`apps/mobile/src/stores/use-auth-store.ts`](../../apps/mobile/src/stores/use-auth-store.ts).
 - **Firestore subscriptions live**, started once from
-  [`database/use-firestore-subscriptions.ts`](../../database/use-firestore-subscriptions.ts).
-- **Data the flow assumes exists** — and, if nothing in the app or in `scripts/db/` creates it, say
-  so here. A prerequisite no code satisfies is a finding, not a footnote.
+  [`apps/mobile/src/hooks/use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts).
+- **Data the flow assumes exists** — and, if nothing in the app or in `firebase/seed/` creates it,
+  say so here. A prerequisite no code satisfies is a finding, not a footnote.
 
 ## Entry points
 
 Every affordance that advertises this journey, and where it lives. A table pays for itself once
 there are more than two:
 
-| Entry point            | Where                                                                                                | Notes                                           |
-| ---------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **<button label>**     | [`features/exercises/exercise-detail-sheet.tsx`](../../features/exercises/exercise-detail-sheet.tsx) | Any condition that gates it, or why it is inert |
-| **<other affordance>** | [`features/home/home-content.tsx`](../../features/home/home-content.tsx)                             | …                                               |
+| Entry point            | Where                                                                                                                                | Notes                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| **<button label>**     | [`apps/mobile/src/features/exercises/exercise-detail-sheet.tsx`](../../apps/mobile/src/features/exercises/exercise-detail-sheet.tsx) | Any condition that gates it, or why it is inert |
+| **<other affordance>** | [`apps/mobile/src/features/home/home-content.tsx`](../../apps/mobile/src/features/home/home-content.tsx)                             | …                                               |
 
 Follow the table with prose when the entry points share a convention worth naming — the pilot
 records that a control with no destination is rendered inert rather than hidden, which is a
@@ -92,8 +92,9 @@ island that implements it. Keep the numbering honest: if the path terminates, ma
 it stops rather than describing an intended one.
 
 1. **<What the user does.>** What renders, and where it comes from —
-   [`app/(private)/workouts/index.tsx`](<../../app/(private)/workouts/index.tsx>) mounts
-   [`features/workouts/workouts-content.tsx`](../../features/workouts/workouts-content.tsx).
+   [`apps/mobile/app/(private)/workouts/index.tsx`](<../../apps/mobile/app/(private)/workouts/index.tsx>)
+   mounts
+   [`apps/mobile/src/features/workouts/workouts-content.tsx`](../../apps/mobile/src/features/workouts/workouts-content.tsx).
 2. **<Next action.>** Include the branch conditions that decide what the user sees.
 3. **<Result.>** …
 
@@ -108,9 +109,10 @@ performs, rules nothing enforces. Delete this section for a flow that ships.
 The inventory, so a reader can find everything without re-reading the steps.
 
 - **Routes:** the paths involved and where they are declared.
-- **Islands:** the `features/` components the routes mount.
+- **Islands:** the `apps/mobile/src/features/` components the routes mount.
 - **Documents:** the Firestore types and collection paths, linked to
-  [`database/types.ts`](../../database/types.ts), [`database/refs.ts`](../../database/refs.ts), and
+  [`@hipefit/schemas`](../../packages/schemas/src/index.ts),
+  [`@hipefit/firebase/react-native`](../../packages/firebase/src/react-native/index.ts), and
   [`docs/db-structure.md`](../db-structure.md).
 
 Merged into one section deliberately — in the pilot each of the three parts was three bullets long,

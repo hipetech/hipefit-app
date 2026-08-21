@@ -2,7 +2,7 @@
 type: flow
 status: current
 area: workouts
-updated: 2026-08-20
+updated: 2026-08-21
 ---
 
 # Flow: finish and log a workout
@@ -29,16 +29,17 @@ There is no user `stats` document or map to pre-seed. Home displays zero workout
 
 There is no Resume, Finish, Complete, Discard, or Abandon control and no workout-specific route. The
 global Start Workout action is disabled in
-[`features/navigation-dock/navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts).
+[`apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts).
 
 ## Read path
 
 No workout read path ships. Central subscription orchestration does not subscribe to workouts, and
 there is no workout collection ref or Zustand store. `Workout`, `WorkoutExercise`, and `WorkoutSet`
-types plus `decodeWorkout` and its write assertion remain as schema contracts for later work.
+types plus `decodeWorkout` and its write assertion remain in
+[`@hipefit/schemas`](../../packages/schemas/src/workout.ts) as contracts for later work.
 
 No `exerciseHistory` collection, persisted aggregate, stats map, or composite history index is read
-or written. [`firestore.indexes.json`](../../firestore.indexes.json) is empty.
+or written. [`firebase/firestore.indexes.json`](../../firebase/firestore.indexes.json) is empty.
 
 ## What the screens show
 
@@ -48,7 +49,8 @@ store.
 
 ## Writes that are absent
 
-There is no workout store or workout collection ref in the client.
+There is no workout store, mobile workout service, or workout collection ref in
+[`@hipefit/firebase/react-native`](../../packages/firebase/src/react-native/index.ts).
 
 Current code therefore performs none of these operations:
 

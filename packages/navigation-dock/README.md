@@ -4,7 +4,7 @@ Private, iOS-only Expo view module for Hipefit's native Create action panel.
 
 The package renders the expandable action card and its invisible modal backdrop. It does not render
 the tab bar or the Create trigger. Those remain real `UITabBar` items owned by Expo Router in
-`app/(private)/_layout.tsx`.
+`apps/mobile/app/(private)/_layout.tsx`.
 
 ## Requirements
 
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
 />;
 ```
 
-The production adapter is `features/navigation-dock/navigation-dock.tsx`.
+The production adapter is `apps/mobile/src/features/navigation-dock/navigation-dock.tsx`.
 
 ## API
 
@@ -100,8 +100,8 @@ supply this value.
 
 Do not subtract or add the bottom safe-area inset. Native treats the safe area as a minimum floor,
 and an iOS 26 floating tab bar is already inset within it. Hipefit's measured value lives in
-`features/navigation-dock/navigation-dock-metrics.ts` and must be remeasured when its documented
-conditions change.
+`apps/mobile/src/features/navigation-dock/navigation-dock-metrics.ts` and must be remeasured when
+its documented conditions change.
 
 ## State And Events
 
@@ -141,7 +141,8 @@ bun run ios:development
 After adding or removing a native dependency, update CocoaPods and commit the resulting lockfile:
 
 ```bash
-pod install --project-directory=ios
+cd apps/mobile/ios
+pod install
 ```
 
 Changes to Swift require rebuilding the development client. TypeScript-only changes can use the

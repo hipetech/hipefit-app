@@ -1,0 +1,16 @@
+{
+  "name": "@hipefit/config",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared TypeScript and ESLint configuration for Hipefit workspaces.",
+  "exports": {
+    "./eslint": "./eslint.js",
+    "./tsconfig.json": "./tsconfig.json"
+  },
+  "peerDependencies": {
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~57.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2"
+  }
+}

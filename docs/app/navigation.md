@@ -2,22 +2,24 @@
 type: app
 status: current
 area: navigation
-updated: 2026-08-20
+updated: 2026-08-21
 ---
 
 # Navigation
 
 Routing is [Expo Router](https://docs.expo.dev/router/introduction/) (`expo-router ~57.0.8` — it
-now tracks the SDK version rather than its own major), file-based over the `app/` directory. Typed
+now tracks the SDK version rather than its own major), file-based over the `apps/mobile/app/`
+directory. Typed
 routes are on, so route strings are checked at compile
-time — see [`app.config.js`](../../app.config.js), which also registers the `expo-router` plugin and
+time — see [`apps/mobile/app.config.ts`](../../apps/mobile/app.config.ts), which also registers the
+`expo-router` plugin and
 the `hipefitapp` URL scheme. There is no custom linking configuration anywhere in the repo: the URL
 space is exactly what the file tree describes.
 
 ## The tree
 
 ```text
-app/
+apps/mobile/app/
 ├── _layout.tsx              Root Stack + auth gate
 ├── index.tsx                Entry redirect
 ├── (public)/
@@ -44,26 +46,28 @@ That is the whole route surface. Eight route files: seven screens, one of which 
 `create.tsx`, which is not a screen at all — it exists because a tab trigger must name a route, and
 it redirects. There is
 no
-`app/+not-found.tsx`, so an unmatched path falls through to Expo Router's built-in unmatched
+`apps/mobile/app/+not-found.tsx`, so an unmatched path falls through to Expo Router's built-in unmatched
 screen rather than anything this app authored.
 
 ## The auth gate
 
-[`app/_layout.tsx`](../../app/_layout.tsx) is a single `Stack` registering three things: `index`,
+[`apps/mobile/app/_layout.tsx`](../../apps/mobile/app/_layout.tsx) is a single `Stack` registering
+three things: `index`,
 `(public)/login`, and `(private)` — the last wrapped in `Stack.Protected` with
 `guard={isLoggedIn}`.
 
 `Stack.Protected` is not a redirect. A false guard **excludes** the wrapped screens from the
 navigator's screen list, so while signed out the `(private)` subtree does not exist as far as
 React Navigation is concerned. That is why signing out needs no navigation call: `signOut` in
-[`features/auth/store/use-auth-store.ts`](../../features/auth/store/use-auth-store.ts) flips
-`isLoggedIn` through the `onAuthStateChanged` listener, the guard closes, and the private routes
-are gone. The same mechanism makes a private deep link unreachable while signed out — it cannot
-resolve to a screen that is not registered.
+[`apps/mobile/src/stores/use-auth-store.ts`](../../apps/mobile/src/stores/use-auth-store.ts) flips
+delegates the Firebase operation to the auth service, then the `onAuthStateChanged` listener flips
+`isLoggedIn`, the guard closes, and the private routes are gone. The same mechanism makes a private
+deep link unreachable while signed out — it cannot resolve to a screen that is not registered.
 
 What actually decides _where_ you land is the entry redirect in
-[`app/index.tsx`](../../app/index.tsx): signed in → `/(private)/(home)`, signed out →
-`/(public)/login`. [`app/(public)/login.tsx`](<../../app/(public)/login.tsx>) repeats the same check
+[`apps/mobile/app/index.tsx`](../../apps/mobile/app/index.tsx): signed in → `/(private)/(home)`, signed
+out → `/(public)/login`.
+[`apps/mobile/app/(public)/login.tsx`](<../../apps/mobile/app/(public)/login.tsx>) repeats the same check
 and redirects to home if a session appears while it is mounted, which is what carries a successful
 Apple Sign-In out of the login screen — the auth screen itself never navigates.
 
@@ -79,7 +83,7 @@ Three details are load-bearing:
 - **Navigation chrome is themed separately.** The root layout feeds a `ThemeProvider` from the
   scheme that `Appearance.setColorScheme` actually resolved to, so large titles and toolbars match
   the SwiftUI content underneath. See
-  [`hooks/use-app-color-scheme.ts`](../../hooks/use-app-color-scheme.ts).
+  [`apps/mobile/src/hooks/use-app-color-scheme.ts`](../../apps/mobile/src/hooks/use-app-color-scheme.ts).
 
 ## Groups: `(public)` and `(private)`
 
@@ -102,7 +106,8 @@ literally `return <Stack />`. The redundancy is deliberate:
   route file per tab has nowhere to put pushed screens, so any future detail screen would land in
   a stack shared across tabs.
 - **A place for per-tab screen options.** Settings already needs this:
-  [`app/(private)/settings/_layout.tsx`](<../../app/(private)/settings/_layout.tsx>) is the one
+  [`apps/mobile/app/(private)/settings/_layout.tsx`](<../../apps/mobile/app/(private)/settings/_layout.tsx>)
+  is the one
   layout with explicit `<Stack.Screen>` declarations, because the Edit Profile sheet's presentation
   is route configuration and has to be declared where the route is registered.
 - **Large titles.** `Stack.Screen.Title large` only means anything inside a stack. Workouts,
@@ -116,31 +121,38 @@ bare and that the screen supplies its own chrome.
 
 The Home tab lives in `(home)` — parentheses, so the group adds no segment and the tab sits at the
 app root. One consequence that has to be respected in two places at once: the tab trigger in
-[`app/(private)/_layout.tsx`](<../../app/(private)/_layout.tsx>) is `name="(home)"`, **with** the
+[`apps/mobile/app/(private)/_layout.tsx`](<../../apps/mobile/app/(private)/_layout.tsx>) is
+`name="(home)"`, **with** the
 parentheses, because a trigger names the child directory, not the URL it produces. Dropping them
 addresses a directory that does not exist.
 
 ## Screen chrome is declared in the screen
 
-`Stack.Screen.Title`, `Stack.Toolbar` and `Stack.SearchBar` are rendered by the screen component,
-as siblings of its content, not configured in the layout. Every route file in the tree follows
-this; see [`app/(private)/workouts/index.tsx`](<../../app/(private)/workouts/index.tsx>) for the
-minimal shape — an island from `features/` plus a title — and
-[`app/(private)/exercises/index.tsx`](<../../app/(private)/exercises/index.tsx>) for the maximal one.
+Private tab screens render their `Stack.Screen.Title` and any `Stack.Toolbar` or `Stack.SearchBar`
+chrome as siblings of their content instead of configuring it in the layout. See
+[`apps/mobile/app/(private)/workouts/index.tsx`](<../../apps/mobile/app/(private)/workouts/index.tsx>)
+for the minimal shape — an island from `apps/mobile/src/features/` plus a title — and
+[`apps/mobile/app/(private)/exercises/index.tsx`](<../../apps/mobile/app/(private)/exercises/index.tsx>)
+for the maximal one.
 
 The reason is that chrome depends on screen state. Home opts out of chrome with
-`headerShown: false`: [`features/home/home-header.tsx`](../../features/home/home-header.tsx) combines
+`headerShown: false`:
+[`apps/mobile/src/features/home/home-header.tsx`](../../apps/mobile/src/features/home/home-header.tsx)
+combines
 the avatar, display name, greeting, and today's date in the body. The greeting is recomputed across
 noon/18:00 and the date across midnight, both on one timer plus an `AppState` resume, by
-[`features/home/use-clock.ts`](../../features/home/use-clock.ts) — iOS suspends timers in the
+[`apps/mobile/src/features/home/use-clock.ts`](../../apps/mobile/src/features/home/use-clock.ts) — iOS
+suspends timers in the
 background, so a resume has to re-read them.
 Exercises' search bar writes into the same `useState` that filters the list. Configuring it from the
 layout would mean lifting that state above the screen that owns it for no benefit.
 
 The pattern also keeps route files thin. A route is normally a title plus one island from
-`features/` — [`features/home/home-content.tsx`](../../features/home/home-content.tsx),
-[`features/workouts/workouts-content.tsx`](../../features/workouts/workouts-content.tsx),
-[`features/settings/settings-content.tsx`](../../features/settings/settings-content.tsx). Exercises
+`apps/mobile/src/features/` —
+[`apps/mobile/src/features/home/home-content.tsx`](../../apps/mobile/src/features/home/home-content.tsx),
+[`apps/mobile/src/features/workouts/workouts-content.tsx`](../../apps/mobile/src/features/workouts/workouts-content.tsx),
+[`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx).
+Exercises
 is the deliberate exception: the route file owns the `LegendList`, the search and filter state, and
 the detail sheet, because all four are the same state.
 
@@ -152,7 +164,8 @@ One sharp edge is recorded in the Exercises screen:
 
 ## Tabs and the create affordance
 
-[`app/(private)/_layout.tsx`](<../../app/(private)/_layout.tsx>) is the only interesting layout. It
+[`apps/mobile/app/(private)/_layout.tsx`](<../../apps/mobile/app/(private)/_layout.tsx>) is the only
+interesting layout. It
 renders two siblings inside one flex `View`: the `NativeTabs` navigator — which contains **five**
 triggers, the four tabs plus Create — and the action panel that overlays it.
 
@@ -166,7 +179,8 @@ Exercises passes the single symbol `checklist`, which has no `.fill` counterpart
 passes a Material icon name, which is inert on this iOS-only app.)
 
 **There is no custom tab rendering and no JS tab routing anywhere in the app.** Neither
-`features/navigation-dock/` nor `packages/navigation-dock/` draws a tab, reports a selection, or
+`apps/mobile/src/features/navigation-dock/` nor `packages/navigation-dock/` draws a tab, reports a
+selection, or
 knows the tab set exists. Anything about tab behaviour is a question about UIKit and Expo Router,
 not about this repository.
 
@@ -183,7 +197,8 @@ Three things make a search tab behave as a button rather than as a tab:
 - **`disabled`** prevents the native selection, so tapping navigates nowhere. The press still arrives
   as `tabPress` with `isPrevented: true`, and that is what opens the panel. This suppresses only the
   native tap: `router.push('/create')` still resolves, which is why
-  [`app/(private)/create.tsx`](<../../app/(private)/create.tsx>) exists and redirects to Home.
+  [`apps/mobile/app/(private)/create.tsx`](<../../apps/mobile/app/(private)/create.tsx>) exists and
+  redirects to Home.
 - **An explicit `Icon` and `Label`** override the system magnifying glass and title, so it presents
   and announces as Create — and as Close, with an `xmark`, while the panel is open.
 - **Detachment keeps it out of the tab group.** In the accessibility tree, `[tab-bar]` holds the
@@ -196,20 +211,20 @@ the bar's width. **Unverified**: no pre-26 runtime is installed on the developme
 
 Because the button is a tab bar item and the panel is an overlay, neither contains the other, so
 `expanded` lives in
-[`features/navigation-dock/store/use-navigation-dock-store.ts`](../../features/navigation-dock/store/use-navigation-dock-store.ts).
+[`apps/mobile/src/stores/use-navigation-dock-store.ts`](../../apps/mobile/src/stores/use-navigation-dock-store.ts).
 That store is **not** a domain store: no Firestore data, no `subscribe(uid)`, not started by
-`database/use-firestore-subscriptions.ts`. It is transient UI state that happens to need two call
-sites.
+[`apps/mobile/src/hooks/use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts).
+It is transient UI state that happens to need two call sites.
 
 ### The panel is a native overlay
 
 Four files, one of them a workspace package of native code:
 
-- [`features/navigation-dock/navigation-dock.tsx`](../../features/navigation-dock/navigation-dock.tsx)
+- [`apps/mobile/src/features/navigation-dock/navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx)
   — the React adapter the tab layout mounts, edge to edge over the whole screen.
-- [`features/navigation-dock/navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts)
+- [`apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts)
   — the three action descriptors, in grid order.
-- [`features/navigation-dock/navigation-dock-metrics.ts`](../../features/navigation-dock/navigation-dock-metrics.ts)
+- [`apps/mobile/src/features/navigation-dock/navigation-dock-metrics.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-metrics.ts)
   — the measured tab bar geometry.
 - [`packages/navigation-dock/`](../../packages/navigation-dock/index.ts) — the Expo view module
   whose single UIKit view draws the action panel and the scrim behind it. **It draws no button and
@@ -226,11 +241,11 @@ built to fill. No route mounts it yet.
 
 Ownership divides three ways:
 
-| Owner                                | Owns                                                                                                        |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| Expo Router (`NativeTabs`)           | The four tabs, the Create item's rendering and placement, and every navigation behaviour.                   |
-| React (`features/navigation-dock/`)  | The `expanded` state, the action descriptors, the measured offset, colour scheme, Reduce Motion, dismissal. |
-| Native (`packages/navigation-dock/`) | Everything the panel draws: layout, materials, animation, hit testing, VoiceOver.                           |
+| Owner                                | Owns                                                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Expo Router (`NativeTabs`)           | The four tabs, the Create item's rendering and placement, and every navigation behaviour.               |
+| React (`apps/mobile/src/`)           | The `expanded` store, action descriptors, measured offset, colour scheme, Reduce Motion, and dismissal. |
+| Native (`packages/navigation-dock/`) | Everything the panel draws: layout, materials, animation, hit testing, VoiceOver.                       |
 
 `expanded` is **controlled and one-way**. The view never flips its own copy; it animates toward
 whatever prop arrives. That is precisely what lets a dismissal originating outside the view win over
@@ -241,10 +256,10 @@ a stale native state. The bridge is props in, events out — the module declares
 
 The panel closes on all of the following, and every one of them routes through the same React state:
 
-- **Create**, which is announced as "Close" and carries an `xmark` while expanded. This is a
-  `tabPress` on the trigger, not an event from the native view.
-- **A scrim tap**, and the VoiceOver escape gesture. Both arrive as `onDismissRequest` with a
-  `reason` of `backdrop` or `escape`.
+- **A backdrop tap**, including a sighted tap on the visible Create circle while expanded. The native
+  overlay covers the tab bar, so that tap arrives as `onDismissRequest` with `reason: 'backdrop'`, not
+  as a second `tabPress`.
+- **The VoiceOver escape gesture**, which arrives as `onDismissRequest` with `reason: 'escape'`.
 - **Any navigation** — a push, a presented sheet, a deep link, or the redirect that follows a session
   change. The adapter listens to the navigation container's `state` event rather than watching route
   state in an effect. Not a tab switch while the panel is up: the scrim is modal and swallows it.
@@ -289,7 +304,7 @@ The consequences are structural, not stylistic:
 
 - The overlay **cannot observe the tab bar**. Neither its height nor its minimize state is exposed
   by any API — Expo records this as a known native-tabs limitation — so every value in
-  [`features/navigation-dock/navigation-dock-metrics.ts`](../../features/navigation-dock/navigation-dock-metrics.ts)
+  [`apps/mobile/src/features/navigation-dock/navigation-dock-metrics.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-metrics.ts)
   is measured on a running simulator and annotated with the measurement rather than derived.
   Re-measure — do not recompute — after any change to the bar. `NavigationDock` passes
   `NAVIGATION_DOCK_BOTTOM_INSET` to the native view as `bottomInset`, which anchors the panel above
@@ -305,7 +320,8 @@ The consequences are structural, not stylistic:
   covers everything on screen and that padding is gone.
 - Declaring the trigger in the tab layout is what makes Create appear on all four tabs from one
   declaration instead of a `+` per screen. The comment in
-  [`app/(private)/workouts/index.tsx`](<../../app/(private)/workouts/index.tsx>) marks where it used
+  [`apps/mobile/app/(private)/workouts/index.tsx`](<../../apps/mobile/app/(private)/workouts/index.tsx>)
+  marks where it used
   to live.
 
 ### A resolved HIG divergence
@@ -314,15 +330,17 @@ This used to record a deliberate divergence: the create button floated in the co
 Apple's HIG advises against, and the iOS HIG has no floating-action-button idiom at all — the term is
 Material Design's. **Both are now moot.** The button is a `UITabBar` item that UIKit places and
 draws, so there is nothing floating in the content layer and nothing Android-flavoured left to name;
-the `features/floating-action-button/` directory is deleted. What remains of the trade is the
+the former floating-action-button feature is deleted. What remains of the trade is the
 pre-iOS-26 rendering noted above.
 
 ### The actions are stubs
 
-**The panel's three actions — Start Workout, New Template, Custom Exercise — are disabled stubs.**
-They render, they are unreachable, and there is nowhere to send them: no route in `app/` creates a
+**The panel's three actions — Start Workout, New Workout Template, Custom Exercise — are disabled
+stubs.**
+They render, they are unreachable, and there is nowhere to send them: no route in `apps/mobile/app/`
+creates a
 workout, a template, or an exercise. Each descriptor in
-[`features/navigation-dock/navigation-dock-actions.ts`](../../features/navigation-dock/navigation-dock-actions.ts)
+[`apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts)
 ships `enabled: false`, and the native control is disabled with `isEnabled = false` rather than by
 switching off user interaction — so a disabled action **swallows** its touch instead of dropping it
 through to the panel behind. `onActionPress` is wired to an empty handler rather than left off, so
@@ -335,13 +353,13 @@ and so also earns a haptic.
 ## Sheets
 
 Only one sheet is a route:
-[`app/(private)/settings/edit-profile.tsx`](<../../app/(private)/settings/edit-profile.tsx>),
+[`apps/mobile/app/(private)/settings/edit-profile.tsx`](<../../apps/mobile/app/(private)/settings/edit-profile.tsx>),
 presented as a `formSheet` with two detents, configured in the Settings layout because presentation
 belongs to route registration.
 
 Everything else that looks like a sheet is a SwiftUI presentation inside a screen — the exercise
 detail in
-[`features/exercises/exercise-detail-sheet.tsx`](../../features/exercises/exercise-detail-sheet.tsx)
+[`apps/mobile/src/features/exercises/exercise-detail-sheet.tsx`](../../apps/mobile/src/features/exercises/exercise-detail-sheet.tsx)
 is driven by component state, so it has no URL, no back-stack entry, and no route file. Reach for
 a route only when the sheet should be addressable or survive a push; otherwise keep it local.
 
@@ -349,9 +367,10 @@ a route only when the sheet should be addressable or survive a push; otherwise k
 
 There are exactly two imperative navigation calls in the app, both in Settings:
 `router.push('/settings/edit-profile')` in
-[`features/settings/settings-content.tsx`](../../features/settings/settings-content.tsx), and
+[`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx),
+and
 `router.back()` in
-[`features/settings/edit-profile-form.tsx`](../../features/settings/edit-profile-form.tsx)
+[`apps/mobile/src/features/settings/edit-profile-form.tsx`](../../apps/mobile/src/features/settings/edit-profile-form.tsx)
 **after** a successful write. The ordering there is a rule, not an accident: dismissing a form
 sheet reads to the user as a completed save, so the dismissal must follow the write.
 

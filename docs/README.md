@@ -2,7 +2,7 @@
 type: index
 status: current
 area: documentation
-updated: 2026-08-20
+updated: 2026-08-21
 ---
 
 # Documentation
@@ -41,7 +41,7 @@ Four rules follow from that split:
 - Describing how a subsystem is put together and why → `docs/app/`.
 - Describing what a user does, across more than one screen → `docs/flows/`. This is the primary
   unit of durable product documentation, because the cross-screen narrative is exactly what cannot
-  be recovered by reading any single directory under `features/`.
+  be recovered by reading any single directory under `apps/mobile/src/features/`.
 - Describing work that has not happened yet → `docs/plans/<initiative-name>/plan.md`.
 - Splitting that work into independently executable items → `docs/plans/<initiative-name>/tasks/`.
 
@@ -105,14 +105,15 @@ per-feature tier; see the argument above.
 an editor preview, and in Obsidian alike.
 
 **Paths are repository-relative and written as links, not bare text.** From a document in
-`docs/flows/`, source is `../../features/workouts/workouts-content.tsx`; from
-`docs/plans/<initiative-name>/`, it is `../../../features/…`. Link inline, in the sentence that
-makes the claim — durable documents do not collect links into a "sources" section at the bottom.
+`docs/flows/`, source is `../../apps/mobile/src/features/workouts/workouts-content.tsx`; from
+`docs/plans/<initiative-name>/`, it is `../../../apps/mobile/src/features/...`. Link inline, in the
+sentence that makes the claim. Durable documents do not collect links into a "sources" section at
+the bottom.
 
 **Wrap any path containing parentheses in angle brackets**, or the link breaks:
 
 ```markdown
-[`app/(private)/workouts/index.tsx`](<../../app/(private)/workouts/index.tsx>)
+[`apps/mobile/app/(private)/workouts/index.tsx`](<../../apps/mobile/app/(private)/workouts/index.tsx>)
 ```
 
 **Every path must exist on disk.** This is the one thing tooling can check, and the one failure

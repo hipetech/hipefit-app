@@ -2,15 +2,16 @@
 type: app
 status: current
 area: ui
-updated: 2026-08-20
+updated: 2026-08-21
 ---
 
 # The UI system
 
 The app renders **real SwiftUI from React**, through `@expo/ui`. There is no cross-platform component
-abstraction under it and no styling framework over it: no Tailwind, no `className`, no CSS, no theme
-provider. Metro carries no `global.css` and no uniwind configuration, and the root layout wraps only
-`GestureHandlerRootView` ([app/\_layout.tsx](../../app/_layout.tsx)). Everything below is a
+abstraction under it and no styling framework over it: no Tailwind, no `className`, no CSS, and no
+app styling theme provider. Metro carries no `global.css` and no uniwind configuration. The root
+layout mounts `GestureHandlerRootView` and a React Navigation `ThemeProvider` for navigation chrome
+([apps/mobile/app/\_layout.tsx](../../apps/mobile/app/_layout.tsx)). Everything below is a
 consequence of that choice.
 
 This document is the authority for building screen bodies. Navigation chrome — titles, toolbars,
@@ -25,40 +26,45 @@ A screen is composed from three things that look similar and are not:
 - the **SwiftUI tree**, imported from `@expo/ui/swift-ui` — `VStack`, `HStack`, `Spacer`, `Text`,
   `List`, `Section`, `Button`, `Menu`, `Picker`, `Alert`, `DisclosureGroup`, plus the `modifiers`
   vocabulary from `@expo/ui/swift-ui/modifiers`;
-- the **`ui/` primitives**, which package a recurring shape in one or the other of those.
+- the shared **`@hipefit/ui` primitives** and app-owned **`src/components/` primitives**, which
+  package recurring shapes in one tree or the other.
 
-`Host` is the bridge from the RN tree into a SwiftUI tree, and `RNHostView` is the bridge back. Both
-are one-way doors: **no flexbox, no RN style objects and no RN components exist inside a `Host`** —
-layout there is SwiftUI stacks plus `modifiers`, and text is the SwiftUI `Text`, not
-[ui/text.tsx](../../ui/text.tsx).
+`Host` is the bridge from the RN tree into a SwiftUI tree, and `RNHostView` is the explicit bridge
+back. Flexbox, RN style objects, and RN components do not exist directly in the SwiftUI side of a
+`Host`; layout there is SwiftUI stacks plus `modifiers`, and text is the SwiftUI `Text`, not
+[apps/mobile/src/components/text.tsx](../../apps/mobile/src/components/text.tsx). React Native content
+can re-enter only as the child of an `RNHostView`.
 
 ## `Host` ownership
 
 **One `Host` per island, never nested.** Import `Host` only from the `@expo/ui` root, never from
 `@expo/ui/swift-ui`. Pass `colorScheme={useAppColorScheme()}`
-([hooks/use-app-color-scheme.ts](../../hooks/use-app-color-scheme.ts)).
+([apps/mobile/src/hooks/use-app-color-scheme.ts](../../apps/mobile/src/hooks/use-app-color-scheme.ts)).
 
 **Never pass `seedColor`.** Leaving it unset makes SwiftUI adopt the system accent, which is the
 intended look — the app deliberately has no brand color so it reads as a native Apple app. The
-rationale is recorded at the top of [theme/colors.ts](../../theme/colors.ts) (`theme/colors.ts:12-16`),
-which also warns that the `accent` token exists for RN tint props only and must never be used to pin
-a `seedColor`.
+rationale is recorded in [`packages/ui/src/colors.ts`](../../packages/ui/src/colors.ts), which also
+warns that the `accent` token exists for RN tint props only and must never be used to pin a
+`seedColor`.
 
 A `List` has **no intrinsic content height**, so it can only live at the root of a `Host` that owns
 real space: `style={layout.groupedScreen}` with `flex: 1` and deliberately **no** `matchContents`.
 Nesting a `List` inside an RN `ScrollView`, or measuring its `Host` with `matchContents`, renders
 nothing at all. Row-sized islands are the opposite case and use
 `matchContents={{ vertical: true }}` — see
-[features/exercises/exercise-row.tsx](../../features/exercises/exercise-row.tsx) against
-[features/home/home-content.tsx](../../features/home/home-content.tsx).
+[apps/mobile/src/features/exercises/exercise-row.tsx](../../apps/mobile/src/features/exercises/exercise-row.tsx)
+against
+[apps/mobile/src/features/home/home-content.tsx](../../apps/mobile/src/features/home/home-content.tsx).
 
 Remote images inside a `Host` go through `RNHostView` + `expo-image`, **never a second `Host`**:
 SwiftUI's `Image` cannot load a URL. `RNHostView` attaches an `RCTSurfaceTouchHandler` to the hosted
 RN view, whose gesture recognizer swallows taps meant for an enclosing SwiftUI `Button`, so a purely
 presentational hosted image must carry `pointerEvents="none"` —
-[features/avatar/avatar.tsx](../../features/avatar/avatar.tsx) documents the case that found this
+[apps/mobile/src/features/avatar/avatar.tsx](../../apps/mobile/src/features/avatar/avatar.tsx)
+documents the case that found this
 (the Settings profile row),
-and [features/exercises/exercise-detail-sheet.tsx](../../features/exercises/exercise-detail-sheet.tsx)
+and
+[apps/mobile/src/features/exercises/exercise-detail-sheet.tsx](../../apps/mobile/src/features/exercises/exercise-detail-sheet.tsx)
 is the other call site.
 
 ## Component files and props
@@ -71,28 +77,34 @@ deliberate project-wide decision, not something to reinstate one component at a 
 A reusable component declares and **exports** its own `Props` interface with a doc comment per prop
 and the default recorded as `@default` — `CardProps`, `ChipProps`, `AvatarProps`, `SeparatorProps`,
 `ExerciseRowProps`. The two plain-RN primitives are the exception rather than the pattern:
-[ui/text.tsx](../../ui/text.tsx) extends React Native's own `Text` props and exports only the
-`TextVariant` union, and [ui/progress.tsx](../../ui/progress.tsx) keeps `ProgressProps` file-local.
+[apps/mobile/src/components/text.tsx](../../apps/mobile/src/components/text.tsx) extends React
+Native's own `Text` props and exports only the `TextVariant` union, and
+[apps/mobile/src/components/progress.tsx](../../apps/mobile/src/components/progress.tsx) keeps
+`ProgressProps` file-local.
 
-## The `ui/` primitives
+## Shared and app UI primitives
 
-Six files, and the inventory is complete as written:
+The shared package owns semantic colors and host-less SwiftUI primitives. The mobile app owns the
+plain React Native wrappers:
 
-| Primitive                           | Tree     | Notes                                                       |
-| ----------------------------------- | -------- | ----------------------------------------------------------- |
-| [Card](../../ui/card.tsx)           | SwiftUI  | Host-less surface container; border-box `width`             |
-| [Chip](../../ui/chip.tsx)           | SwiftUI  | Capsule status label; variants map to system status colors  |
-| [Separator](../../ui/separator.tsx) | SwiftUI  | Native `Divider` horizontally, a tinted 1pt rule vertically |
-| [Text](../../ui/text.tsx)           | Plain RN | Apple's 11 text styles — see [Typography](#typography)      |
-| [Progress](../../ui/progress.tsx)   | Plain RN | Determinate bar; **no call sites today**                    |
-| [Image](../../ui/Image.tsx)         | Plain RN | A one-line re-export of `expo-image`                        |
+| Primitive                                                 | Owner         | Tree     | Notes                                                       |
+| --------------------------------------------------------- | ------------- | -------- | ----------------------------------------------------------- |
+| [Card](../../packages/ui/src/card.tsx)                    | `@hipefit/ui` | SwiftUI  | Host-less surface container; border-box `width`             |
+| [Chip](../../packages/ui/src/chip.tsx)                    | `@hipefit/ui` | SwiftUI  | Capsule status label; variants map to system status colors  |
+| [Separator](../../packages/ui/src/separator.tsx)          | `@hipefit/ui` | SwiftUI  | Native `Divider` horizontally, a tinted 1pt rule vertically |
+| [Text](../../apps/mobile/src/components/text.tsx)         | mobile app    | Plain RN | Apple's 11 text styles; see [Typography](#typography)       |
+| [Progress](../../apps/mobile/src/components/progress.tsx) | mobile app    | Plain RN | Determinate bar; **no call sites today**                    |
+| [Image](../../apps/mobile/src/components/image.tsx)       | mobile app    | Plain RN | A one-line re-export of `expo-image`                        |
 
-The three SwiftUI primitives are **host-less** — they compose inside a screen's `Host` and must never
-open one of their own. The three plain-RN primitives are usable anywhere in the RN tree and nowhere
-inside a `Host`.
+The three SwiftUI primitives are **host-less**. They compose inside a screen's `Host` and must never
+open one of their own. The three plain-RN primitives are usable in the RN tree, including through an
+`RNHostView`, but never directly in SwiftUI JSX. Semantic colors are defined in
+[`packages/ui/src/colors.ts`](../../packages/ui/src/colors.ts); the mobile
+[`src/theme/colors.ts`](../../apps/mobile/src/theme/colors.ts) file is only an app-local re-export.
 
 Avatar is a shared feature rather than a generic UI primitive. The component, fixed artwork palette,
-and deterministic seed selection live together under [`features/avatar/`](../../features/avatar).
+and deterministic seed selection live together under
+[`apps/mobile/src/features/avatar/`](../../apps/mobile/src/features/avatar).
 It uses a supplied stable user seed to choose one of 14 pastel vertical gradients. Each swatch
 specifies dark or light initials for contrast, and a display-name edit does not change the selected
 background. Names render the first and final initials; when `source` is present, `expo-image` crops
@@ -100,10 +112,10 @@ it to fill the same circle instead. Home uses it in a transparent greeting row, 
 it in the profile row. The component accepts an image URI but the app has no photo picker or upload
 path.
 
-Add to `ui/` only when a generic shape has more than one call site. Anything with a single call site
-stays in its feature directory, where its rationale can live beside the screen that needs it. Avatar
-is shared but remains a feature because its domain-specific palette and identity rules belong with
-the component rather than in cross-cutting modules.
+Add a generic SwiftUI shape to `@hipefit/ui` only when it has more than one call site. App-specific
+React Native wrappers stay in `apps/mobile/src/components/`. Anything with one call site stays in its
+feature directory, where its rationale can live beside the screen that needs it. Avatar is shared but
+remains a feature because its domain-specific palette and identity rules belong with the component.
 
 ## When a hand-written native view is correct
 
@@ -112,7 +124,7 @@ the component rather than in cross-cutting modules.
 as `@hipefit/navigation-dock`, whose `NavigationDockView` is a UIKit `ExpoView` — the create action
 panel and the scrim behind it, drawn in UIKit rather than SwiftUI. It draws no button: Create is a
 `UITabBar` item, for the reason given in [navigation.md](navigation.md). Where such packages live and
-how they are linked is in [architecture.md](architecture.md#packages-the-local-native-boundary); this
+how they are linked is in [architecture.md](architecture.md#packages-reusable-workspace-boundaries); this
 section is about when reaching for one is justified and what the resulting view owes.
 
 Write a UIKit `ExpoView` only when the view needs something the SwiftUI bridge structurally cannot
@@ -144,8 +156,9 @@ ownership split is tabulated in [navigation.md](navigation.md).
 handles both sides of the iOS 26 line — `glassEffect` above, `.regularMaterial` below. It is the
 module's only SwiftUI, and the reason is animation rather than taste: a `CAAnimation` attached to a
 `UIGlassEffect` surface or any ancestor composites its system-drawn shadow twice, and SwiftUI's
-animation engine does not attach one. That file carries the measurement, the six falsified UIKit
-routes, and the numbers on both sides. It replaced a `MaterialSurfaceView` wrapper around
+animation engine does not attach one. Its source comment records the animation invariant; this
+section retains the measured failure and the six falsified UIKit routes. It replaced a
+`MaterialSurfaceView` wrapper around
 `UIVisualEffectView`, which no UIKit animation could fade cleanly.
 
 **Only the background is SwiftUI.** The grid, the scroll view and every control stay UIKit, drawn as
@@ -166,18 +179,9 @@ revisions stopped it short of the tab bar — one the dimming, one the touches �
 the first drew a bright band across the bottom of a dimmed screen, the second left a tab bar that
 still navigated from under a scrim.
 
-The OS split is an **availability check, never a preprocessor branch**, so one code path is compiled
-and shipped for every supported version. Glass is gated three times over: `#if compiler(>=6.2)`
-because `UIGlassEffect` does not exist in pre-Xcode-26 SDKs and would not compile; `@available(iOS
-26.0, *)`; and an `NSClassFromString` runtime probe, because early iOS 26 betas vend a
-`UIGlassEffect` whose initializer fails. Below that, the fallback is a `UIVisualEffectView` with
-`.systemChromeMaterial` — what UIKit puts behind its own bars, so the dock reads as chrome rather
-than as a sheet.
-
-Two ordering traps are encoded in that file and must not be "simplified" away: a glass effect
-assigned before the view has a non-zero size renders nothing, and re-assigning one without tearing
-down the old effect leaves the surface blank. So the effect is applied on the first real layout pass
-and not again.
+The OS split uses two gates. `#if compiler(>=6.2)` is required because `glassEffect` does not exist in
+pre-Xcode-26 SDKs and would not compile, while `#available(iOS 26.0, *)` selects `glassEffect` at
+runtime. Earlier iOS versions render a rounded rectangle filled with SwiftUI `.regularMaterial`.
 
 **Not verified below iOS 26.** The glass path was confirmed at runtime on an iOS 26.5 simulator. The
 16.4–25 fallback has never been seen — no pre-26 simulator runtime exists on this machine — so its
@@ -202,9 +206,9 @@ Two related distinctions, both easy to get backwards:
 
 ### Native motion
 
-The dock's motion is UIKit's, and it follows the same principle as the SwiftUI screens: one
-animation drives every view that participates. Since the backdrop became invisible, that is a single
-property — the panel's `alpha`, in one `UIView.animate` block. There is **no transform**. A glass
+The dock's UIKit motion follows the same principle as the SwiftUI screens: one animation drives every
+UIKit view that participates. Since the backdrop became invisible, that is a single property, the
+grid scroll view's `alpha`, in one `UIView.animate` block. There is **no transform**. A glass
 surface's shadow is drawn by the system and does not follow a scale, which showed up as a halo wider
 and darker than the card for the first frames of every open; a translation avoided that but bought
 nothing a fade does not already do. The backdrop still takes part in the _timing_: it is unhidden
@@ -214,7 +218,8 @@ bar item cannot cross-fade between two images, so it swaps. That is the one piec
 by moving the button into the bar.
 
 **Reduce Motion is a prop, not an automatic behaviour** — UIKit no more honours it for you than
-SwiftUI does. `reduceMotion` comes from [hooks/use-reduce-motion.ts](../../hooks/use-reduce-motion.ts),
+SwiftUI does. `reduceMotion` comes from
+[apps/mobile/src/hooks/use-reduce-motion.ts](../../apps/mobile/src/hooks/use-reduce-motion.ts),
 the same hook the `List` screens gate on. With the motion already reduced to a cross-fade for
 everyone, that path only shortens it.
 
@@ -222,9 +227,9 @@ everyone, that path only shortens it.
 the same curve and duration and look like one animation, and splitting them is what removes the
 doubled-shadow artifact rather than a compromise around it: the glass never gets a `CAAnimation`, and
 the grid is a sibling of the glass rather than an ancestor, so its animation cannot reach it.
-Fading the _card_ instead would put the animation above the glass and bring the halo straight back —
-[`DockGlassSurface.swift`](../../packages/navigation-dock/ios/DockGlassSurface.swift) carries the
-measurement and the six falsified alternatives. Check it before re-investigating.
+Fading the _card_ instead would put the animation above the glass and bring the halo straight back.
+This section records the measurement and the six falsified alternatives; check it before
+re-investigating.
 
 ### Accessibility rules for a native overlay
 
@@ -238,8 +243,7 @@ measurement and the six falsified alternatives. Check it before re-investigating
   therefore the Close button. The scrim blocks that region for everyone, so this matches the sighted
   behaviour rather than diverging from it.
 - **Focus is posted explicitly on both edges**, with `.layoutChanged`: to the first action on
-  expand — a container argument makes VoiceOver pick its own starting element, which lands on the
-  scroll view — and to `nil` on dismiss, asking UIKit to re-read the screen. It cannot name the
+  expand, and to `nil` on dismiss, asking UIKit to re-read the screen. It cannot name the
   Create button any more: that control belongs to the tab bar, and this view has no reference to it.
 - **Expanded state is spelled in the button's label**, "Create" / "Close", not in a selected trait —
   set on the trigger in the tab layout, not here.
@@ -257,26 +261,33 @@ measurement and the six falsified alternatives. Check it before re-investigating
 
 ## Color and theme
 
-[theme/colors.ts](../../theme/colors.ts) is the source of semantic app color. Tokens resolve to UIKit
-semantic colors through `Color.ios.*` — the type-safe `expo-router` wrapper, never raw
-`PlatformColor` — wrapped in `Platform.select` purely to supply a `default` web fallback. That
-`Platform.select` is the one sanctioned platform branch in the codebase, and there is no brand
-accent. The one fixed-artwork exception is the 14-swatch reference palette in
-[`features/avatar/avatar-backgrounds.ts`](../../features/avatar/avatar-backgrounds.ts); those colors
-must not adapt because they reproduce selectable artwork rather than semantic UI roles.
+[`packages/ui/src/colors.ts`](../../packages/ui/src/colors.ts) is the source of semantic app color.
+Tokens resolve to UIKit semantic colors through `Color.ios.*` — the type-safe `expo-router` wrapper,
+never raw `PlatformColor` — wrapped in `Platform.select` purely to supply a `default` web fallback.
+That `Platform.select` is the package's web-fallback branch, not an Android color implementation,
+and there is no brand accent. The mobile app re-exports the tokens from
+[`apps/mobile/src/theme/colors.ts`](../../apps/mobile/src/theme/colors.ts). The one fixed-artwork
+exception is the 14-swatch reference palette in
+[`apps/mobile/src/features/avatar/avatar-backgrounds.ts`](../../apps/mobile/src/features/avatar/avatar-backgrounds.ts);
+those colors must not adapt because they reproduce selectable artwork rather than semantic UI roles.
 
 Two tokens carry rules rather than values. `systemGroupedBackground` — not `systemBackground` — is
 the correct backdrop behind `insetGrouped` rows, which is why
-[theme/styles.ts](../../theme/styles.ts) names it once as `layout.groupedScreen` instead of letting
+[apps/mobile/src/theme/styles.ts](../../apps/mobile/src/theme/styles.ts) names it once as
+`layout.groupedScreen` instead of letting
 each grouped screen re-decide. And `accent` exists only for RN tint props; native controls are left
 untinted so they pick up the system accent.
 
 The user's theme preference lives at `profile.settings.theme` in Firestore and reaches the UI by two
-paths from one hook: [hooks/use-app-color-scheme.ts](../../hooks/use-app-color-scheme.ts) maps it to
+paths from one hook:
+[apps/mobile/src/hooks/use-app-color-scheme.ts](../../apps/mobile/src/hooks/use-app-color-scheme.ts)
+maps it to
 `'light' | 'dark' | undefined` (undefined meaning "follow the device"), the root layout applies it
-app-wide with `Appearance.setColorScheme` ([app/\_layout.tsx](../../app/_layout.tsx)), and every
+app-wide with `Appearance.setColorScheme`
+([apps/mobile/app/\_layout.tsx](../../apps/mobile/app/_layout.tsx)), and every
 `Host` receives the same value as `colorScheme`. Settings writes the preference through a menu
-`Picker` in a grouped row ([features/settings/settings-content.tsx](../../features/settings/settings-content.tsx)).
+`Picker` in a grouped row
+([apps/mobile/src/features/settings/settings-content.tsx](../../apps/mobile/src/features/settings/settings-content.tsx)).
 
 ## Where styles live
 
@@ -294,12 +305,14 @@ on a modifier array** — the `modifiers` prop is a mutable `ModifierConfig[]` a
 will not assign to it (TS4104).
 
 File-local arrays are `SCREAMING_SNAKE` with a `_MODIFIERS` suffix. Cross-file shapes live in
-[theme/styles.ts](../../theme/styles.ts) (`layout.*`) and [theme/modifiers.ts](../../theme/modifiers.ts)
+[`apps/mobile/src/theme/styles.ts`](../../apps/mobile/src/theme/styles.ts) (`layout.*`) and
+[`apps/mobile/src/theme/modifiers.ts`](../../apps/mobile/src/theme/modifiers.ts)
 (`mods.*`). Editing a shared entry moves every screen that uses it — when one site needs to differ,
 **inline that one site**, never edit the shared value. Two arrays that happen to look alike are not
 the same constant: `mods.secondaryActionButton`'s `frame({ maxWidth: Infinity })` stretches a control
 to fill its row, while `FILL_LEADING` in
-[features/exercises/exercise-row.tsx](../../features/exercises/exercise-row.tsx) adds
+[apps/mobile/src/features/exercises/exercise-row.tsx](../../apps/mobile/src/features/exercises/exercise-row.tsx)
+adds
 `alignment: 'leading'` to stretch a text column and left-align it. They must never be merged.
 
 ## Modifier order is semantics
@@ -313,10 +326,12 @@ Three consequences:
 - **Compose only at the ends**: `[...mods.bodyLabel, dyn]` or `[dyn, ...mods.bodyLabel]`. Never
   splice a dynamic modifier into the middle of a hoisted run. If the dynamic modifier belongs
   mid-sequence, keep the whole array inline at that call site —
-  [ui/chip.tsx](../../ui/chip.tsx) is the worked example, with its one variant-dependent
+  [`packages/ui/src/chip.tsx`](../../packages/ui/src/chip.tsx) is the worked example, with its one
+  variant-dependent
   `foregroundStyle` at index 1 of 7.
 - **Placement is load-bearing, and the reasoning belongs in a comment.**
-  [ui/card.tsx](../../ui/card.tsx) documents at length why `frame` must sit after `padding` (so
+  [`packages/ui/src/card.tsx`](../../packages/ui/src/card.tsx) documents at length why `frame` must
+  sit after `padding` (so
   `width` is the card's outer width) and before `background` (because `.background` reports the
   primary content size, and a `VStack` hugs its widest child rather than filling a proposed width —
   which is what made fixed-width workout-template cards render at visibly uneven widths).
@@ -338,7 +353,9 @@ back to match the skills.**
 
 ## Typography
 
-One vocabulary spans both trees. [ui/text.tsx](../../ui/text.tsx) exposes Apple's 11 text styles
+One vocabulary spans both trees.
+[`apps/mobile/src/components/text.tsx`](../../apps/mobile/src/components/text.tsx) exposes Apple's 11
+text styles
 under exactly the names in the `textStyle` union of `@expo/ui`'s `font()` modifier — `largeTitle ·
 title · title2 · title3 · headline · body · callout · subheadline · footnote · caption · caption2` —
 so an RN `Text` and a SwiftUI `Text` are described with identical words, and `mods.footnoteSecondary`
@@ -349,7 +366,8 @@ Type, and a `font` modifier supersedes `size`, so the two must never be combined
 Symbols too — `mods.title3` sizes a leading list glyph with a text style so it scales alongside the
 labels beside it.
 
-On the RN side the same discipline needs one extra prop. `ui/text.tsx` passes a per-variant
+On the RN side the same discipline needs one extra prop. The app's `components/text.tsx` passes a
+per-variant
 `dynamicTypeRamp` because RN otherwise applies a single flat multiplier, while Apple's ramps are not
 uniform — at accessibility sizes `body` grows proportionally much more than `largeTitle`. Passing the
 ramp routes scaling through `UIFontMetrics` for that style, which is the curve SwiftUI's
@@ -357,7 +375,7 @@ ramp routes scaling through `UIFontMetrics` for that style, which is the curve S
 instead of drifting apart. Never set `allowFontScaling={false}`.
 
 The one sanctioned exception to the text-style rule is
-[features/avatar/avatar.tsx](../../features/avatar/avatar.tsx), whose
+[apps/mobile/src/features/avatar/avatar.tsx](../../apps/mobile/src/features/avatar/avatar.tsx), whose
 initials are sized relative to a fixed-pixel circle that cannot itself scale; the file carries the
 full argument, including the fact that its `expo-image` branch has no Dynamic Type support at all.
 
@@ -367,7 +385,8 @@ Variants are **typography only**. `textAlign`, margins, padding, borders and any
 Counters that update in place take `monospacedDigit()` (SwiftUI) or `fontVariant: ['tabular-nums']`
 (RN) so the digits stop jittering. Reserve them for standalone figures: fixed-width digits inside a
 descriptive sentence fragment ("6 exercises · 45 min") read as a typographic mistake, which is why
-[features/home/home-content.tsx](../../features/home/home-content.tsx) applies them to the three
+[apps/mobile/src/features/home/home-content.tsx](../../apps/mobile/src/features/home/home-content.tsx)
+applies them to the three
 Activity values and to nothing else on the screen.
 
 ## Lists: bounded grouped lists versus the one catalogue
@@ -380,11 +399,14 @@ and, while stores load, `mods.listInsetGroupedRedacted` — redaction over the r
 plausible placeholder values, so there is one code path, no skeleton components and no layout jump.
 
 A `List` is **not virtualized**: every row is a live JSX node, so it suits bounded content only.
-[Exercises](<../../app/(private)/exercises/index.tsx>) is the deliberate exception. The catalogue is
+[Exercises](<../../apps/mobile/app/(private)/exercises/index.tsx>) is the deliberate exception. The
+catalogue is
 unbounded, so it keeps `@legendapp/list` with each row as its own `Host` island
-([features/exercises/exercise-row.tsx](../../features/exercises/exercise-row.tsx)) and reproduces the
+([apps/mobile/src/features/exercises/exercise-row.tsx](../../apps/mobile/src/features/exercises/exercise-row.tsx))
+and reproduces the
 grouped look by hand from the **measured** constants in
-[features/exercises/row-metrics.ts](../../features/exercises/row-metrics.ts). Those values track what
+[apps/mobile/src/features/exercises/row-metrics.ts](../../apps/mobile/src/features/exercises/row-metrics.ts).
+Those values track what
 SwiftUI actually draws rather than a documented figure: the real corner radius is ~22pt on iOS 26,
 not the widely-quoted 10pt, and the section margin measured 16pt rather than the often-quoted 20pt.
 **Re-measure them, do not re-derive them** — and note that `GROUPED_SEPARATOR_INSET` is documented as
@@ -398,7 +420,8 @@ Two `Section` traps, both found the hard way:
 - **`badge()` on a `Section` is broken.** It does not decorate the header; it collapses the title
   _into_ the first row, so the heading renders beside the row content with the count floating right.
   The supported escape hatch is a custom `header` node — `SectionHeader` in
-  [features/workouts/workouts-content.tsx](../../features/workouts/workouts-content.tsx) is the
+  [apps/mobile/src/features/workouts/workouts-content.tsx](../../apps/mobile/src/features/workouts/workouts-content.tsx)
+  is the
   worked example, and it deliberately sets **no** font or color, because the list style publishes the
   header font, color and text case through the SwiftUI environment and a plain child view inherits
   them. Hard-coding `footnote` + `secondaryLabel` there would look right today and drift from the
@@ -411,9 +434,11 @@ tall centred empty card the grouped-list migration deleted.
 ## The calendar: a React Native island inside the `List`
 
 Home's expandable calendar
-([features/calendar/index.tsx](../../features/calendar/index.tsx))
+([apps/mobile/src/features/calendar/index.tsx](../../apps/mobile/src/features/calendar/index.tsx))
 is the app's one substantial React Native island rendered _through_ the SwiftUI tree rather than
-beside it. [features/home/home-content.tsx](../../features/home/home-content.tsx) puts it in an
+beside it.
+[apps/mobile/src/features/home/home-content.tsx](../../apps/mobile/src/features/home/home-content.tsx)
+puts it in an
 `RNHostView matchContents` row of the screen's `List`, and strips the `insetGrouped` card off that
 one row so the grid reads as part of the page — `listSectionMargins`, `listRowInsets`,
 `listRowBackground` and `listRowSeparator`, all four, because `listSectionMargins` is what actually
@@ -432,7 +457,7 @@ because the list below has to be _pushed down_ by the opening month, and a trans
 anything — it would slide the calendar over the rows instead of moving them. Everything else in the
 island animates `transform` or `opacity`, which composite without touching layout. Nothing else may
 animate layout;
-[features/calendar/hooks/use-expansion.ts](../../features/calendar/hooks/use-expansion.ts)
+[apps/mobile/src/features/calendar/hooks/use-expansion.ts](../../apps/mobile/src/features/calendar/hooks/use-expansion.ts)
 carries the reasoning beside the one exception.
 
 **Virtualization does not belong inside an animating clip.** A horizontal paged `FlashList` was the
@@ -443,7 +468,8 @@ consequences on device — an initial scroll landing on the wrong page, a settle
 offset one page stale, and the grid going blank for ~430ms mid-collapse. Three fixed pages
 (previous, current, next, recentred on settle) replaced it, and bought nothing back: a month page is
 42 cells, well below the size at which recycling pays for itself. See
-[features/calendar/components/pager.tsx](../../features/calendar/components/pager.tsx) before
+[apps/mobile/src/features/calendar/components/pager.tsx](../../apps/mobile/src/features/calendar/components/pager.tsx)
+before
 reintroducing a list there.
 
 ## Hit testing and accessibility
@@ -462,24 +488,25 @@ not enough, because hit-testing follows drawn content rather than layout bounds.
 in a 60pt circle otherwise leaves an 18pt dead ring and fails Apple's 44pt minimum target.
 
 **No `@expo/ui` `Menu` exists in the app today.** The create menu was the last one and is now the
-native dock ([navigation.md](navigation.md)); the only menu still on screen is the
-`Stack.Toolbar.Menu` in [app/(private)/exercises/index.tsx](<../../app/(private)/exercises/index.tsx>),
-which is Expo Router's toolbar API and a different thing. Both rules above are recorded findings to
-apply if a SwiftUI `Menu` comes back, not descriptions of live code. Hit testing inside the native
-dock follows a different set of rules —
+native dock ([navigation.md](navigation.md)); no Expo Router toolbar menu is mounted either. Both
+rules above are recorded findings to apply if a SwiftUI `Menu` comes back, not descriptions of live
+code. Hit testing inside the native dock follows a different set of rules —
 [Pass-through hit testing](#pass-through-hit-testing) above.
 
 Two more rules the screens already follow. Decorative glyphs are hidden from VoiceOver with
 `accessibilityHidden(true)` so a row announces once — the hand-drawn disclosure chevron in
-[features/settings/settings-content.tsx](../../features/settings/settings-content.tsx) is the case
+[apps/mobile/src/features/settings/settings-content.tsx](../../apps/mobile/src/features/settings/settings-content.tsx)
+is the case
 in point. And where a container's `accessibilityLabel` is synthesized from its children, sibling
 controls announce identically and need `accessibilityIdentifier` to stay distinguishable, as the two
 buttons inside each expanded row of
-[features/exercises/exercise-row.tsx](../../features/exercises/exercise-row.tsx) do.
+[apps/mobile/src/features/exercises/exercise-row.tsx](../../apps/mobile/src/features/exercises/exercise-row.tsx)
+do.
 
 ## Haptics
 
-Feedback goes through [lib/haptics.ts](../../lib/haptics.ts) under **intent names** —
+Feedback goes through
+[apps/mobile/src/lib/haptics.ts](../../apps/mobile/src/lib/haptics.ts) under **intent names** —
 `hapticSelection`, `hapticImpact`, `hapticSuccess` — never raw `expo-haptics`. The wrapper is
 iOS-gated and fire-and-forget, so a haptic that fails (no Taptic Engine, Low Power Mode, simulator)
 cannot reject into the interaction it decorates. It also keeps the mapping from event kind to
@@ -519,7 +546,8 @@ the one recorded exception is the dock's modal presentation, argued in
 pass-through to `.animation(_:value:)` with no accessibility check
 (`AnimationModifier` in `node_modules/@expo/ui/ios/Modifiers/ViewModifierRegistry.swift`), and the
 SwiftUI environment value cannot be read from JS. Gate on
-[hooks/use-reduce-motion.ts](../../hooks/use-reduce-motion.ts) and **drop the motion modifiers
+[apps/mobile/src/hooks/use-reduce-motion.ts](../../apps/mobile/src/hooks/use-reduce-motion.ts) and
+**drop the motion modifiers
 entirely** rather than animating to zero duration. UIKit is no different — the native dock reads the
 same hook, as [Native motion](#native-motion) records.
 
@@ -528,7 +556,7 @@ same hook, as [Native motion](#native-motion) records.
 jumps straight to its target whenever the OS setting is on. So the calendar opens and closes
 instantly, correctly, with no `useReducedMotion()` check in the hook and none in any component —
 see the `reduceMotion`-is-deliberately-absent note in
-[features/calendar/hooks/use-expansion.ts](../../features/calendar/hooks/use-expansion.ts).
+[apps/mobile/src/features/calendar/hooks/use-expansion.ts](../../apps/mobile/src/features/calendar/hooks/use-expansion.ts).
 **Do not import `useReduceMotion()` into a Reanimated island.** That hook exists for the two engines
 that have no check of their own; using it on this side reintroduces by hand a branch Reanimated
 already takes, and a hand-written branch can be wrong. (Testers: iOS applies a Reduce Motion change
@@ -537,6 +565,7 @@ to a running app only after a relaunch.)
 Gate on loading state as well. `.animation(_:value:)` never animates the first time it is applied, so
 introducing it at the moment redaction lifts is what stops placeholder figures from visibly rolling
 into the real ones — see `counterModifiers` in
-[features/home/home-content.tsx](../../features/home/home-content.tsx), which returns the static base
+[apps/mobile/src/features/home/home-content.tsx](../../apps/mobile/src/features/home/home-content.tsx),
+which returns the static base
 array whenever the stores are loading or Reduce Motion is on, leaving the redacted modifier arrays
 byte-identical to what they were before.

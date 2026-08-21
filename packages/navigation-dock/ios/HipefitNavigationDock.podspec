@@ -5,7 +5,7 @@ Pod::Spec.new do |s|
   s.description    = 'iOS-only Expo view module that renders the Hipefit create action panel and its scrim.'
   s.author         = ''
   s.homepage       = 'https://docs.expo.dev/modules/'
-  # Matches `ios.deploymentTarget` in ios/Podfile.properties.json. The iOS 26
+  # Matches `ios.deploymentTarget` in apps/mobile/ios/Podfile.properties.json. The iOS 26
   # glass material is reached through availability checks, not a raised floor.
   s.platforms      = {
     :ios => '16.4'

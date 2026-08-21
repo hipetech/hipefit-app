@@ -2,310 +2,294 @@
 type: app
 status: current
 area: architecture
-updated: 2026-08-20
+updated: 2026-08-21
 ---
 
 # Application architecture
 
-Hipefit is an iOS-only Expo (SDK 57, bare workflow) app. This document describes the durable,
-cross-feature shape of the code — what the layers are, why they are separated the way they are, and
-where a new piece of work belongs. It does not restate APIs; follow the links for detail.
+Hipefit is an iOS-only Expo SDK 57 app in a Bun workspace. The Expo app uses the bare workflow and
+lives under [`apps/mobile/`](../../apps/mobile). This document describes the cross-feature layers,
+their boundaries, and where new work belongs.
 
-Rules that every agent must obey unconditionally live in [AGENTS.md](../../AGENTS.md). This document
-explains the reasoning behind them and the parts of the system no single rule covers. The Firestore
-schema is in [docs/db-structure.md](../db-structure.md).
+Rules that every agent must follow live in [`AGENTS.md`](../../AGENTS.md). The Firestore schema is
+documented in [`docs/db-structure.md`](../db-structure.md).
 
-## The layering
+## Layers
 
-There are four layers on the read path and no service tier between them:
+The mobile read path is split across these layers:
 
-```text
-app/            route files — title, navigation chrome, one feature island
-features/       screen bodies, row components, and the Zustand store per domain
-database/       Firestore refs, document types, subscription orchestration
-Firebase        Firestore / Auth, via @react-native-firebase directly
-```
+| Layer             | Location                                                                              | Owns                                                               |
+| ----------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Routes            | [`apps/mobile/app/`](../../apps/mobile/app)                                           | Expo Router files, navigation chrome, and one feature island       |
+| Features          | [`apps/mobile/src/features/`](../../apps/mobile/src/features)                         | Screen bodies and feature-specific components                      |
+| Stores            | [`apps/mobile/src/stores/`](../../apps/mobile/src/stores)                             | Zustand state, actions, and subscription-facing state updates      |
+| Services          | [`apps/mobile/src/services/`](../../apps/mobile/src/services)                         | App-specific Firebase queries, listeners, provisioning, and writes |
+| Firebase bindings | [`@hipefit/firebase/react-native`](../../packages/firebase/src/react-native/index.ts) | React Native Firebase SDK instances and typed ref builders         |
+| Firebase          | [Firestore configuration](../../firebase/firebase.json)                               | Auth and persisted data                                            |
 
-Four things sit beside those layers rather than inside them: `theme/` (colors, shared SwiftUI
-modifier arrays, shared RN styles), `ui/` (reusable native primitives), `lib/` + `hooks/`
-(formatting, constants, haptics, cross-feature hooks), and `packages/` (workspace packages the app
-consumes by name — today one iOS native module and one pure React integration; see
-[`packages/`: reusable workspace boundaries](#packages-reusable-workspace-boundaries)).
+Cross-cutting mobile code sits beside those layers under
+[`apps/mobile/src/`](../../apps/mobile/src): [`theme/`](../../apps/mobile/src/theme) holds shared
+modifier arrays and React Native styles, [`components/`](../../apps/mobile/src/components) holds
+app-owned React Native wrappers, [`lib/`](../../apps/mobile/src/lib) holds formatting, constants,
+and haptics, and [`hooks/`](../../apps/mobile/src/hooks) holds cross-feature hooks.
 
-The absence of an API/service layer is deliberate. Active reads are live `onSnapshot` subscriptions
-and the small write surface uses Firebase operations directly, so a wrapper would only add a name to
-pass through. What _is_ centralized is the part that actually varies: document paths
-(`database/refs.ts`), persisted types and runtime decoders, and subscription lifetime
-(`database/use-firestore-subscriptions.ts`).
+Workspace packages under [`packages/`](../../packages) are imported through package contracts.
+Portable Firestore contracts belong to `@hipefit/schemas`, framework-free catalogue and
+localization logic belongs to `@hipefit/domain`, and SDK-bound refs belong to
+`@hipefit/firebase/react-native`. This keeps Firebase calls out of stores without forcing unrelated
+consumers through one SDK-neutral Firebase API.
 
-## Feature-based organization
+## Feature organization
 
-A screen is a route file plus a feature island. The route file owns navigation chrome —
-`Stack.Screen.Title`, toolbars, search bars — and renders a single component from `features/`, which
-owns the body and reads its own stores. See
-[app/(private)/(home)/index.tsx](<../../app/(private)/(home)/index.tsx>) against
-[features/home/home-content.tsx](../../features/home/home-content.tsx) for the canonical pair.
+A screen is a route plus a feature island. The route owns navigation chrome such as
+`Stack.Screen.Title`, toolbars, and search bars. It renders a component from
+[`apps/mobile/src/features/`](../../apps/mobile/src/features), which owns the screen body and reads
+the stores it needs. Compare the canonical pair:
 
-The split exists because Expo Router's file tree is a _routing_ structure, and screen composition
-should not have to move when a route moves. It also keeps the chrome declarations — several of which
-must be literal JSX children of `Stack.Toolbar` to render at all — isolated from the part of the
-screen that changes most.
+- [`apps/mobile/app/(private)/(home)/index.tsx`](<../../apps/mobile/app/(private)/(home)/index.tsx>)
+- [`apps/mobile/src/features/home/home-content.tsx`](../../apps/mobile/src/features/home/home-content.tsx)
 
-Inside `features/<name>/`:
+The split keeps Expo Router's routing tree separate from screen composition. It also isolates
+navigation declarations that must remain literal children of Router components from the screen body
+that changes more often.
 
-- `<name>-content.tsx` is the screen island the route renders
-  ([features/workouts/workouts-content.tsx](../../features/workouts/workouts-content.tsx),
-  [features/settings/settings-content.tsx](../../features/settings/settings-content.tsx));
-- one named component per file for anything reused or large enough to read on its own
-  ([features/home/home-header.tsx](../../features/home/home-header.tsx),
-  [features/exercises/exercise-row.tsx](../../features/exercises/exercise-row.tsx));
-- `store/use-<name>-store.ts` for the domain's Zustand store;
-- measured native constants live next to the feature that measured them
-  ([features/exercises/row-metrics.ts](../../features/exercises/row-metrics.ts),
-  [features/navigation-dock/navigation-dock-metrics.ts](../../features/navigation-dock/navigation-dock-metrics.ts)).
+Most feature directories are flat:
 
-Two features do not follow the pattern, both knowingly.
-[app/(private)/exercises/index.tsx](<../../app/(private)/exercises/index.tsx>) keeps the list, the
-filter state and the placeholder data in the route file because the screen _is_ the list; and
-[features/auth/index.tsx](../../features/auth/index.tsx) is a bare `index.tsx` left over from an
-earlier convention. Neither is a template to copy.
+- `<name>-content.tsx` is the island rendered by the route, as in
+  [`workouts-content.tsx`](../../apps/mobile/src/features/workouts/workouts-content.tsx) and
+  [`settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx).
+- A component that needs its own name gets its own file, as in
+  [`home-header.tsx`](../../apps/mobile/src/features/home/home-header.tsx) and
+  [`exercise-row.tsx`](../../apps/mobile/src/features/exercises/exercise-row.tsx).
+- Measured native constants stay with the feature that measured them, as in
+  [`row-metrics.ts`](../../apps/mobile/src/features/exercises/row-metrics.ts) and
+  [`navigation-dock-metrics.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-metrics.ts).
 
-[features/calendar/](../../features/calendar) is a third, and this one **is** deliberate. It is the
-only feature grouped into `components/`, `helpers/` and `hooks/` behind an
-[index.tsx](../../features/calendar/index.tsx) that publishes the component and its
-[types.ts](../../features/calendar/types.ts) contract and nothing else. It earned the exception by
-size: fourteen files, roughly twice the next largest feature, at which point a flat directory stops
-telling you which of them a screen is allowed to import. The `calendar-` filename prefix went with
-the flattening — the directory already says it. Nothing outside the feature reaches past
-`@/features/calendar`.
+Stores and Firebase operations are not feature-local. Domain stores live in
+[`apps/mobile/src/stores/`](../../apps/mobile/src/stores), and SDK operations live in
+[`apps/mobile/src/services/`](../../apps/mobile/src/services). Feature components import them through
+the `@/` alias, which maps to [`apps/mobile/src/`](../../apps/mobile/src).
 
-Copy it only when a feature reaches a comparable size. Below that the flat layout is easier to read,
-which is why the other eight features keep it, and a half-populated `components/` directory is worse
-than no directory at all.
+The exercises route is a documented exception to the thin-route rule.
+[`apps/mobile/app/(private)/exercises/index.tsx`](<../../apps/mobile/app/(private)/exercises/index.tsx>)
+owns its virtualized list, search state, expansion state, and detail-sheet selection because the
+screen is the list. It is not a template for other routes.
 
-One feature directory has no route of its own. `features/navigation-dock/` is mounted by the tab
-layout rather than by a screen — it is the React adapter for the native create panel, plus the store
-the tab layout shares with it and the measured tab bar geometry both need. Its contract is in
-[navigation.md](navigation.md).
+[`apps/mobile/src/features/auth/index.tsx`](../../apps/mobile/src/features/auth/index.tsx) retains a
+generic `index.tsx` name from an earlier layout. New screen islands use the `<name>-content.tsx`
+convention instead.
 
-## State: one Zustand store per domain
+[`apps/mobile/src/features/calendar/`](../../apps/mobile/src/features/calendar) is deliberately
+grouped into `components/`, `helpers/`, and `hooks/` behind
+[`index.tsx`](../../apps/mobile/src/features/calendar/index.tsx). The calendar is large enough that a
+flat directory no longer shows which modules are public. Code outside the feature imports its
+component and types through `@/features/calendar`. Copy this structure only when a feature reaches a
+similar size.
 
-Stores are module-level singletons created with `create()` and live at
-`features/<name>/store/use-<name>-store.ts`. Zustand rather than context because the stores must be
-usable from outside React, where the subscription hook drives them through `getState()`, and because
-components select narrow slices instead of re-rendering on every unrelated snapshot.
+[`apps/mobile/src/features/navigation-dock/`](../../apps/mobile/src/features/navigation-dock) has no
+screen route. The private layout mounts it as the React adapter for the native create panel. Its UI
+state lives in
+[`use-navigation-dock-store.ts`](../../apps/mobile/src/stores/use-navigation-dock-store.ts) because
+the trigger and panel are mounted in different parts of the route layout. Its navigation contract is
+documented in [navigation.md](navigation.md).
 
-Two stores hold Firestore data:
+## Stores
 
-| Store                                                                    | Holds                                                                                 |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| [useUserStore](../../features/user/store/use-user-store.ts)              | profile, newest body measurement/current weight, and profile/settings/weigh-in writes |
-| [useExerciseStore](../../features/exercises/store/use-exercise-store.ts) | localized, visible exercise/category/equipment view models                            |
+Zustand stores are module-level singletons created with `create()` under
+[`apps/mobile/src/stores/`](../../apps/mobile/src/stores):
 
-Each exposes `subscribe(uid)` returning a teardown. The teardown detaches listeners and clears the
-slice back to initial values, including `isLoading: true`; there are no separate `reset()` actions.
+| Store                                                                                 | Holds                                                                    |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                      | Firebase user, auth loading state, Apple sign-in, and sign-out           |
+| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                      | Profile, newest body measurement, current weight, and user write actions |
+| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)              | Localized and visibility-filtered exercise catalogue view models         |
+| [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts) | Whether the native create panel is expanded                              |
 
-Conventions worth knowing before writing another store:
+Zustand is used instead of React context because subscription orchestration drives stores through
+`getState()` outside component trees, while components can select narrow slices.
 
-- **Every `onSnapshot` has an error callback** that logs with a store-specific prefix and completes
-  that listener's loading condition. The UI currently presents a failed listener like empty data.
-- **Every snapshot crosses the decoder boundary.** Malformed documents are logged and dropped before
-  they enter Zustand; TypeScript casts are not used as runtime validation.
-- **`isLoading` drives redaction, not an early return.** Screens render their real structure with
-  plausible placeholder values and apply `redacted('placeholder')` while loading. See
-  [features/home/home-content.tsx](../../features/home/home-content.tsx) and
-  [theme/modifiers.ts](../../theme/modifiers.ts).
-- **Derived data is computed in stores, not screens.** Localized exercise view models are published
-  centrally so consumers agree.
-- **Writes live on the owning store.** Auth creates or self-heals the user document. The user store
-  updates profile/settings and appends weigh-ins. Other data stores are read-only today.
+The two Firestore data stores expose `subscribe(uid)`, which returns a teardown. A teardown removes
+the service listeners and restores the store's initial loading state. They do not expose separate
+`reset()` actions. The navigation-dock store is UI state and has no Firestore lifecycle.
 
-[useExerciseStore](../../features/exercises/store/use-exercise-store.ts) is the complex catalogue
-store. It fans out over five Firestore collections: global exercises, categories and equipment, plus
-the user's custom exercises and custom categories. It keeps raw decoded snapshots in a closure and
-recomputes localized, visibility-filtered view models when any source or relevant user setting
-changes. The details and trust boundary live in [database.md](database.md).
+Data-store conventions:
 
-## Auth is a different kind of store
+- Every Firestore listener has an error callback. The service forwards errors to the owning store,
+  which logs a store-specific prefix and completes that listener's loading condition. Most UI
+  surfaces present a failed listener like empty data. If the user store finishes without a profile,
+  the exercise catalogue clears its lists and shows an empty state because it cannot safely choose a
+  locale or hidden-ref settings.
+- Every snapshot crosses a decoder from `@hipefit/schemas` before publication. Malformed documents
+  are logged and dropped instead of being trusted through a TypeScript cast.
+- Loading drives redaction rather than an early return. Screens render their normal structure with
+  plausible placeholders and apply `redacted('placeholder')`. See
+  [`home-content.tsx`](../../apps/mobile/src/features/home/home-content.tsx) and
+  [`modifiers.ts`](../../apps/mobile/src/theme/modifiers.ts).
+- Stores own state and actions. Services own Firebase operations. Framework-free derivation belongs
+  in `@hipefit/domain`.
 
-[useAuthStore](../../features/auth/store/use-auth-store.ts) does not follow the data stores'
-`subscribe(uid)` shape because it is what produces the uid. It exposes `initialize()`, which installs the
-Firebase `onAuthStateChanged` listener and returns a teardown, plus `signInWithApple()` and
-`signOut()`.
+The exercise store subscribes to five Firestore collections through
+[`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts). It keeps decoded raw
+inputs in its subscription closure and calls
+[`buildExerciseCatalogue`](../../packages/domain/src/exercises/catalogue.ts) whenever a source or a
+relevant user setting changes. The package function localizes labels, resolves refs, filters hidden
+or retired entries, and returns the published view models.
 
-`initialize()` is deliberately idempotent: four call sites invoke it (the root layout, the entry
-redirect, the login route and the auth screen it renders), and without the guard each call would
-overwrite the shared unsubscribe slot — leaking the previous listener and letting one component's
-cleanup tear down a listener it did not create. The comment at the guard records this.
+## Auth
 
-Sign-in also owns first-run provisioning and restored-session repair. Every authenticated callback
-ensures `users/{uid}` exists before publishing the user to the protected app. Creation is one document
-write with default body/settings fields; no reference data is copied. Apple's name-once-only behavior
-is handled by filling only missing name fields, so a non-empty user-edited display name is preserved.
+[`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts) does not use the data stores'
+`subscribe(uid)` shape because it produces the UID. It delegates SDK work to
+[`auth-service.ts`](../../apps/mobile/src/services/auth-service.ts) and exposes `initialize()`,
+`signInWithApple()`, and `signOut()`.
+
+`initialize()` is idempotent because the root layout, entry redirect, login route, and auth screen
+all call it. The guard prevents each call from replacing the shared unsubscribe slot or letting one
+caller's cleanup remove another caller's listener.
+
+The auth service also owns first-run profile provisioning and restored-session repair. Every
+authenticated callback ensures `users/{uid}` exists before the store publishes the user to the
+protected app. Creation writes one document with default profile, body, and settings fields. Apple's
+name-once behavior is handled by filling only missing name fields, so a non-empty user-edited display
+name remains unchanged.
 
 ## Subscription orchestration
 
-[database/use-firestore-subscriptions.ts](../../database/use-firestore-subscriptions.ts) is the only
-place data subscriptions start. It reads `user` from the auth store and, in one effect keyed on that
-user, calls `subscribe(uid)` on the two data stores and returns a teardown that unsubscribes both of
-them. It is called exactly once from [app/_layout.tsx](../../app/_layout.tsx), above the auth gate.
+[`use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts) is the
+only place data subscriptions start. It watches the auth user, starts the user and exercise stores
+for that UID, and returns a teardown for both. The root layout mounts it once in
+[`apps/mobile/app/_layout.tsx`](../../apps/mobile/app/_layout.tsx), above the protected route tree.
 
-Centralizing this buys three things a per-screen `useEffect` cannot: data is already streaming before
-any screen mounts, so tab switches are instant; sign-out tears every listener down in one place, so
-no store can keep serving the previous user's documents; and there is exactly one answer to "who
-listens to what", instead of a listener count that grows with screen mounts.
+This starts data before a feature screen mounts, keeps tab switches from creating duplicate
+listeners, and removes every user-scoped listener on sign-out. The consequence is that all seven
+current snapshot listeners remain live for the authenticated session. The app does not subscribe to
+workouts or workout templates.
 
-The consequence is that every subscribed collection stays live for the whole session. Workout and
-workout-template schemas remain in the database boundary, rules, and admin tooling, but the client
-does not subscribe to those collections or derive state from them.
+## Firebase and data packages
 
-## `database/`: the Firestore boundary
+The boundary has four parts:
 
-Everything Firestore-shaped is consolidated under [database/](../../database) and imported through
-the barrel [database/index.ts](../../database/index.ts), which re-exports refs, types, and decoders.
-The subscription hook is imported by its own path because it consumes that vocabulary rather than
-defining it.
+- [`@hipefit/schemas`](../../packages/schemas/src/index.ts) owns persisted document interfaces,
+  structural timestamps, `WithId<T>`, runtime decoders, write assertions, `Ref` strings, and path
+  strings. It has no runtime dependencies or Firebase SDK import.
+- [`@hipefit/domain`](../../packages/domain/src/index.ts) owns framework-free operations over those
+  contracts. Its current implementation is the exercise catalogue merge and localization fallback.
+- [`@hipefit/firebase/react-native`](../../packages/firebase/src/react-native/index.ts) owns React
+  Native Firebase Auth and Firestore instances plus ref builders. It builds refs from path strings in
+  `@hipefit/schemas`.
+- [`apps/mobile/src/services/`](../../apps/mobile/src/services) owns the mobile app's query shapes,
+  subscriptions, auth provisioning, and writes. It imports SDK operations directly and passes
+  decoded values or errors to stores.
 
-[database/refs.ts](../../database/refs.ts) exposes helpers only for the six collections the client
-currently accesses, plus the `users/{uid}` document helper. The schema still defines nine collections;
-workout and workout-template paths can return with their future implementation. Path discipline
-matters: user-owned collections are nested under `users/{uid}`, so an inline path is one typo away
-from the wrong subtree and would scatter schema changes through feature code.
+There is no app-local database barrel. App code imports contracts from `@hipefit/schemas`, catalogue
+logic from `@hipefit/domain`, and refs or SDK instances from `@hipefit/firebase/react-native`.
+Features normally reach Firebase-backed behavior through stores, not by calling services directly.
+The full trust boundary is documented in [database.md](database.md).
 
-[database/types.ts](../../database/types.ts) declares document interfaces, full `Ref` strings,
-localized maps, Firestore `Timestamp`, and `WithId<T> = { id: string; data: T }`.
-[database/decoders.ts](../../database/decoders.ts) validates unknown snapshot data and official writes;
-malformed read documents are logged and dropped. Firestore rules add owner isolation and top-level
-checks but cannot iterate nested exercise/set arrays or verify references. The schema and full trust
-boundary are in [docs/db-structure.md](../db-structure.md) and [database.md](database.md).
+## UI ownership
 
-## The UI layer
+The UI vocabulary spans a shared package and app-local adapters:
 
-The UI is not a fifth layer beneath `database/`. It is the vocabulary the screen bodies in
-`features/` are written in — real SwiftUI rendered from React through `@expo/ui` — supported by
-`theme/` (the token, modifier and style source), `ui/` (reusable native primitives) and the hooks and
-wrappers in `hooks/` and `lib/`. [ui.md](ui.md) is the authority for building in it; two structural
-facts belong here because they shape where code can live at all.
+- [`@hipefit/ui`](../../packages/ui/src/index.ts) owns the host-less SwiftUI `Card`, `Chip`, and
+  `Separator` primitives plus semantic `colors`.
+- [`apps/mobile/src/components/`](../../apps/mobile/src/components) owns app-specific React Native
+  `Text`, `Progress`, and `Image` wrappers.
+- [`apps/mobile/src/theme/colors.ts`](../../apps/mobile/src/theme/colors.ts) re-exports the package
+  colors so existing mobile code has one app-local token import.
+- [`apps/mobile/src/theme/modifiers.ts`](../../apps/mobile/src/theme/modifiers.ts) owns shared SwiftUI
+  modifier arrays, while [`styles.ts`](../../apps/mobile/src/theme/styles.ts) owns shared React Native
+  layout styles.
 
-**`Host` is a one-way boundary between two component trees.** That is a placement constraint, not
-just a styling one: a screen island is shaped around a single `Host`, and a shape reused across
-screens has to pick a side of the bridge before it can move into [ui/](../../ui) — the SwiftUI
-primitives are host-less and compose inside a screen's `Host`, the plain-RN ones are usable only
-outside one. The rules for building inside that boundary are in [ui.md](ui.md).
+`Host` remains a one-way boundary between React Native and SwiftUI trees. Shared SwiftUI primitives
+are host-less and compose inside a screen's `Host`. App React Native components are used in the React
+Native tree, including through `RNHostView` where a SwiftUI tree explicitly hosts one. The placement,
+modifier-order, typography, and color rules are documented in [ui.md](ui.md).
 
-**Styling is two vocabularies over one semantic token source**, which is why `theme/` sits beside the
-layers rather than inside them: [theme/colors.ts](../../theme/colors.ts) is the semantic token source,
-[theme/modifiers.ts](../../theme/modifiers.ts) holds the shared SwiftUI arrays and
-[theme/styles.ts](../../theme/styles.ts) the shared RN styles, so a screen never owns a color or a
-reusable layout of its own. Fixed artwork may stay with the feature that owns it: Avatar's reference
-swatches live in [`features/avatar/avatar-backgrounds.ts`](../../features/avatar/avatar-backgrounds.ts)
-rather than pretending to be semantic UI roles. What the shared tokens are, how the two vocabularies
-stay named alike, and the ordering rule that constrains how the shared arrays may be reused are all
-in [ui.md](ui.md).
+Fixed artwork may stay with its feature. For example,
+[`avatar-backgrounds.ts`](../../apps/mobile/src/features/avatar/avatar-backgrounds.ts) owns Avatar's
+reference swatches rather than treating artwork colors as semantic UI roles.
 
-Shared formatting lives in [lib/format.ts](../../lib/format.ts) — check it before writing a local
-helper. It holds the greeting and casing helpers, the metric/imperial converters, and the calendar
-date-ID and month/day formatters. Duration and volume helpers do **not** exist: they left with the
-workout store and will be written by whoever rebuilds it.
+Shared formatting lives in [`apps/mobile/src/lib/format.ts`](../../apps/mobile/src/lib/format.ts).
+It contains greeting and casing helpers, metric and imperial converters, and calendar date and label
+formatters. Duration and volume helpers do not exist because workout persistence is not implemented.
 
-## `packages/`: reusable workspace boundaries
+## Workspace packages
 
-[packages/](../../packages) holds code intentionally consumed through a package contract rather
-than the root `@/*` alias. There are two packages:
+[`package.json`](../../package.json) declares `apps/*` and `packages/*` workspaces. The current
+packages are:
 
-| Package                                                                          | Kind             | Owns                                                      |
-| -------------------------------------------------------------------------------- | ---------------- | --------------------------------------------------------- |
-| [`@hipefit/navigation-dock`](../../packages/navigation-dock/index.ts)            | Expo native view | UIKit create panel, scrim, and bridge types               |
-| [`@hipefit/expandable-accessory`](../../packages/expandable-accessory/README.md) | Pure React       | Router provider, content slots, outlets, and zoom trigger |
+| Package                                                                         | Kind                  | Owns                                              |
+| ------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------- |
+| [`@hipefit/config`](../../packages/config/package.json)                         | Shared configuration  | TypeScript and ESLint bases                       |
+| [`@hipefit/domain`](../../packages/domain/src/index.ts)                         | Pure TypeScript       | Framework-free catalogue and localization logic   |
+| [`@hipefit/expandable-accessory`](../../packages/expandable-accessory/index.ts) | React                 | Router provider, slots, outlets, and zoom trigger |
+| [`@hipefit/firebase`](../../packages/firebase/src/react-native/index.ts)        | SDK-bound TypeScript  | Target-specific Firebase instances and refs       |
+| [`@hipefit/navigation-dock`](../../packages/navigation-dock/index.ts)           | Expo native view      | UIKit create panel, scrim, and bridge types       |
+| [`@hipefit/schemas`](../../packages/schemas/src/index.ts)                       | Pure TypeScript       | Persisted contracts, validation, and path strings |
+| [`@hipefit/ui`](../../packages/ui/src/index.ts)                                 | SwiftUI through React | `Card`, `Chip`, `Separator`, and semantic colors  |
 
-The distinction is load-bearing. `navigation-dock` has `expo-module.config.json`, Swift, a podspec,
-and a typed `requireNativeView` bridge. `expandable-accessory` has none of those: it packages a
-reusable React coordination problem because its provider must span a NativeTabs subtree and a root
-Stack route, not because anything needs new native code.
+Package contracts are imported by name, never through a relative path into `packages/`. Each
+workspace that imports a package declares it at `workspace:*` in its own `package.json`.
+The root TypeScript program includes every `.ts` and `.tsx` file under `packages/`, including source
+that no consumer imports yet.
 
-- **A package is imported by name, never by path.**
-  `import { NavigationDockView } from '@hipefit/navigation-dock'`, not a `@/`-aliased path — the
-  `@/*` alias maps to the repository root and deliberately does not reach in here. That is the line
-  between the two directories: something reachable only by a relative path belongs in `features/`.
-- **Native packages are for views and APIs UIKit must own.** A native module is not the answer to
-  "this should look different" — `@expo/ui` renders real SwiftUI already. It is the answer to a
-  requirement the SwiftUI bridge structurally cannot serve; [ui.md](ui.md#when-a-hand-written-native-view-is-correct)
-  lists the three that produced this one and is the authority for how such a view must behave.
-- **Linking follows package kind.** Root `package.json` declares `workspaces: ["packages/*"]` and
-  both package dependencies at `workspace:*`, so Bun symlinks both into `node_modules`.
-  `navigation-dock` is native-autolinked through `expo-module.config.json` and has a `Podfile.lock`
-  entry pointing at `../packages/navigation-dock/ios`; changing its native dependency relationship
-  requires `pod install --project-directory=ios`. `expandable-accessory` is TypeScript only, so
-  adding it changed `bun.lock` but requires no pod install or native rebuild.
+`@hipefit/firebase` exposes a React Native entry instead of pretending every Firebase SDK has one
+shared API. A future SDK target gets its own entry point. `@hipefit/domain` and `@hipefit/schemas`
+remain free of React and React Native Firebase so non-mobile consumers can reuse them.
 
-  **The install layout is pinned, and must stay pinned.** Bun defaults a workspace install to the
-  _isolated_ linker, which stops hoisting transitive dependencies to the project root. Expo's Metro
-  config resolves `metro-runtime` from the root and Metro resolves its own transform worker the same
-  way, so the isolated layout takes the dev server down with
-  `Cannot read properties of undefined (reading 'transformFile')` while every package is nonetheless
-  installed. [bunfig.toml](../../bunfig.toml) pins the hoisted linker for that reason.
+`@hipefit/navigation-dock` has Swift source, a podspec, `expo-module.config.json`, and a typed
+`requireNativeView` bridge. `@hipefit/expandable-accessory` is React-only because it coordinates a
+provider across the NativeTabs and root Stack trees. The mobile adapter for the native package stays
+in
+[`navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx), where it
+can read app state and navigation.
 
-  The same episode surfaced a second rule. Adding workspaces also exposed a package the app imported
-  but never declared, relying on it being hoisted as someone else's transitive dependency. **If a
-  file imports it, `package.json` declares it.** A transitive dependency is an implementation detail
-  of the package that owns it, free to vanish in a patch release, and the failure surfaces at an
-  unrelated moment with nothing pointing back at the import that caused it.
+The install layout is pinned. Bun's isolated linker prevents Expo's Metro dependencies from being
+resolved from the workspace root, so [`bunfig.toml`](../../bunfig.toml) selects the hoisted linker.
+If a source file imports a dependency, the importing workspace declares it rather than relying on a
+transitive hoist.
 
-- **The app-specific side stays in `features/`.** The native package's `index.ts` exports a typed
-  view and nothing else — no state, store reads, or navigation. Its adapter is
-  [features/navigation-dock/navigation-dock.tsx](../../features/navigation-dock/navigation-dock.tsx).
-  Likewise, the expandable package knows only controlled `active`, an Expo Router `href`, React
-  nodes, and route state. A consumer remains responsible for feature state and visuals under
-  `features/`, while route files own the package outlets.
-- **The bridge is a contract in two files.** Prop and event names appear in the Swift
-  `ModuleDefinition` and in `index.ts`, and nothing checks that they agree: an unknown prop is
-  dropped silently and an unknown event never reaches JS. Rename in both or not at all.
+Native bridge prop and event names appear in both the Swift `ModuleDefinition` and the TypeScript
+entry point. Nothing checks that they match: unknown props are dropped and unknown events never
+reach JavaScript. Rename both sides together.
 
 ## Environments
 
-Three environments, each a distinct bundle identifier, Xcode scheme, Firebase project and App Store
+Each environment has its own bundle identifier, Xcode scheme, Firebase project, and App Store
 Connect record:
 
-| Environment | Scheme          | Bundle identifier                         | Info.plist                                             |
-| ----------- | --------------- | ----------------------------------------- | ------------------------------------------------------ |
-| development | `Hipefit-dev`   | `com.kyrylokorota.hipefitapp.development` | [Info-dev.plist](../../ios/Hipefit/Info-dev.plist)     |
-| staging     | `Hipefit-stage` | `com.kyrylokorota.hipefitapp.staging`     | [Info-stage.plist](../../ios/Hipefit/Info-stage.plist) |
-| production  | `Hipefit`       | `com.kyrylokorota.hipefitapp`             | [Info-prod.plist](../../ios/Hipefit/Info-prod.plist)   |
+| Environment | Scheme          | Bundle identifier                         | Info.plist                                                           |
+| ----------- | --------------- | ----------------------------------------- | -------------------------------------------------------------------- |
+| development | `Hipefit-dev`   | `com.kyrylokorota.hipefitapp.development` | [`Info-dev.plist`](../../apps/mobile/ios/Hipefit/Info-dev.plist)     |
+| staging     | `Hipefit-stage` | `com.kyrylokorota.hipefitapp.staging`     | [`Info-stage.plist`](../../apps/mobile/ios/Hipefit/Info-stage.plist) |
+| production  | `Hipefit`       | `com.kyrylokorota.hipefitapp`             | [`Info-prod.plist`](../../apps/mobile/ios/Hipefit/Info-prod.plist)   |
 
-The selection is **native, not JavaScript**. All three `GoogleService-Info-*.plist` files are bundled,
-and [ios/Hipefit/AppDelegate.swift](../../ios/Hipefit/AppDelegate.swift) picks one at launch by
-inspecting `Bundle.main.bundleIdentifier`, then calls `FirebaseApp.configure(options:)` with it.
-Nothing in the JS bundle needs to know which environment it is running in, which is why no store or
-screen reads an environment variable.
+Environment selection is native. All three Firebase plist files are bundled, and
+[`AppDelegate.swift`](../../apps/mobile/ios/Hipefit/AppDelegate.swift) selects one from the bundle
+identifier before configuring Firebase. Stores and screens do not choose a Firebase environment.
 
-The `ios:*` scripts in [package.json](../../package.json) copy the matching `.env.<environment>` file
-to `.env.local` and launch `expo run:ios` with the right scheme; [eas.json](../../eas.json) maps the
-same three names to build and submit profiles. The `.env` files currently define
-`EXPO_PUBLIC_APP_ENV` and `SECRET_API_KEY`, neither of which is read anywhere in the TypeScript
-sources — treat them as reserved rather than load-bearing.
+Root `ios:*` scripts in [`package.json`](../../package.json) delegate to
+[`apps/mobile/package.json`](../../apps/mobile/package.json), which copies the matching root
+`.env.<environment>` file to `apps/mobile/.env.local` and launches the correct scheme.
+[`apps/mobile/eas.json`](../../apps/mobile/eas.json) maps the same environment names to build and
+submit profiles.
 
-Being a bare workflow, [ios/](../../ios) is committed and authoritative: native configuration is
-edited there, not synthesized from [app.config.js](../../app.config.js), which carries only the
-Expo-level settings (`expo-router` plugin, typed routes, React Compiler). New Architecture is enabled
-in [ios/Podfile.properties.json](../../ios/Podfile.properties.json). Adding or removing a dependency
-with native code means running `pod install --project-directory=ios` and committing the
-`Podfile.lock` change in the same commit.
+The committed [`apps/mobile/ios/`](../../apps/mobile/ios) directory is authoritative for native
+configuration. [`apps/mobile/app.config.ts`](../../apps/mobile/app.config.ts) contains only Expo-level
+settings. New Architecture is enabled in
+[`Podfile.properties.json`](../../apps/mobile/ios/Podfile.properties.json). Adding or removing native
+code requires running `pod install` from `apps/mobile/ios/` and committing the resulting
+[`Podfile.lock`](../../apps/mobile/ios/Podfile.lock) change.
 
-## What is deliberately absent
+## Deliberately absent
 
-Stated plainly so nothing here is mistaken for shipped behavior:
-
-- **There is no workout player.** Start and Add to Workout affordances remain disabled in Home, the
-  exercise list rows, the exercise detail sheet, and the create panel — the reusable workout cards
-  that once carried them were deleted with the workout store. The `Workout` document type and
-  validation remain in place, but there is no workout store, read request, or write path.
-- **All three global create actions are stubs:** Start Workout, New Workout Template, and Custom Exercise
-  each ship `enabled: false` in
-  [features/navigation-dock/navigation-dock-actions.ts](../../features/navigation-dock/navigation-dock-actions.ts),
-  and native swallows their touches. See [navigation.md](navigation.md) for the panel itself.
-- **There is no automated test suite.** No test runner is installed; `bun run type-check` is the
-  verification gate, with `bun run lint` and `bun run format:check` alongside it.
-- **There is no Android project**, by decision — see [AGENTS.md](../../AGENTS.md). Reviving it is a
-  project-wide change, not a per-component one.
-- **`ios/hipefit-watch Watch App/` is an unmodified Xcode template** (a "Hello, world!" `ContentView`)
-  with schemes wired up per environment. There is no watch feature.
+- There is no workout player. Start and Add to Workout affordances remain disabled. Workout and
+  workout-template contracts and validation exist, but there is no app ref, listener, store, or
+  write path for either collection.
+- The three global create actions are disabled in
+  [`navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts).
+- There is no automated test runner. `bun run type-check` is the primary code gate, with
+  `bun run lint` and `bun run format:check` beside it.
+- There is no Android project. Reviving Android is a project-wide decision recorded in
+  [`AGENTS.md`](../../AGENTS.md).
+- [`apps/mobile/ios/hipefit-watch Watch App/`](<../../apps/mobile/ios/hipefit-watch Watch App>) is an
+  unmodified Xcode template. It does not implement a watch feature.

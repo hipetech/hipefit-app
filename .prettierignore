@@ -7,7 +7,7 @@ package-lock.json
 # Build outputs
 dist/
 build/
-.expo/
+**/.expo/
 .expo-shared/
 
 # Generated files
@@ -23,9 +23,7 @@ Thumbs.db
 .idea/
 
 # Native
-ios/Pods/
-android/.gradle/
-android/app/build/
+apps/mobile/ios/Pods/
 
 # Obsidian vault config. Obsidian rewrites these files itself, so formatting them
 # only produces a diff it will undo; the Markdown they describe is still formatted.
@@ -35,4 +33,3 @@ docs/.obsidian/
 # `bun run format` globs **/*.md and would otherwise rewrite these third-party
 # docs — reformatting tables and sorting imports inside their code fences.
 .agents/
-

@@ -1,13 +1,13 @@
-# GitHub Copilot ignore file - Excludes unnecessary files from Copilot context indexing
+# GitHub Copilot ignore file
 
-## Dependencies & Package Management
+## Dependencies and package management
 node_modules/
-bun.lockb
+bun.lock
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-## Build Outputs & Generated Files
+## Build outputs and generated files
 dist/
 build/
 .next/
@@ -16,29 +16,24 @@ web-build/
 *.tsbuildinfo
 .metro-health-check*
 
-## Native Build Artifacts
-android/build/
-android/.gradle/
-android/local.properties
-ios/Pods/
-ios/Podfile.lock
-ios/.xcode.env.local
+## Native build artifacts
+apps/mobile/ios/Pods/
+apps/mobile/ios/Podfile.lock
+apps/mobile/ios/.xcode.env.local
+apps/mobile/ios/build/
 *.xcarchive
 *.ipa
-*.apk
 DerivedData/
 
-## IDE & Editor Files
+## IDE and editor files
 .vscode/
 .idea/
 .cursor/
 *.swp
 *.swo
 *~
-.vscode/launch.json
-.vscode/tasks.json
 
-## Environment & Secrets
+## Environments and secrets
 .env
 .env.local
 .env.*.local
@@ -53,47 +48,19 @@ DerivedData/
 *.mobileprovision
 *.jks
 
-## Firebase & Credentials
+## Firebase credentials
 firebase-adminsdk-*.json
 service-account*.json
 *-firebase-adminsdk-*.json
 *.serviceAccountKey.json
 
-## Logs & Temporary Files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-bun-error.log
+## Logs, caches, and local state
 *.log
 .DS_Store
 Thumbs.db
-
-## OS-Specific
-.AppleDouble
-.LSOverride
-.DS_Store
-.env.local
-
-## Build Tracking
-.prebuild-env
-*.orig.*
-
-## Large Directories Not Needed for Code Context
-node_modules/
-android/
-ios/
-.expo/
-
-## Session & Cache Files
-.expo/devices.json
-.expo/settings.json
 *.cache
 .cache/
-
-## Testing & Coverage
 coverage/
 .nyc_output/
 *.lcov
-
-## Generated Files
 expo-env.d.ts

@@ -1,0 +1,16 @@
+{
+  "name": "@hipefit/firebase",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Target-specific Firebase SDK bindings for Hipefit consumers.",
+  "exports": {
+    "./react-native": "./src/react-native/index.ts"
+  },
+  "peerDependencies": {
+    "@react-native-firebase/auth": "25.1.0",
+    "@react-native-firebase/firestore": "25.1.0"
+  },
+  "dependencies": {
+    "@hipefit/schemas": "workspace:*"
+  }
+}
