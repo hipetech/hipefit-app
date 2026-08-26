@@ -281,7 +281,7 @@ island owns its `Host` and store reads. The route does not call services.
 ## TypeScript
 
 [`apps/mobile/tsconfig.json`](../../apps/mobile/tsconfig.json) extends Expo's base and the shared
-strict configuration in [`packages/config/tsconfig.json`](../../packages/config/tsconfig.json). The
+strict configuration in [`packages/config/base.json`](../../packages/config/base.json). The
 root [`tsconfig.json`](../../tsconfig.json) extends the same shared configuration for Firebase,
 scripts, and every TypeScript source file under `packages/`. Package files are checked even before a
 consumer imports or re-exports them.

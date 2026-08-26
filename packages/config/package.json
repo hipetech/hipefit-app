@@ -5,7 +5,7 @@
   "description": "Shared TypeScript and ESLint configuration for Hipefit workspaces.",
   "exports": {
     "./eslint": "./eslint.js",
-    "./tsconfig.json": "./tsconfig.json"
+    "./base.json": "./base.json"
   },
   "peerDependencies": {
     "eslint": "^9.39.5",

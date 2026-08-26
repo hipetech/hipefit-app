@@ -1,5 +1,5 @@
 {
-  "extends": ["expo/tsconfig.base", "@hipefit/config/tsconfig.json"],
+  "extends": ["expo/tsconfig.base", "@hipefit/config/base.json"],
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"]

@@ -1,5 +1,5 @@
 {
-  "extends": "@hipefit/config/tsconfig.json",
+  "extends": "@hipefit/config/base.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "esModuleInterop": true,
