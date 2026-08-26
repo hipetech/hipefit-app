@@ -60,6 +60,7 @@ jobs:
           fi
 
       - name: Run EAS Build
+        working-directory: apps/mobile
         run: |
           eas build \
             --platform ios \

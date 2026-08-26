@@ -2,7 +2,7 @@
 type: app
 status: current
 area: database
-updated: 2026-08-20
+updated: 2026-08-21
 ---
 
 # Firestore database structure
@@ -39,9 +39,10 @@ client read path; their schemas are retained for later implementation.
 ### Document identity
 
 Firestore document IDs are not repeated inside document data. Stores carry a read document as
-`WithId<T> = { id: string; data: T }`, keeping the ID separate from the persisted shape. Global IDs
-are deterministic lowercase slugs. User-subcollection IDs are Firestore IDs; the current weigh-in
-writer uses an auto ID.
+`WithId<T> = { id: string; data: T }` from
+[`@hipefit/schemas`](../packages/schemas/src/shared.ts), keeping the ID separate from the persisted
+shape. Global IDs are deterministic lowercase slugs. User-subcollection IDs are Firestore IDs; the
+current weigh-in writer uses an auto ID.
 
 ### Full references
 
@@ -94,7 +95,10 @@ decoders, and rules rather than a user journey.
 Changing `settings.language` recomputes exercise, category, and equipment view models from the
 already-subscribed locale maps. It does not refetch the collections. Never query or sort by a
 localized map key: documents without that locale would be omitted by Firestore. Lists resolve and
-sort names in memory instead.
+sort names in memory instead. Catalogue construction and locale fallback live in
+[`exercise-catalogue.ts`](../apps/mobile/src/features/exercises/exercise-catalogue.ts) and
+[`exercise-localization.ts`](../apps/mobile/src/features/exercises/exercise-localization.ts); the
+exercise store delegates that projection instead of owning a second implementation.
 
 ### Units and calendar values
 
@@ -205,7 +209,8 @@ exercise store, but hide/unhide controls are not shipped.
 
 Global categories sort by their `order`, followed by custom categories sorted by their `order`.
 Archived categories are absent from the visible category list. Exercise browse rows are filtered by
-retirement and user hidden refs, not by the archive flag.
+retirement and user hidden refs, not by the archive flag. These catalogue rules are implemented by
+[`exercise-catalogue.ts`](../apps/mobile/src/features/exercises/exercise-catalogue.ts).
 
 ### `users/{uid}/customExercises/{id}`
 
@@ -300,18 +305,24 @@ listener, edit action, or delete action in the app.
 
 ## Current read and write status
 
-| Collection                 | Current read behavior                | Current client writes                         |
-| -------------------------- | ------------------------------------ | --------------------------------------------- |
-| `users`                    | One profile listener                 | Create/self-heal; profile and settings update |
-| `exerciseCategories`       | One exercise-store listener          | None                                          |
-| `equipment`                | One exercise-store listener          | None                                          |
-| `exercises`                | One exercise-store listener          | None                                          |
-| `customExerciseCategories` | One exercise-store listener          | None                                          |
-| `customExercises`          | One exercise-store listener          | None                                          |
-| `workoutTemplates`         | None                                 | None                                          |
-| `workouts`                 | None                                 | None                                          |
-| `bodyMeasurements`         | One newest-first `limit(1)` listener | Append weigh-in only                          |
+| Collection                 | Current read behavior                         | Current client writes                         |
+| -------------------------- | --------------------------------------------- | --------------------------------------------- |
+| `users`                    | One profile listener in the user service      | Create/self-heal; profile and settings update |
+| `exerciseCategories`       | One listener in the exercise service          | None                                          |
+| `equipment`                | One listener in the exercise service          | None                                          |
+| `exercises`                | One listener in the exercise service          | None                                          |
+| `customExerciseCategories` | One listener in the exercise service          | None                                          |
+| `customExercises`          | One listener in the exercise service          | None                                          |
+| `workoutTemplates`         | None                                          | None                                          |
+| `workouts`                 | None                                          | None                                          |
+| `bodyMeasurements`         | One newest-first listener in the user service | Append weigh-in only                          |
 
-The three global collections are seeded by [`scripts/db/seed-exercises.ts`](../scripts/db/seed-exercises.ts).
-The app's schema interfaces and runtime validators live in
-[`database/types.ts`](../database/types.ts) and [`database/decoders.ts`](../database/decoders.ts).
+The three global collections are seeded by
+[`firebase/seed/seed-exercises.ts`](../firebase/seed/seed-exercises.ts). The persisted interfaces,
+runtime validators, write assertions, and path strings live in
+[`@hipefit/schemas`](../packages/schemas/src/index.ts). React Native Firebase instances and typed ref
+builders live in
+[`@hipefit/firebase/react-native`](../packages/firebase/src/react-native/index.ts). Mobile stores
+delegate Firebase subscriptions and writes to
+[`apps/mobile/src/services/`](../apps/mobile/src/services), which imports both packages; features do
+not construct Firestore paths inline.

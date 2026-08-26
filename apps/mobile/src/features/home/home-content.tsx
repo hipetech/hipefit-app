@@ -1,0 +1,408 @@
+import type { CalendarDateMarkers } from '@/features/calendar';
+import { useCallback, useState } from 'react';
+import { Host } from '@expo/ui';
+import {
+  Button,
+  HStack,
+  Image,
+  Label,
+  LabeledContent,
+  List,
+  RNHostView,
+  Section,
+  Spacer,
+  Text,
+  VStack,
+} from '@expo/ui/swift-ui';
+import {
+  Animation,
+  animation,
+  contentTransition,
+  font,
+  listRowBackground,
+  listRowInsets,
+  listRowSeparator,
+  listSectionMargins,
+  monospacedDigit,
+  padding,
+} from '@expo/ui/swift-ui/modifiers';
+
+import { ExpandableWeeklyCalendar } from '@/features/calendar';
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
+import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { toLocalDateId } from '@/lib/format';
+import { useAuthStore } from '@/stores/use-auth-store';
+import { useUserStore } from '@/stores/use-user-store';
+import { colors } from '@/theme/colors';
+import { mods } from '@/theme/modifiers';
+import { layout } from '@/theme/styles';
+
+import { HomeHeader } from './home-header';
+
+/** One row of the "Recent Workouts" section, already formatted for display. */
+interface RecentWorkoutRow {
+  id: string;
+  title: string;
+  /** "45 min · 6 exercises" */
+  meta: string;
+  dateLabel: string;
+  isCompleted: boolean;
+}
+
+/** The single highlighted workout template, formatted for display. */
+interface FeaturedWorkoutTemplate {
+  name: string;
+  description: string | null;
+  /** "6 exercises · 45 min" */
+  meta: string;
+}
+
+/**
+ * How an Activity figure rolls to its new value.
+ *
+ * 250ms of ease-in-out: fast enough that it reads as the number *settling*
+ * rather than as an effect, and comfortably inside the ~300ms budget the rest
+ * of the app's motion works to. Apple's `Animation.default` is roughly 350ms,
+ * which is noticeably draggy on a three-row stat block.
+ */
+const COUNTER_ANIMATION = Animation.easeInOut({ duration: 0.25 });
+
+/**
+ * The static half of an Activity value's modifiers — see `counterModifiers`
+ * below for why the motion modifiers are appended rather than baked in here.
+ */
+const COUNTER_BASE_MODIFIERS = [font({ textStyle: 'body' }), monospacedDigit()];
+
+/**
+ * Modifiers for one Activity value.
+ *
+ * `font` then `monospacedDigit` is the Phase 2.5 order and is load-bearing
+ * (index 0 is innermost, so the digit variant *refines* the resolved font
+ * instead of being overwritten by it). The two motion modifiers are appended
+ * **after** those, i.e. outermost: `contentTransition('numericText')` marks the
+ * text as a rolling odometer, and `animation` supplies the transaction that
+ * actually drives it — without the latter the transition never runs.
+ *
+ * `animated` is false while workout data loads and whenever Reduce Motion is on,
+ * which drops both modifiers entirely rather than animating to zero duration.
+ * Gating on load matters for more than taste: applying `.animation(_:value:)`
+ * for the first time never animates, so introducing it at the moment redaction
+ * lifts is what stops the placeholder figures from visibly rolling into the
+ * real ones. It also leaves the redacted modifier arrays byte-identical to what
+ * they were before, so nothing about the measured placeholder widths shifts.
+ */
+const counterModifiers = (value: number, animated: boolean) =>
+  animated
+    ? [
+        ...COUNTER_BASE_MODIFIERS,
+        contentTransition('numericText'),
+        animation(COUNTER_ANIMATION, value),
+      ]
+    : COUNTER_BASE_MODIFIERS;
+
+/**
+ * Realistic stand-ins rendered behind `redacted('placeholder')` while the
+ * data loads. Redaction needs real structure with plausible string lengths —
+ * there is deliberately no separate skeleton tree and no early return.
+ */
+const PLACEHOLDER_STATS = {
+  totalWorkouts: 12,
+  currentStreak: 3,
+  longestStreak: 9,
+};
+
+const PLACEHOLDER_TEMPLATE: FeaturedWorkoutTemplate = {
+  name: 'Placeholder Template',
+  description: 'A short workout-template description',
+  meta: '6 exercises · 45 min',
+};
+
+const PLACEHOLDER_WORKOUTS: RecentWorkoutRow[] = [
+  {
+    id: 'placeholder-1',
+    title: 'Placeholder Workout',
+    meta: '45 min · 6 exercises',
+    dateLabel: 'Yesterday',
+    isCompleted: true,
+  },
+  {
+    id: 'placeholder-2',
+    title: 'Another Workout',
+    meta: '38 min · 5 exercises',
+    dateLabel: '3 days ago',
+    isCompleted: true,
+  },
+  {
+    id: 'placeholder-3',
+    title: 'Morning Session',
+    meta: '52 min · 8 exercises',
+    dateLabel: '5 days ago',
+    isCompleted: true,
+  },
+];
+
+/**
+ * Strips a list row back to bare full-bleed space for the calendar.
+ *
+ * `insetGrouped` wants to put every row in a rounded card at a 16pt margin,
+ * which is right for the sections below and wrong for a calendar: the grid
+ * carries its own inset, so a card around it would double the margin and box in
+ * a surface that is meant to read as part of the page. All four are needed —
+ * `listSectionMargins` is what actually owns the horizontal 16pt under
+ * `insetGrouped`, and `listRowInsets` alone leaves it in place.
+ */
+const CALENDAR_ROW_MODIFIERS = [
+  listSectionMargins({ length: 0, edges: 'horizontal' }),
+  listRowInsets({ top: 0, leading: 0, bottom: 0, trailing: 0 }),
+  listRowBackground('transparent'),
+  listRowSeparator('hidden'),
+];
+
+const FEATURED_STACK_MODIFIERS = [padding({ vertical: 4 })];
+
+const RECENT_ROW_MODIFIERS = [padding({ vertical: 2 })];
+
+const EMPTY_DATE_MARKERS: CalendarDateMarkers[] = [];
+
+/**
+ * Body of the Home screen.
+ *
+ * The component reads the live user store itself and takes no props, so the
+ * route file stays thin (title + this island). Workout persistence is
+ * intentionally disconnected and those sections render honest empty values.
+ *
+ * **One `Host` around a SwiftUI `List`, with the calendar inside it.** The
+ * screen is a single screen-filling `Host` (`flex: 1`, deliberately **no**
+ * `matchContents`) around a `List` with `listStyle('insetGrouped')`; the `Host`
+ * needs that real flex space because a `List` has no intrinsic content height
+ * and renders nothing without it. `insetGrouped` supplies the 16pt margins,
+ * 44pt row heights, inset hairlines and grouped background for free, which is
+ * why every hand-rolled width/padding/gap constant is gone.
+ *
+ * The calendar is plain React Native and comes back through `RNHostView
+ * matchContents` as a full-bleed row of that list, rather than sitting above the
+ * `Host` as a sibling. That is what lets it scroll with the page rather than
+ * pinning above it. The price is real and accepted: its Reanimated
+ * open/close animates a height, so every frame of the spring crosses the bridge
+ * as an intrinsic-size invalidation on this row. If the open/close ever starts
+ * to stutter, that is where to look, and moving the calendar back out to a
+ * sibling island is the escape hatch.
+ *
+ * Home starts with a transparent profile greeting row. It stays in this Host so
+ * the avatar and typography remain native SwiftUI.
+ */
+export const HomeContent = () => {
+  const colorScheme = useAppColorScheme();
+  const [selectedDateId, setSelectedDateId] = useState(() =>
+    toLocalDateId(new Date())
+  );
+  const reduceMotion = useReduceMotion();
+  const user = useAuthStore((state) => state.user);
+  const { profile, isLoading: userLoading } = useUserStore();
+  const isWorkoutDataLoading = false;
+  const profileDisplayName = profile?.displayName.trim();
+  const displayName = userLoading
+    ? 'Placeholder User'
+    : profileDisplayName || 'User';
+  const photoURL = userLoading ? null : profile?.photoURL;
+
+  // Each figure is kept as a number and formatted at the call site, because
+  // `animation` is driven by the value itself (the native side accepts only a
+  // number or a boolean) and it has to be the *same* number the label shows.
+  const totalWorkouts = isWorkoutDataLoading
+    ? PLACEHOLDER_STATS.totalWorkouts
+    : 0;
+  const currentStreak = isWorkoutDataLoading
+    ? PLACEHOLDER_STATS.currentStreak
+    : 0;
+  const longestStreak = isWorkoutDataLoading
+    ? PLACEHOLDER_STATS.longestStreak
+    : 0;
+
+  const animateCounters = !isWorkoutDataLoading && !reduceMotion;
+
+  // Selecting a day moves the circle and nothing else. Activity, the featured
+  // template and recent workouts are not filtered by it — day summaries need
+  // real workout data, and this initiative deliberately ships none.
+  const handleDatePress = useCallback((dateId: string) => {
+    setSelectedDateId(dateId);
+  }, []);
+
+  const featuredTemplate: FeaturedWorkoutTemplate | null = isWorkoutDataLoading
+    ? PLACEHOLDER_TEMPLATE
+    : null;
+
+  const recentRows: RecentWorkoutRow[] = isWorkoutDataLoading
+    ? PLACEHOLDER_WORKOUTS
+    : [];
+
+  return (
+    <Host style={layout.groupedScreen} colorScheme={colorScheme}>
+      <List modifiers={mods.listInsetGrouped}>
+        <HomeHeader
+          displayName={displayName}
+          photoURL={photoURL}
+          avatarSeed={user?.uid ?? displayName}
+          isLoading={userLoading}
+        />
+        <Section modifiers={CALENDAR_ROW_MODIFIERS}>
+          <RNHostView matchContents>
+            <ExpandableWeeklyCalendar
+              selectedDateId={selectedDateId}
+              dateMarkers={EMPTY_DATE_MARKERS}
+              onDatePress={handleDatePress}
+            />
+          </RNHostView>
+        </Section>
+        {/*
+          Stats are label + value rows rather than a tile grid: the same three
+          numbers already render this way in Settings, and a full-bleed grid row
+          would reintroduce the width math `List` exists to delete.
+
+          These values retain the counter styling they will use when workout
+          behavior returns. They currently remain at zero because workout
+          persistence is intentionally disconnected.
+        */}
+        <Section title="Activity">
+          <LabeledContent
+            label={
+              <Label
+                title="Workouts"
+                systemImage="figure.strengthtraining.traditional"
+              />
+            }
+          >
+            <Text modifiers={counterModifiers(totalWorkouts, animateCounters)}>
+              {String(totalWorkouts)}
+            </Text>
+          </LabeledContent>
+          <LabeledContent
+            label={<Label title="Current Streak" systemImage="flame.fill" />}
+          >
+            <Text modifiers={counterModifiers(currentStreak, animateCounters)}>
+              {`${currentStreak} days`}
+            </Text>
+          </LabeledContent>
+          <LabeledContent
+            label={<Label title="Longest Streak" systemImage="trophy.fill" />}
+          >
+            <Text modifiers={counterModifiers(longestStreak, animateCounters)}>
+              {`${longestStreak} days`}
+            </Text>
+          </LabeledContent>
+        </Section>
+
+        {/*
+          Empty sections are a plain secondary-label row plus a `Section`
+          footer, never a `ContentUnavailableView`. `ContentUnavailableView` is
+          a *whole-view* treatment ("there is nothing on this screen"); Home
+          always renders real Activity data, so it is never in that state, and
+          dropping one into a row just re-creates the tall centred empty card
+          this migration deleted. Apple's own grouped lists (Settings, Wallet,
+          Health) say "None"/"No Data" in a normal 44pt row and put the "what to
+          do next" sentence in the section footer — which is exactly what the
+          footer is for.
+        */}
+        <Section
+          title="Featured Workout Template"
+          footer={
+            featuredTemplate ? undefined : (
+              <Text>
+                Create a workout template in the Workouts tab and it will be
+                featured here.
+              </Text>
+            )
+          }
+        >
+          {featuredTemplate ? (
+            <>
+              <VStack
+                alignment="leading"
+                spacing={4}
+                modifiers={FEATURED_STACK_MODIFIERS}
+              >
+                <Text modifiers={mods.headlineLabel}>
+                  {featuredTemplate.name}
+                </Text>
+                {featuredTemplate.description ? (
+                  <Text modifiers={mods.subheadlineSecondary}>
+                    {featuredTemplate.description}
+                  </Text>
+                ) : null}
+                {/*
+                  No `monospacedDigit()` here, unlike the Activity values
+                  above: this is a descriptive sentence fragment ("6 exercises
+                  · 45 min") that never updates in place and has nothing to
+                  align against. Fixed-width digits inside running text read as
+                  a typographic mistake — reserve them for standalone figures.
+                */}
+                <Text modifiers={mods.footnoteSecondary}>
+                  {featuredTemplate.meta}
+                </Text>
+              </VStack>
+              {/*
+                Left-aligned tinted action row — Apple's list idiom for a
+                non-destructive action (centered labels are for destructive
+                confirms). `disabled(true)` until the workout player lands:
+                without an `onPress` the row would still light up on touch and
+                promise something it cannot deliver. Drop the modifier and add
+                `onPress` in the same commit that ships the player.
+              */}
+              <Button
+                label="Start Workout"
+                systemImage="play.fill"
+                modifiers={mods.disabledOnly}
+              />
+            </>
+          ) : (
+            <Text modifiers={mods.bodySecondary}>
+              No Active Workout Templates
+            </Text>
+          )}
+        </Section>
+
+        <Section
+          title="Recent Workouts"
+          footer={
+            recentRows.length === 0 ? (
+              <Text>Finish your first workout and it will appear here.</Text>
+            ) : undefined
+          }
+        >
+          {recentRows.length > 0 ? (
+            recentRows.map((row) => (
+              <HStack
+                key={row.id}
+                spacing={12}
+                alignment="center"
+                modifiers={RECENT_ROW_MODIFIERS}
+              >
+                <Image
+                  systemName={
+                    row.isCompleted ? 'checkmark.circle.fill' : 'xmark.circle'
+                  }
+                  color={
+                    row.isCompleted ? colors.systemGreen : colors.systemOrange
+                  }
+                  modifiers={mods.title3}
+                />
+                <VStack alignment="leading" spacing={2}>
+                  <Text modifiers={mods.bodyLabel}>{row.title}</Text>
+                  {/* Same reasoning as the Featured Template meta line: a
+                      subtitle sentence, not a figure. */}
+                  <Text modifiers={mods.footnoteSecondary}>{row.meta}</Text>
+                </VStack>
+                <Spacer />
+                {/* "Yesterday" / "3 days ago" — prose, and already flush right
+                    via the `Spacer`, so fixed-width digits buy no alignment. */}
+                <Text modifiers={mods.footnoteSecondary}>{row.dateLabel}</Text>
+              </HStack>
+            ))
+          ) : (
+            <Text modifiers={mods.bodySecondary}>No Recent Workouts</Text>
+          )}
+        </Section>
+      </List>
+    </Host>
+  );
+};

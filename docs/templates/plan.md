@@ -2,7 +2,7 @@
 type: template
 status: current
 area: documentation
-updated: 2026-08-04
+updated: 2026-08-21
 ---
 
 # Template: plan document
@@ -21,8 +21,8 @@ impact** section below is where planning records its output.
 
 Paths below are written as bare repository-relative code spans because the template and its
 destination sit at different depths. In the real file, write them as standard Markdown links
-relative to `docs/plans/<initiative-name>/` — `../../flows/start-workout.md` for a durable
-document, `../../../features/workouts/workouts-content.tsx` for source, and wrap any path
+relative to `docs/plans/<initiative-name>/`: `../../flows/start-workout.md` for a durable document,
+`../../../apps/mobile/src/features/workouts/workouts-content.tsx` for source, and wrap any path
 containing parentheses in angle brackets.
 
 ---
@@ -47,7 +47,7 @@ If this plan supersedes an earlier one, link it here and say it is historical in
 
 ## Context
 
-Only what the reader cannot get from the durable docs. Link rather than restate —
+Only what the reader cannot get from the durable docs. Link rather than restate:
 `docs/app/architecture.md`, `docs/flows/start-workout.md`. Verify any claim you carry over from an
 older plan against the code first: several plans in `docs/plans/` describe work that was never
 built.
@@ -55,8 +55,8 @@ built.
 ## Approach
 
 The shape of the change: what gets added, what gets modified, what the boundaries are. Reference
-real paths — `features/exercises/store/use-exercise-store.ts`, `database/refs.ts` — rather than
-describing files abstractly.
+real paths such as `apps/mobile/src/stores/use-exercise-store.ts` and
+`apps/mobile/src/services/exercise-service.ts` rather than describing files abstractly.
 
 Record the alternatives you rejected and why. That is the part of a plan that stays valuable after
 it ships.

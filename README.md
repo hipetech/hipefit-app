@@ -1,50 +1,77 @@
-# Welcome to your Expo app 👋
+# Hipefit
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Hipefit is an iOS-only fitness app in a Bun workspace. The mobile app uses React Native, Expo SDK
+57 in the bare workflow, Expo Router, `@expo/ui`, Zustand, Firebase Auth, and Firestore.
 
-## Get started
+## Workspace layout
 
-1. Install dependencies
+| Path           | Purpose                                                      |
+| -------------- | ------------------------------------------------------------ |
+| `apps/mobile/` | Expo app, application source, assets, and native iOS project |
+| `packages/`    | Shared schemas, Firebase bindings, UI, and native modules    |
+| `firebase/`    | Firebase configuration, rules, seed data, and migrations     |
+| `scripts/`     | Repository CLI wrappers and CI helpers                       |
+| `docs/`        | Current architecture, product flows, plans, and templates    |
+| `e2e/`         | Reserved empty scaffold for future end-to-end tests          |
 
-   ```bash
-   bun install
-   ```
+The root `package.json` owns workspace scripts. Run commands from the repository root unless a
+document says otherwise.
 
-2. Start the app
-
-   ```bash
-   bunx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Setup
 
 ```bash
-bun run reset-project
+bun install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Run iOS
 
-## Learn more
+Each command copies the matching root environment file into the mobile app and launches the
+corresponding Xcode scheme:
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+bun run ios:development
+bun run ios:staging
+bun run ios:production
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Start Metro without launching a simulator, or open the native project directly:
 
-## Join the community
+```bash
+bun run start
+bun run open:xcode
+```
 
-Join our community of developers creating universal apps.
+The committed project under `apps/mobile/ios/` is authoritative for native configuration. After
+adding or removing a native dependency, update CocoaPods from that directory:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+cd apps/mobile/ios
+pod install
+```
+
+## Checks
+
+```bash
+bun run type-check
+bun run lint
+bun run format:check
+```
+
+The repository has no automated test runner. Pull requests run these three checks in CI.
+
+## Firebase tooling
+
+Firebase assets live under `firebase/`. Root scripts keep environment selection explicit:
+
+```bash
+bun run db:seed --seed exercises --env development
+bun run db:migrate --env development --dry-run
+bun run db:wipe --env development
+bun run firebase -- deploy --only firestore:rules --dry-run --project development
+```
+
+The Firebase deployment wrapper accepts only `development` and `staging`. It resolves that
+environment to a fixed project ID, refuses production, and does not expose other Firebase CLI
+commands.
+
+Read [`docs/README.md`](docs/README.md) for the documentation index and feature workflow.

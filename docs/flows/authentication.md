@@ -2,7 +2,7 @@
 type: flow
 status: current
 area: auth
-updated: 2026-08-20
+updated: 2026-08-21
 ---
 
 # Flow: sign in with Apple
@@ -21,58 +21,65 @@ before exposing the private app.
 ## Prerequisites
 
 - Apple authentication must be available. The app requests `FULL_NAME` and `EMAIL` through
-  [`expo-apple-authentication` in the auth store](../../features/auth/store/use-auth-store.ts).
+  [`apps/mobile/src/services/auth-service.ts`](../../apps/mobile/src/services/auth-service.ts).
 - The Sign in with Apple entitlement is committed in
-  [`ios/Hipefit/Hipefit.entitlements`](../../ios/Hipefit/Hipefit.entitlements).
+  [`apps/mobile/ios/Hipefit/Hipefit.entitlements`](../../apps/mobile/ios/Hipefit/Hipefit.entitlements).
 - The selected native scheme must point at a configured Firebase project. The environment-specific
   plist is selected from the bundle identifier by
-  [`ios/Hipefit/AppDelegate.swift`](../../ios/Hipefit/AppDelegate.swift); JavaScript does not select
-  the Firebase environment.
+  [`apps/mobile/ios/Hipefit/AppDelegate.swift`](../../apps/mobile/ios/Hipefit/AppDelegate.swift);
+  JavaScript does not select the Firebase environment.
 
 The global exercise seed is not a sign-in prerequisite. Profile creation no longer reads or copies
 categories. An unseeded global library produces an empty Exercises screen, not a partial profile.
 
 ## Entry points
 
-| Entry point        | Location                                                                                 | Current behavior                                     |
-| ------------------ | ---------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Cold launch        | [`app/index.tsx`](../../app/index.tsx)                                                   | Redirects according to auth state                    |
-| Login route        | [`app/(public)/login.tsx`](<../../app/(public)/login.tsx>)                               | Renders `AuthScreen`; redirects if already signed in |
-| Sign in with Apple | [`features/auth/index.tsx`](../../features/auth/index.tsx)                               | The only sign-in provider                            |
-| Edit Profile       | [`features/settings/settings-content.tsx`](../../features/settings/settings-content.tsx) | Opens the existing route-based profile form sheet    |
-| Log Out            | [`features/settings/settings-content.tsx`](../../features/settings/settings-content.tsx) | Destructive alert, then Firebase sign-out            |
+| Entry point        | Location                                                                                                                 | Current behavior                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| Cold launch        | [`apps/mobile/app/index.tsx`](../../apps/mobile/app/index.tsx)                                                           | Redirects according to auth state                    |
+| Login route        | [`apps/mobile/app/(public)/login.tsx`](<../../apps/mobile/app/(public)/login.tsx>)                                       | Renders `AuthScreen`; redirects if already signed in |
+| Sign in with Apple | [`apps/mobile/src/features/auth/index.tsx`](../../apps/mobile/src/features/auth/index.tsx)                               | The only sign-in provider                            |
+| Edit Profile       | [`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx) | Opens the existing route-based profile form sheet    |
+| Log Out            | [`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx) | Destructive alert, then Firebase sign-out            |
 
 There is no email/password, guest, or alternate-provider path.
 
 ## Main path
 
-1. [`app/_layout.tsx`](../../app/_layout.tsx) calls the auth store's `initialize()`. Several routes
-   and islands also call it, so the method is idempotent and only the first call installs
-   `onAuthStateChanged`.
+1. [`apps/mobile/app/_layout.tsx`](../../apps/mobile/app/_layout.tsx) calls the auth store's
+   `initialize()`. Several routes and islands also call it, so the method is idempotent and only the
+   first call installs `onAuthStateChanged` through the auth service.
 2. While Firebase restores auth, the root layout holds the route tree behind `isLoading`.
-3. When auth returns a user, the callback calls `ensureUserProfile` before publishing that user to
-   the auth store. Domain subscriptions and the protected tabs therefore do not start until the
-   profile ensure settles.
-4. For an interactive sign-in, the Apple button asks for full name and email, exchanges the Apple
-   identity token for a Firebase credential, and stores the returned name long enough for the auth
-   callback and explicit sign-in continuation to share it. A per-UID in-flight promise deduplicates
-   those two ensure calls.
-5. `ensureUserProfile` reads `users/{uid}` through `userRef(uid)`.
+3. When auth returns a user, the store calls `ensureUserProfile` in
+   [`apps/mobile/src/services/auth-service.ts`](../../apps/mobile/src/services/auth-service.ts)
+   before publishing that user. Domain subscriptions and the protected tabs therefore do not start
+   until the profile ensure settles.
+4. For an interactive sign-in, the Apple button asks for full name and email. The auth service hands
+   the returned name to the store before exchanging the identity token for a Firebase credential, so
+   an early auth callback and the explicit sign-in continuation share it. A per-UID in-flight promise
+   deduplicates those two ensure calls.
+5. `ensureUserProfile` reads `users/{uid}` through `userRef(uid)`. The typed ref and Firebase Auth
+   instance come from
+   [`@hipefit/firebase/react-native`](../../packages/firebase/src/react-native/index.ts); collection
+   paths and persisted validation come from
+   [`@hipefit/schemas`](../../packages/schemas/src/index.ts).
 6. If the document is missing, `createUserProfile` validates and writes exactly one document with
    `setDoc`. There is no batch and no user category copy.
 7. If the document exists, the decoder validates it. Missing Apple name fields and an empty display
    name are filled only when Apple supplied values. A schema version below the current version is
    advanced. Existing non-empty user-edited names are not overwritten.
 8. The auth store publishes `user`, `isLoggedIn: true`, and `isLoading: false`. The protected tree
-   mounts, and [`database/use-firestore-subscriptions.ts`](../../database/use-firestore-subscriptions.ts)
-   starts the user and exercise stores.
-9. [`app/index.tsx`](../../app/index.tsx) redirects to Home. Surfaces backed by live stores manage
-   their own loading presentation; Home limits profile redaction to its header.
+   mounts, and
+   [`apps/mobile/src/hooks/use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts)
+   starts the user and exercise stores. Those stores delegate listener setup and Firebase operations
+   to app services.
+9. [`apps/mobile/app/index.tsx`](../../apps/mobile/app/index.tsx) redirects to Home. Surfaces backed by
+   live stores manage their own loading presentation; Home limits profile redaction to its header.
 
 The profile ensure also runs for a restored session. If the document was deleted while the Firebase
 session survived, launch recreates it before the app reports the user signed in. This is self-healing
-for a missing document, not a general repair mechanism: an existing malformed profile is logged by
-the decoder and is not replaced.
+for a missing document, not a general repair mechanism: an existing malformed profile makes the
+ensure fail, remains unchanged, and keeps the protected app closed.
 
 ## First profile shape
 
@@ -97,7 +104,8 @@ in-app recovery path.
 ## Profile and settings controls
 
 The existing Edit Profile form sheet in
-[`features/settings/edit-profile-form.tsx`](../../features/settings/edit-profile-form.tsx) now saves:
+[`apps/mobile/src/features/settings/edit-profile-form.tsx`](../../apps/mobile/src/features/settings/edit-profile-form.tsx)
+now saves:
 
 - display name;
 - optional birth date as a real, non-future `YYYY-MM-DD`;
@@ -141,9 +149,12 @@ No profile, measurement, template, workout, or Auth user is deleted by sign-out.
 - User cancels Apple's sheet: cancellation is logged and rethrown, then swallowed by the screen.
 - Missing identity token or Firebase failure: logged, rethrown, and swallowed; there is no error UI.
 - Missing profile on any authenticated callback: recreated as one default document.
-- Malformed existing profile: logged and left in place; the user can enter the private app with
-  `profile: null`, so screens use their fallbacks.
-- Firestore profile or measurement listener failure: logged and presented like missing/empty data.
+- Malformed existing profile: logged and left in place; the auth store publishes a signed-out state,
+  so the protected app remains closed even though Firebase Auth still has the session.
+- Firestore measurement listener failure: logged and presented like missing data.
+- Initial Firestore profile listener failure after the protected app opens: logged; the user store
+  finishes without a profile, and Exercises shows an empty state rather than using default catalogue
+  settings. If the listener had already published a profile, a later error retains that profile.
 - Profile save failure: the Edit Profile sheet stays open and shows a connection-oriented error.
 - Sign-out failure: logged by the store and Settings; the user remains signed in with no user-facing
   explanation.
