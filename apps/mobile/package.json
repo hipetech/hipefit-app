@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@expo/ui": "~57.0.7",
-    "@hipefit/domain": "workspace:*",
     "@hipefit/expandable-accessory": "workspace:*",
     "@hipefit/firebase": "workspace:*",
     "@hipefit/navigation-dock": "workspace:*",

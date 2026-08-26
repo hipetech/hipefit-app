@@ -1,17 +1,11 @@
+import type { ExerciseCatalogueSource } from '@/features/exercises/exercise-catalogue';
 import type { ExerciseListenerName } from '@/services/exercise-service';
-import type { ExerciseCatalogueSource } from '@hipefit/domain';
-import { buildExerciseCatalogue } from '@hipefit/domain';
 import { create } from 'zustand';
 
+import { buildExerciseCatalogue } from '@/features/exercises/exercise-catalogue';
 import { subscribeToExerciseCatalogue } from '@/services/exercise-service';
 
 import { useUserStore } from './use-user-store';
-
-export type {
-  MergedCategory,
-  MergedEquipment,
-  MergedExercise,
-} from '@hipefit/domain';
 
 interface ExerciseState {
   exercises: ReturnType<typeof buildExerciseCatalogue>['exercises'];

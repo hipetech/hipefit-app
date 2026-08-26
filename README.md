@@ -5,14 +5,14 @@ Hipefit is an iOS-only fitness app in a Bun workspace. The mobile app uses React
 
 ## Workspace layout
 
-| Path           | Purpose                                                          |
-| -------------- | ---------------------------------------------------------------- |
-| `apps/mobile/` | Expo app, application source, assets, and native iOS project     |
-| `packages/`    | Shared schemas, domain logic, Firebase bindings, UI, and modules |
-| `firebase/`    | Firebase configuration, rules, seed data, and migrations         |
-| `scripts/`     | Repository CLI wrappers and CI helpers                           |
-| `docs/`        | Current architecture, product flows, plans, and templates        |
-| `e2e/`         | Reserved empty scaffold for future end-to-end tests              |
+| Path           | Purpose                                                      |
+| -------------- | ------------------------------------------------------------ |
+| `apps/mobile/` | Expo app, application source, assets, and native iOS project |
+| `packages/`    | Shared schemas, Firebase bindings, UI, and native modules    |
+| `firebase/`    | Firebase configuration, rules, seed data, and migrations     |
+| `scripts/`     | Repository CLI wrappers and CI helpers                       |
+| `docs/`        | Current architecture, product flows, plans, and templates    |
+| `e2e/`         | Reserved empty scaffold for future end-to-end tests          |
 
 The root `package.json` owns workspace scripts. Run commands from the repository root unless a
 document says otherwise.

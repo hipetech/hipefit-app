@@ -1,4 +1,4 @@
-import type { MergedExercise } from '@hipefit/domain';
+import type { MergedExercise } from '@/features/exercises/exercise-catalogue';
 import type {
   NativeSyntheticEvent,
   TextInputFocusEventData,

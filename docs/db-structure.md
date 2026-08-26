@@ -96,8 +96,9 @@ Changing `settings.language` recomputes exercise, category, and equipment view m
 already-subscribed locale maps. It does not refetch the collections. Never query or sort by a
 localized map key: documents without that locale would be omitted by Firestore. Lists resolve and
 sort names in memory instead. Catalogue construction and locale fallback live in
-[`@hipefit/domain`](../packages/domain/src/exercises/index.ts); the exercise store delegates that
-projection instead of owning a second implementation.
+[`exercise-catalogue.ts`](../apps/mobile/src/features/exercises/exercise-catalogue.ts) and
+[`exercise-localization.ts`](../apps/mobile/src/features/exercises/exercise-localization.ts); the
+exercise store delegates that projection instead of owning a second implementation.
 
 ### Units and calendar values
 
@@ -209,7 +210,7 @@ exercise store, but hide/unhide controls are not shipped.
 Global categories sort by their `order`, followed by custom categories sorted by their `order`.
 Archived categories are absent from the visible category list. Exercise browse rows are filtered by
 retirement and user hidden refs, not by the archive flag. These catalogue rules are implemented by
-[`@hipefit/domain`](../packages/domain/src/exercises/catalogue.ts).
+[`exercise-catalogue.ts`](../apps/mobile/src/features/exercises/exercise-catalogue.ts).
 
 ### `users/{uid}/customExercises/{id}`
 

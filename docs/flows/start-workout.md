@@ -23,7 +23,7 @@ No step after choosing an affordance is reachable today.
 - The user is signed in. The user and exercise stores are subscribed.
 - The exercise catalogue can be read from the three seeded global collections and optional custom
   collections. Firebase listeners live in the mobile exercise service; catalogue merging and
-  localization live in `@hipefit/domain`. There is no workout-specific picker projection.
+  localization live in the exercise feature. There is no workout-specific picker projection.
 
 ## Disabled entry points
 
@@ -67,8 +67,8 @@ or a read path exists.
   starts only the user and exercise stores. Those stores delegate Firebase operations to services.
 - [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts) exposes the localized,
   visible browse catalogue built by
-  [`@hipefit/domain`](../../packages/domain/src/exercises/catalogue.ts), but no workout picker or
-  canonical-fork resolver.
+  [`exercise-catalogue.ts`](../../apps/mobile/src/features/exercises/exercise-catalogue.ts), but no
+  workout picker or canonical-fork resolver.
 - Workout/template interfaces, decoders, assertions, and rules remain available for a later
   implementation. No index is retained —
   [`firebase/firestore.indexes.json`](../../firebase/firestore.indexes.json) is empty, as

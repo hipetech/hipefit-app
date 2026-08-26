@@ -15,24 +15,25 @@ trust, subscription lifetime, store ownership, rules, and admin tooling.
 
 The data boundary is split by portability and responsibility:
 
-| Location                                                                                                             | Owns                                                                                                         |
-| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [`packages/schemas/src/`](../../packages/schemas/src)                                                                | Persisted interfaces, embedded shapes, runtime decoders, write assertions, `Ref`, `WithId`, and path strings |
-| [`packages/domain/src/exercises/`](../../packages/domain/src/exercises)                                              | Framework-free exercise catalogue merge and localization fallback                                            |
-| [`packages/firebase/src/react-native/`](../../packages/firebase/src/react-native)                                    | React Native Firebase Auth and Firestore instances plus refs for paths the app accesses                      |
-| [`apps/mobile/src/services/`](../../apps/mobile/src/services)                                                        | App-specific queries, snapshot listeners, auth provisioning, and writes                                      |
-| [`apps/mobile/src/stores/`](../../apps/mobile/src/stores)                                                            | Published state, loading state, actions, and service callback handling                                       |
-| [`apps/mobile/src/hooks/use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts) | Auth-scoped lifetime of the two live data stores                                                             |
+| Location                                                                                                                                                                                      | Owns                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [`packages/schemas/src/`](../../packages/schemas/src)                                                                                                                                         | Persisted interfaces, embedded shapes, runtime decoders, write assertions, `Ref`, `WithId`, and path strings |
+| [`exercise-catalogue.ts`](../../apps/mobile/src/features/exercises/exercise-catalogue.ts) and [`exercise-localization.ts`](../../apps/mobile/src/features/exercises/exercise-localization.ts) | Exercise catalogue merge, localization, and published view models                                            |
+| [`packages/firebase/src/react-native/`](../../packages/firebase/src/react-native)                                                                                                             | React Native Firebase Auth and Firestore instances plus refs for paths the app accesses                      |
+| [`apps/mobile/src/services/`](../../apps/mobile/src/services)                                                                                                                                 | App-specific queries, snapshot listeners, auth provisioning, and writes                                      |
+| [`apps/mobile/src/stores/`](../../apps/mobile/src/stores)                                                                                                                                     | Published state, loading state, actions, and service callback handling                                       |
+| [`apps/mobile/src/hooks/use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts)                                                                          | Auth-scoped lifetime of the two live data stores                                                             |
 
 There is no app-local `@/database` barrel. Mobile code imports persisted contracts from
-`@hipefit/schemas`, framework-free catalogue logic from `@hipefit/domain`, and refs from
+`@hipefit/schemas`, feature-specific catalogue logic through the `@/` alias, and refs from
 `@hipefit/firebase/react-native`.
 
 Stores do not call React Native Firebase operations directly. They delegate reads and writes to
 [`auth-service.ts`](../../apps/mobile/src/services/auth-service.ts),
 [`user-service.ts`](../../apps/mobile/src/services/user-service.ts), and
 [`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts). Stores retain ownership
-of app state and actions; services own SDK execution; `@hipefit/domain` owns reusable derivation.
+of app state and actions; services own SDK execution; the exercise feature owns its pure catalogue
+derivation.
 
 ## Paths and refs
 
@@ -75,8 +76,8 @@ document IDs before creating refs.
 
 `WithId<T> = { id: string; data: T }` is the app's decoded document shape. Firestore keeps the ID
 outside `data()`, so services do not inject it into persisted payloads. `MergedExercise`,
-`MergedCategory`, and `MergedEquipment` from `@hipefit/domain` are flat computed view models, not
-Firestore documents.
+`MergedCategory`, and `MergedEquipment` from the exercise catalogue helper are flat computed view
+models, not Firestore documents.
 
 The same shared validation exports `assert...Write` functions. Every shipped client write validates
 the complete prospective shape before sending it:
@@ -127,9 +128,9 @@ listener error retains the last profile published by the user store.
 [`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts) decodes the five Firestore
 inputs. [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts) keeps those arrays in
 its subscription closure and passes them with the current user settings to
-[`buildExerciseCatalogue`](../../packages/domain/src/exercises/catalogue.ts).
+[`buildExerciseCatalogue`](../../apps/mobile/src/features/exercises/exercise-catalogue.ts).
 
-The domain function:
+The feature helper:
 
 1. resolves global and custom category names for `settings.language`;
 2. orders global categories and custom categories by their own `order` fields;

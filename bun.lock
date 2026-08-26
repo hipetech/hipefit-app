@@ -30,7 +30,6 @@
       "version": "1.0.0",
       "dependencies": {
         "@expo/ui": "~57.0.7",
-        "@hipefit/domain": "workspace:*",
         "@hipefit/expandable-accessory": "workspace:*",
         "@hipefit/firebase": "workspace:*",
         "@hipefit/navigation-dock": "workspace:*",
@@ -83,13 +82,6 @@
         "eslint-config-expo": "~57.0.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-jsx-a11y": "^6.10.2",
-      },
-    },
-    "packages/domain": {
-      "name": "@hipefit/domain",
-      "version": "1.0.0",
-      "dependencies": {
-        "@hipefit/schemas": "workspace:*",
       },
     },
     "packages/expandable-accessory": {
@@ -502,8 +494,6 @@
     "@grpc/proto-loader": ["@grpc/proto-loader@0.8.0", "", { "dependencies": { "lodash.camelcase": "^4.3.0", "long": "^5.0.0", "protobufjs": "^7.5.3", "yargs": "^17.7.2" }, "bin": { "proto-loader-gen-types": "build/bin/proto-loader-gen-types.js" } }, "sha512-rc1hOQtjIWGxcxpb9aHAfLpIctjEnsDehj0DAiVfBlmT84uvR0uUtN2hEi/ecvWVjXUGf5qPF4qEgiLOx1YIMQ=="],
 
     "@hipefit/config": ["@hipefit/config@workspace:packages/config"],
-
-    "@hipefit/domain": ["@hipefit/domain@workspace:packages/domain"],
 
     "@hipefit/expandable-accessory": ["@hipefit/expandable-accessory@workspace:packages/expandable-accessory"],
 

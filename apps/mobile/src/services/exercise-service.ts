@@ -1,4 +1,4 @@
-import type { ExerciseCatalogueSource } from '@hipefit/domain';
+import type { ExerciseCatalogueSource } from '@/features/exercises/exercise-catalogue';
 import type { WithId } from '@hipefit/schemas';
 import type { SnapshotOptions } from '@react-native-firebase/firestore';
 import {

@@ -1,4 +1,4 @@
-import type { MergedExercise } from '@hipefit/domain';
+import type { MergedExercise } from './exercise-catalogue';
 import type { ExerciseType } from '@hipefit/schemas';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { StyleSheet, View } from 'react-native';

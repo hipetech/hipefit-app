@@ -25,17 +25,17 @@ toward these standards without expanding the task into unrelated cleanup.
 
 ## Module vocabulary
 
-| Kind                     | Location                                                                             | Shape                                                         |
-| ------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
-| Route                    | [`apps/mobile/app/**/*.tsx`](../../apps/mobile/app)                                  | `export default function Name()`                              |
-| Screen island            | [`apps/mobile/src/features/<name>/`](../../apps/mobile/src/features)                 | `export const NameContent: React.FC = () => ...`              |
-| Feature component        | [`apps/mobile/src/features/<name>/`](../../apps/mobile/src/features)                 | `export const Thing: React.FC<ThingProps> = (...) => ...`     |
-| App component            | [`apps/mobile/src/components/`](../../apps/mobile/src/components)                    | App-specific React Native wrapper                             |
-| Shared SwiftUI component | [`packages/ui/src/`](../../packages/ui/src)                                          | Host-less primitive exported by `@hipefit/ui`                 |
-| Hook                     | [`apps/mobile/src/hooks/`](../../apps/mobile/src/hooks) or a feature                 | `export const useThing = (...): T => ...`                     |
-| Store                    | [`apps/mobile/src/stores/`](../../apps/mobile/src/stores)                            | `export const useNameStore = create<NameState>(...)`          |
-| Service                  | [`apps/mobile/src/services/`](../../apps/mobile/src/services)                        | Named functions that execute app-specific Firebase operations |
-| Helper or constants      | [`apps/mobile/src/lib/`](../../apps/mobile/src/lib), a feature, or `@hipefit/domain` | Named exports, no default export                              |
+| Kind                     | Location                                                             | Shape                                                         |
+| ------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Route                    | [`apps/mobile/app/**/*.tsx`](../../apps/mobile/app)                  | `export default function Name()`                              |
+| Screen island            | [`apps/mobile/src/features/<name>/`](../../apps/mobile/src/features) | `export const NameContent: React.FC = () => ...`              |
+| Feature component        | [`apps/mobile/src/features/<name>/`](../../apps/mobile/src/features) | `export const Thing: React.FC<ThingProps> = (...) => ...`     |
+| App component            | [`apps/mobile/src/components/`](../../apps/mobile/src/components)    | App-specific React Native wrapper                             |
+| Shared SwiftUI component | [`packages/ui/src/`](../../packages/ui/src)                          | Host-less primitive exported by `@hipefit/ui`                 |
+| Hook                     | [`apps/mobile/src/hooks/`](../../apps/mobile/src/hooks) or a feature | `export const useThing = (...): T => ...`                     |
+| Store                    | [`apps/mobile/src/stores/`](../../apps/mobile/src/stores)            | `export const useNameStore = create<NameState>(...)`          |
+| Service                  | [`apps/mobile/src/services/`](../../apps/mobile/src/services)        | Named functions that execute app-specific Firebase operations |
+| Helper or constants      | [`apps/mobile/src/lib/`](../../apps/mobile/src/lib) or a feature     | Named exports, no default export                              |
 
 The `@/*` alias maps to [`apps/mobile/src/*`](../../apps/mobile/src). It does not map to the
 repository root or to `apps/mobile/app`. Workspace packages are imported by package name.
@@ -176,15 +176,21 @@ assertions from `@hipefit/schemas`.
 Services return data or invoke typed handlers. They do not import Zustand stores or React
 components. Stores call services and translate their results into application state.
 
-### Packages and framework-free logic
+### Packages and feature logic
 
 Use package boundaries rather than app source paths when code is shared by responsibility:
 
 - `@hipefit/schemas` owns persisted contracts, validation, and Firestore path strings.
-- `@hipefit/domain` owns framework-free operations over decoded contracts. Its current exercise
-  entry contains catalogue construction and localization fallback.
 - `@hipefit/firebase/react-native` owns React Native Firebase instances and ref builders.
 - `@hipefit/ui` owns shared SwiftUI primitives and semantic colors.
+
+Pure logic used by one mobile feature stays in that feature. Exercise catalogue construction and
+view models live in
+[`exercise-catalogue.ts`](../../apps/mobile/src/features/exercises/exercise-catalogue.ts), and the
+locale fallback lives in
+[`exercise-localization.ts`](../../apps/mobile/src/features/exercises/exercise-localization.ts). The
+store and service import the feature contract without moving state or Firebase operations into the
+feature.
 
 Do not import a file under [`packages/`](../../packages) through `@/` or a relative path. If a
 workspace imports a package, its `package.json` declares that package at `workspace:*`.
@@ -217,8 +223,7 @@ Placement:
   directory for a large feature such as
   [`calendar/helpers/`](../../apps/mobile/src/features/calendar/helpers).
 - Shared mobile helpers go in [`apps/mobile/src/lib/`](../../apps/mobile/src/lib), grouped by subject.
-- Framework-free domain logic that belongs to package contracts goes in
-  [`packages/domain/src/`](../../packages/domain/src).
+- Pure projection over decoded contracts used by one feature stays in that feature.
 
 Helpers are pure when their job is derivation: arguments in, value out, with no component state or
 store reads. Pass store data as an argument. An inline `onPress={() => setOpen(true)}` is component
@@ -265,8 +270,7 @@ return values or typed callbacks without importing stores.
 ### Add a helper
 
 Start with a helper instead of leaving computation inline. Use a feature helper for one feature,
-`apps/mobile/src/lib/` for shared mobile behavior, or `@hipefit/domain` for framework-free domain
-logic that belongs outside the app. Use a named export and explicit return type.
+or `apps/mobile/src/lib/` for shared mobile behavior. Use a named export and explicit return type.
 
 ### Add a screen
 
@@ -297,7 +301,7 @@ Settings that affect authoring:
 
 Both TypeScript configurations map `@/*` to `apps/mobile/src/*`. Imports such as
 `@/theme/colors` stay within mobile source. Import workspace packages by names such as
-`@hipefit/domain` and `@hipefit/firebase/react-native`.
+`@hipefit/schemas` and `@hipefit/firebase/react-native`.
 
 ## Naming and imports
 

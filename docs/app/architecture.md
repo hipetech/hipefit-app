@@ -34,10 +34,12 @@ app-owned React Native wrappers, [`lib/`](../../apps/mobile/src/lib) holds forma
 and haptics, and [`hooks/`](../../apps/mobile/src/hooks) holds cross-feature hooks.
 
 Workspace packages under [`packages/`](../../packages) are imported through package contracts.
-Portable Firestore contracts belong to `@hipefit/schemas`, framework-free catalogue and
-localization logic belongs to `@hipefit/domain`, and SDK-bound refs belong to
-`@hipefit/firebase/react-native`. This keeps Firebase calls out of stores without forcing unrelated
-consumers through one SDK-neutral Firebase API.
+Portable Firestore contracts belong to `@hipefit/schemas`, and SDK-bound refs belong to
+`@hipefit/firebase/react-native`. Pure logic used by one feature stays with that feature, including
+the exercise projection in
+[`exercise-catalogue.ts`](../../apps/mobile/src/features/exercises/exercise-catalogue.ts) and its
+fallback rules in
+[`exercise-localization.ts`](../../apps/mobile/src/features/exercises/exercise-localization.ts).
 
 ## Feature organization
 
@@ -64,11 +66,14 @@ Most feature directories are flat:
 - Measured native constants stay with the feature that measured them, as in
   [`row-metrics.ts`](../../apps/mobile/src/features/exercises/row-metrics.ts) and
   [`navigation-dock-metrics.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-metrics.ts).
+- Pure derivation used by one feature stays in a feature helper, as in
+  [`exercise-catalogue.ts`](../../apps/mobile/src/features/exercises/exercise-catalogue.ts).
 
 Stores and Firebase operations are not feature-local. Domain stores live in
 [`apps/mobile/src/stores/`](../../apps/mobile/src/stores), and SDK operations live in
 [`apps/mobile/src/services/`](../../apps/mobile/src/services). Feature components import them through
-the `@/` alias, which maps to [`apps/mobile/src/`](../../apps/mobile/src).
+the `@/` alias, which maps to [`apps/mobile/src/`](../../apps/mobile/src). A store or service may
+import a feature's pure contract or derivation helper when that logic belongs only to the feature.
 
 The exercises route is a documented exception to the thin-route rule.
 [`apps/mobile/app/(private)/exercises/index.tsx`](<../../apps/mobile/app/(private)/exercises/index.tsx>)
@@ -125,15 +130,15 @@ Data-store conventions:
   plausible placeholders and apply `redacted('placeholder')`. See
   [`home-content.tsx`](../../apps/mobile/src/features/home/home-content.tsx) and
   [`modifiers.ts`](../../apps/mobile/src/theme/modifiers.ts).
-- Stores own state and actions. Services own Firebase operations. Framework-free derivation belongs
-  in `@hipefit/domain`.
+- Stores own state and actions. Services own Firebase operations. Feature-specific derivation stays
+  in the owning feature.
 
 The exercise store subscribes to five Firestore collections through
 [`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts). It keeps decoded raw
 inputs in its subscription closure and calls
-[`buildExerciseCatalogue`](../../packages/domain/src/exercises/catalogue.ts) whenever a source or a
-relevant user setting changes. The package function localizes labels, resolves refs, filters hidden
-or retired entries, and returns the published view models.
+[`buildExerciseCatalogue`](../../apps/mobile/src/features/exercises/exercise-catalogue.ts) whenever a
+source or a relevant user setting changes. The feature helper localizes labels, resolves refs,
+filters hidden or retired entries, and returns the published view models.
 
 ## Auth
 
@@ -164,15 +169,16 @@ listeners, and removes every user-scoped listener on sign-out. The consequence i
 current snapshot listeners remain live for the authenticated session. The app does not subscribe to
 workouts or workout templates.
 
-## Firebase and data packages
+## Firebase and data boundaries
 
 The boundary has four parts:
 
 - [`@hipefit/schemas`](../../packages/schemas/src/index.ts) owns persisted document interfaces,
   structural timestamps, `WithId<T>`, runtime decoders, write assertions, `Ref` strings, and path
   strings. It has no runtime dependencies or Firebase SDK import.
-- [`@hipefit/domain`](../../packages/domain/src/index.ts) owns framework-free operations over those
-  contracts. Its current implementation is the exercise catalogue merge and localization fallback.
+- [`exercise-catalogue.ts`](../../apps/mobile/src/features/exercises/exercise-catalogue.ts) and
+  [`exercise-localization.ts`](../../apps/mobile/src/features/exercises/exercise-localization.ts) own
+  the exercise feature's merge, localization, and published view models.
 - [`@hipefit/firebase/react-native`](../../packages/firebase/src/react-native/index.ts) owns React
   Native Firebase Auth and Firestore instances plus ref builders. It builds refs from path strings in
   `@hipefit/schemas`.
@@ -180,10 +186,10 @@ The boundary has four parts:
   subscriptions, auth provisioning, and writes. It imports SDK operations directly and passes
   decoded values or errors to stores.
 
-There is no app-local database barrel. App code imports contracts from `@hipefit/schemas`, catalogue
-logic from `@hipefit/domain`, and refs or SDK instances from `@hipefit/firebase/react-native`.
-Features normally reach Firebase-backed behavior through stores, not by calling services directly.
-The full trust boundary is documented in [database.md](database.md).
+There is no app-local database barrel. App code imports contracts from `@hipefit/schemas`, refs or
+SDK instances from `@hipefit/firebase/react-native`, and feature-specific derivation through the
+`@/` alias. Features normally reach Firebase-backed behavior through stores, not by calling services
+directly. The full trust boundary is documented in [database.md](database.md).
 
 ## UI ownership
 
@@ -220,7 +226,6 @@ packages are:
 | Package                                                                         | Kind                  | Owns                                              |
 | ------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------- |
 | [`@hipefit/config`](../../packages/config/package.json)                         | Shared configuration  | TypeScript and ESLint bases                       |
-| [`@hipefit/domain`](../../packages/domain/src/index.ts)                         | Pure TypeScript       | Framework-free catalogue and localization logic   |
 | [`@hipefit/expandable-accessory`](../../packages/expandable-accessory/index.ts) | React                 | Router provider, slots, outlets, and zoom trigger |
 | [`@hipefit/firebase`](../../packages/firebase/src/react-native/index.ts)        | SDK-bound TypeScript  | Target-specific Firebase instances and refs       |
 | [`@hipefit/navigation-dock`](../../packages/navigation-dock/index.ts)           | Expo native view      | UIKit create panel, scrim, and bridge types       |
@@ -233,8 +238,8 @@ The root TypeScript program includes every `.ts` and `.tsx` file under `packages
 that no consumer imports yet.
 
 `@hipefit/firebase` exposes a React Native entry instead of pretending every Firebase SDK has one
-shared API. A future SDK target gets its own entry point. `@hipefit/domain` and `@hipefit/schemas`
-remain free of React and React Native Firebase so non-mobile consumers can reuse them.
+shared API. A future SDK target gets its own entry point. `@hipefit/schemas` remains free of React
+and React Native Firebase so non-mobile consumers can reuse it.
 
 `@hipefit/navigation-dock` has Swift source, a podspec, `expo-module.config.json`, and a typed
 `requireNativeView` bridge. `@hipefit/expandable-accessory` is React-only because it coordinates a

@@ -11,7 +11,7 @@ import type {
   WithId,
 } from '@hipefit/schemas';
 
-import { resolveGlobalText, resolveUserText } from './localization';
+import { resolveGlobalText, resolveUserText } from './exercise-localization';
 
 export interface MergedEquipment {
   id: string;

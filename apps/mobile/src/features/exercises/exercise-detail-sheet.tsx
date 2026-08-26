@@ -1,4 +1,4 @@
-import type { MergedExercise } from '@hipefit/domain';
+import type { MergedExercise } from './exercise-catalogue';
 import { StyleSheet, useWindowDimensions } from 'react-native';
 import { Host } from '@expo/ui';
 import {
