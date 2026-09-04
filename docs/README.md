@@ -2,7 +2,7 @@
 type: index
 status: current
 area: documentation
-updated: 2026-08-21
+updated: 2026-09-04
 ---
 
 # Documentation
@@ -79,6 +79,10 @@ calls a bug.
 6. **Verify and complete.** Run the required checks, mark task notes done, and mark the initiative
    plan `completed` only once the code and the durable documentation agree.
 
+Two skills carry this lifecycle, both under `.agents/skills/`. The `write-plan` skill produces steps
+2 and 3, the plan and its task notes under `docs/plans/<initiative-name>/`. The `implement` skill
+runs steps 4 through 6 for a plan that has an execution graph.
+
 ### When a flow must change
 
 Review and update the affected flow whenever a feature changes any of:
@@ -122,12 +126,12 @@ directory and update the citations in the same commit.
 
 **Frontmatter is required on every Markdown file under `docs/`:**
 
-| `type`              | Required keys                                  |
-| ------------------- | ---------------------------------------------- |
-| `app`, `flow`       | `type`, `status`, `area`, `updated`            |
-| `plan`              | `type`, `status`, `area`, `created`            |
-| `task`              | `type`, `status`, `area`, `context`, `created` |
-| `template`, `index` | `type`, `status`, `area`, `updated`            |
+| `type`              | Required keys                                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `app`, `flow`       | `type`, `status`, `area`, `updated`                                                                           |
+| `plan`              | `type`, `status`, `area`, `created`                                                                           |
+| `task`              | `type`, `status`, `area`, `context`, `created`, plus `wave`, `deps`, `owns` in a plan with an execution graph |
+| `template`, `index` | `type`, `status`, `area`, `updated`                                                                           |
 
 `status` is `current | superseded` for durable documents, the lifecycle values in
 [`templates/plan.md`](templates/plan.md) for plans, and the workflow values in
@@ -136,6 +140,10 @@ place rather than superseded.
 
 `context:` on a task note is **required and must be non-empty** — it is the reliable discovery
 path, naming the exact documents and files to read before writing code.
+
+`wave:`, `deps:`, and `owns:` are required on every task note in a plan that has an **Execution
+graph**, and absent from every task note in a plan that does not. `owns:` is the file set a task may
+modify, and two tasks in the same wave must never share a path in it.
 
 **Enforcement.** There is none. Nothing validates frontmatter keys, checks that a cited path still
 resolves, or confirms that a `context:` entry exists — these conventions hold exactly as far as the

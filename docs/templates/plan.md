@@ -2,7 +2,7 @@
 type: template
 status: current
 area: documentation
-updated: 2026-08-21
+updated: 2026-08-31
 ---
 
 # Template: plan document
@@ -82,7 +82,9 @@ exists and describes what the code now does.
 
 ## Implementation phases
 
-Phases only when the work does not fit in one sitting; a short plan can use a flat checklist.
+Phases only when the work does not fit in one sitting; a short plan can use a flat checklist. A
+plan with task notes uses **Execution graph** below instead of phases, so the work items live in one
+place rather than two.
 
 ### Phase 1: <name>
 
@@ -93,9 +95,44 @@ Phases only when the work does not fit in one sitting; a short plan can use a fl
 
 - [ ] <step>
 
+## Execution graph
+
+Required when the initiative has task notes in `tasks/`; omit the section entirely when it does not.
+Every task note appears exactly once, in the earliest wave it can start in.
+
+A wave is a set of tasks that can run at the same time, in one working tree, by different agents.
+Two rules make that safe, and both are the author's job because nothing enforces them:
+
+- **`deps:` point backwards only.** Every dependency of a task sits in a strictly earlier wave. Wave
+  1 tasks have none.
+- **`owns:` are disjoint within a wave.** No two tasks in the same wave may modify the same file. A
+  file that several work items would touch is owned by exactly one of them; the rest depend on it.
+
+The same three fields appear in each task note's frontmatter. The graph and the notes must agree.
+
+Execution moves this plan's `status:` too: `active` while a run is in progress, `blocked` when a
+task or a wave's checks stop it, and `completed` only once every task note is `done` and every
+document under **Documentation impact** describes what the code now does.
+
+```
+Wave 1 (parallel)
+  - tasks/schema-fields.md      owns: packages/schemas/src/workout.ts
+  - tasks/service-queries.md    owns: apps/mobile/src/services/workout-service.ts
+
+Wave 2 (after wave 1)
+  - tasks/store-wiring.md       deps: schema-fields, service-queries
+                                owns: apps/mobile/src/stores/use-workout-store.ts
+
+Wave 3 (after wave 2)
+  - tasks/screen-ui.md          deps: store-wiring
+                                owns: apps/mobile/src/features/workouts/**
+```
+
 ## Verification
 
-The commands that prove the work landed, and any manual check that a command cannot cover.
+The commands that prove the work landed, and any manual check that a command cannot cover. With an
+execution graph, run them at each wave boundary rather than inside a wave: they cover the whole
+workspace, so a sibling task's half-finished edit fails them.
 
 ```bash
 bun run type-check
