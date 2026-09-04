@@ -1,13 +1,13 @@
 ---
 name: pull-request
-description: Open a pull request for work in hipefit-app. Use when the user says "create a PR", "open a pull request", "raise a PR", or asks to put a branch up for review — including "commit and open a PR", which runs the commit skill first. Always confirms the source branch and merge target first via a selectable prompt, then opens the PR with a brief title and a short summary of what was done.
+description: Open a pull request for work in hipefit-app. Use when the user says "create a PR", "open a pull request", "raise a PR", or asks to put a branch up for review, including "commit and open a PR", which runs the commit skill first. Always confirms the source branch and merge target first via a selectable prompt, then opens the PR with a brief title and a short summary of what was done.
 ---
 
 # Pull request
 
 Open a pull request on `github.com/hipetech/hipefit-app` using the `gh` CLI.
 
-## 1. Confirm the branches — always, never assume
+## 1. Confirm the branches: always, never assume
 
 First gather the real candidates, most recently used first:
 
@@ -16,36 +16,36 @@ git branch --show-current
 git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/heads | head -8
 ```
 
-Then ask with **`AskUserQuestion`** — two questions in a single call, each with selectable options
+Then ask with **`AskUserQuestion`**, two questions in a single call, each with selectable options
 built from that output. The tool always appends an **"Other"** choice with a free-text field, so the
 user can type any branch name that is not listed; never skip the prompt just because the answer
 looks obvious.
 
-**Question 1 — "Which branch should be merged?"** (header: `Source`)
+**Question 1: "Which branch should be merged?"** (header: `Source`)
 
 - The current branch, first, labelled `(current)`
 - The next two or three most recent local branches
 - Description on each: its last commit subject and date, so the user can tell them apart
 
-**Question 2 — "Where should it merge into?"** (header: `Target`)
+**Question 2: "Where should it merge into?"** (header: `Target`)
 
-- `main` first, marked `(Recommended)` — the default base
+- `main` first, marked `(Recommended)`, the default base
 - `development`, which also exists on origin
 - Any other plausible long-lived branch from the list
 
 This repo carries several long-lived `feature/*` branches plus `development`, so the target is a
-real choice, not a formality. If the chosen source has no upstream, say so — pushing it is part of
+real choice, not a formality. If the chosen source has no upstream, say so: pushing it is part of
 this skill.
 
 ## 2. Check the branch is ready
 
 - **Nothing uncommitted that belongs in the PR.** Run `git status`. If relevant changes are
   uncommitted, what happens next depends on what was asked:
-  - **The request covered committing** — "commit and open a PR", "ship this", "commit this then
-    raise it" — invoke the **`commit` skill** with the `Skill` tool and follow it in full, then
+  - **The request covered committing** ("commit and open a PR", "ship this", "commit this then
+    raise it"): invoke the **`commit` skill** with the `Skill` tool and follow it in full, then
     return here and finish this step against the resulting tree. Do not commit by hand; that skill
     owns scope confirmation, the type-check gate, and the message format.
-  - **The request was only for a PR** — ask whether to commit the outstanding work first. On yes,
+  - **The request was only for a PR**: ask whether to commit the outstanding work first. On yes,
     invoke the `commit` skill as above. On no, stop: a PR that omits the work under discussion is
     almost never what was wanted.
 
@@ -67,7 +67,7 @@ git diff <target>...<source> --stat
 git diff <target>...<source>
 ```
 
-Write the PR from the diff, not from the conversation — the branch may carry work from earlier
+Write the PR from the diff, not from the conversation. The branch may carry work from earlier
 sessions.
 
 ## 4. Open it
@@ -80,7 +80,7 @@ Report the PR URL back to the user.
 
 ## Title
 
-A brief summary of the changes — one line, plain language, under ~70 characters, describing the
+A brief summary of the changes: one line, plain language, under ~70 characters, describing the
 branch as a whole rather than its largest single change.
 
 Good: `Expandable weekly calendar on Home`
@@ -116,5 +116,5 @@ Never claim verification you did not run. If something is untested on device, wr
 - Confirm source and target every time, with selectable options; never infer the base.
 - PRs open ready for review. Pass `--draft` only when the user asks for a draft.
 - Never `--force` push.
-- No `--admin`, no auto-merge, no merging — opening the PR is where this skill stops.
+- No `--admin`, no auto-merge, no merging. Opening the PR is where this skill stops.
 - iOS only. A branch adding Android branches or `.android.tsx` files is wrong before it is reviewed.
