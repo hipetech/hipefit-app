@@ -206,3 +206,9 @@ Historical and proposed work, never current behavior. Plans currently present in
   current nine-collection Firestore redesign. [`schema.md`](plans/db-redesign/schema.md),
   [`plan.md`](plans/db-redesign/plan.md), and [`ui-plan.md`](plans/db-redesign/ui-plan.md) remain plan
   artifacts; the durable database and flow documents above describe what is actually implemented.
+- [`plans/ios-worktree-simulators/plan.md`](plans/ios-worktree-simulators/plan.md) holds the intent
+  behind the `ios:worktree` commands. The root [`README.md`](../README.md) documents how they
+  behave now.
+- [`plans/worktree-review-fixes/plan.md`](plans/worktree-review-fixes/plan.md) proposes fixes for
+  startup imports, stale-lock recovery, target selection, and deletion failures, plus verification of
+  the authentication background.

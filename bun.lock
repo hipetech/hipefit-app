@@ -127,6 +127,10 @@
         "react-native": "0.86.0",
       },
     },
+    "packages/worktree-devices": {
+      "name": "@hipefit/worktree-devices",
+      "version": "1.0.0",
+    },
   },
   "packages": {
     "@adobe/css-tools": ["@adobe/css-tools@4.5.0", "", {}, "sha512-6OzddxPio9UiWTCemp4N8cYLV2ZN1ncRnV1cVGtve7dhPOtRkleRyx32GQCYSwDYgaHU3USMm84tNsvKzRCa1Q=="],
@@ -506,6 +510,8 @@
     "@hipefit/schemas": ["@hipefit/schemas@workspace:packages/schemas"],
 
     "@hipefit/ui": ["@hipefit/ui@workspace:packages/ui"],
+
+    "@hipefit/worktree-devices": ["@hipefit/worktree-devices@workspace:packages/worktree-devices"],
 
     "@hono/node-server": ["@hono/node-server@2.1.1", "", { "peerDependencies": { "hono": "^4" } }, "sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg=="],
 

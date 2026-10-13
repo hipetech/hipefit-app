@@ -1,0 +1,7 @@
+{
+  "appDirectory": "apps/mobile",
+  "scheme": "Hipefit-dev",
+  "bundleIdentifier": "com.kyrylokorota.hipefitapp.development",
+  "simulatorNamePrefix": "Hipefit Worktree",
+  "registryName": "hipefit-ios-worktrees"
+}

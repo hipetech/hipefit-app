@@ -55,6 +55,12 @@ Read `docs/app/architecture.md` when a change crosses layers.
 - Data stores expose `subscribe(uid)` teardowns and are started centrally from
   `apps/mobile/src/hooks/use-firestore-subscriptions.ts`, not by screens. Auth owns its separate
   listener.
+- `@hipefit/worktree-devices` owns the per-worktree simulator and Metro port commands. It reads
+  `worktree-devices.json` for app-specific values, so keep the scheme, bundle identifier, and app
+  directory in that file rather than in the package. Copying environment files between worktrees is
+  not its concern and lives in `scripts/env/sync.ts`. Inside it, `core/` holds
+  the shared vocabulary and `commands/` holds one file per subcommand; add a subcommand as its own
+  file rather than growing an existing one.
 - `@hipefit/ui` owns shared SwiftUI primitives and semantic colors. App-specific cross-cutting code
   lives under `apps/mobile/src/components/`, `theme/`, `lib/`, and `hooks/`. Keep a shape in its
   feature until it has multiple call sites.
