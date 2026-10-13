@@ -1,10 +1,15 @@
 import type { UserProfile } from '@hipefit/schemas';
 import type { User } from '@react-native-firebase/auth';
-import { getFirebaseAuth, userRef } from '@hipefit/firebase/react-native';
+import {
+  getFirebaseAuth,
+  getFirebaseProjectId,
+  userRef,
+} from '@hipefit/firebase/react-native';
 import { assertUserProfileWrite, decodeUserProfile } from '@hipefit/schemas';
 import {
   OAuthProvider,
   onAuthStateChanged,
+  signInAnonymously,
   signInWithCredential,
   signOut,
 } from '@react-native-firebase/auth';
@@ -31,7 +36,19 @@ export interface AppleSignInResult {
 
 const CURRENT_SCHEMA_VERSION = 1;
 
+// An allowlist of the development and staging projects, not a check that excludes production. A
+// denylist would enable quick sign-in for any project ID nobody anticipated.
+const QUICK_SIGN_IN_PROJECT_IDS: readonly string[] = [
+  'hipefit-app-dev',
+  'hipefit-app-stage',
+];
+
 export const noAppleName: AppleName = { firstName: null, lastName: null };
+
+export const quickAccountName: AppleName = {
+  firstName: 'Quick',
+  lastName: 'User',
+};
 
 const buildDisplayName = (
   firstName: string | null,
@@ -186,6 +203,18 @@ export const signInWithAppleAccount = async (
     appleCredential
   );
   return { user, appleName };
+};
+
+export const isQuickSignInAvailable = (): boolean =>
+  QUICK_SIGN_IN_PROJECT_IDS.includes(getFirebaseProjectId());
+
+export const signInWithQuickAccount = async (): Promise<User> => {
+  if (!isQuickSignInAvailable()) {
+    throw new Error('Quick sign-in is not available for this Firebase project');
+  }
+
+  const { user } = await signInAnonymously(getFirebaseAuth());
+  return user;
 };
 
 export const signOutCurrentUser = async (): Promise<void> =>

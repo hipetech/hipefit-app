@@ -2,21 +2,26 @@
 type: flow
 status: current
 area: auth
-updated: 2026-08-21
+updated: 2026-10-13
 ---
 
 # Flow: sign in with Apple
 
 > **This journey ships end to end.** A user can sign in with Apple, receive or recover one Firestore
-> profile document, enter the protected tabs, edit profile/settings, and sign out. The login screen
-> remains a developer-grade placeholder, sign-in failures are logged but not shown, and there is no
-> account-deletion path.
+> profile document, enter the protected tabs, edit profile/settings, and sign out. Development and
+> staging builds also offer Quick Login, which signs in with a new anonymous Firebase account. The
+> login screen remains a developer-grade placeholder, sign-in failures are logged but not shown, and
+> there is no account-deletion path.
 
 ## User goal
 
 Enter Hipefit with an Apple ID and retain the same profile across launches. A first-time account gets
 one `users/{uid}` document. A restored Firebase session checks that the same document still exists
 before exposing the private app.
+
+On a development or staging build, Quick Login enters the app without an Apple ID. Each tap from a
+signed-out state creates a new anonymous Firebase account with its own `users/{uid}` document. The
+session survives a relaunch until the user logs out.
 
 ## Prerequisites
 
@@ -28,27 +33,38 @@ before exposing the private app.
   plist is selected from the bundle identifier by
   [`apps/mobile/ios/Hipefit/AppDelegate.swift`](../../apps/mobile/ios/Hipefit/AppDelegate.swift);
   JavaScript does not select the Firebase environment.
+- Quick Login needs the Anonymous sign-in provider enabled in the `hipefit-app-dev` and
+  `hipefit-app-stage` Firebase projects and disabled in `hipefit-app`. The project IDs are recorded
+  in [`firebase/.firebaserc`](../../firebase/.firebaserc). The provider setting lives in the Firebase
+  consoles, so the repository cannot verify it.
 
 The global exercise seed is not a sign-in prerequisite. Profile creation no longer reads or copies
 categories. An unseeded global library produces an empty Exercises screen, not a partial profile.
 
 ## Entry points
 
-| Entry point        | Location                                                                                                                 | Current behavior                                     |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
-| Cold launch        | [`apps/mobile/app/index.tsx`](../../apps/mobile/app/index.tsx)                                                           | Redirects according to auth state                    |
-| Login route        | [`apps/mobile/app/(public)/login.tsx`](<../../apps/mobile/app/(public)/login.tsx>)                                       | Renders `AuthScreen`; redirects if already signed in |
-| Sign in with Apple | [`apps/mobile/src/features/auth/index.tsx`](../../apps/mobile/src/features/auth/index.tsx)                               | The only sign-in provider                            |
-| Edit Profile       | [`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx) | Opens the existing route-based profile form sheet    |
-| Log Out            | [`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx) | Destructive alert, then Firebase sign-out            |
+| Entry point        | Location                                                                                                                 | Current behavior                                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| Cold launch        | [`apps/mobile/app/index.tsx`](../../apps/mobile/app/index.tsx)                                                           | Redirects according to auth state                                                                                     |
+| Login route        | [`apps/mobile/app/(public)/login.tsx`](<../../apps/mobile/app/(public)/login.tsx>)                                       | Renders `AuthScreen`; redirects if already signed in                                                                  |
+| Sign in with Apple | [`apps/mobile/src/features/auth/index.tsx`](../../apps/mobile/src/features/auth/index.tsx)                               | Shown in every environment                                                                                            |
+| Quick Login        | [`apps/mobile/src/features/auth/quick-login-button.tsx`](../../apps/mobile/src/features/auth/quick-login-button.tsx)     | Shown under the Apple button only when the configured Firebase project ID is `hipefit-app-dev` or `hipefit-app-stage` |
+| Edit Profile       | [`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx) | Opens the existing route-based profile form sheet                                                                     |
+| Log Out            | [`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx) | Destructive alert, then Firebase sign-out                                                                             |
 
-There is no email/password, guest, or alternate-provider path.
+Apple and Quick Login are the only sign-in paths. There is no email/password path, and a quick
+account cannot be linked to an Apple ID. The auth store's `isQuickSignInAvailable` flag controls
+whether Quick Login renders. `isQuickSignInAvailable()` in
+[`apps/mobile/src/services/auth-service.ts`](../../apps/mobile/src/services/auth-service.ts) supplies
+it by comparing the configured Firebase project ID with an allowlist of the development and staging
+projects, so a production build and any unlisted project get no button.
 
 ## Main path
 
 1. [`apps/mobile/app/_layout.tsx`](../../apps/mobile/app/_layout.tsx) calls the auth store's
    `initialize()`. Several routes and islands also call it, so the method is idempotent and only the
-   first call installs `onAuthStateChanged` through the auth service.
+   first call installs `onAuthStateChanged` through the auth service. The same first call sets
+   `isQuickSignInAvailable`.
 2. While Firebase restores auth, the root layout holds the route tree behind `isLoading`.
 3. When auth returns a user, the store calls `ensureUserProfile` in
    [`apps/mobile/src/services/auth-service.ts`](../../apps/mobile/src/services/auth-service.ts)
@@ -58,23 +74,28 @@ There is no email/password, guest, or alternate-provider path.
    the returned name to the store before exchanging the identity token for a Firebase credential, so
    an early auth callback and the explicit sign-in continuation share it. A per-UID in-flight promise
    deduplicates those two ensure calls.
-5. `ensureUserProfile` reads `users/{uid}` through `userRef(uid)`. The typed ref and Firebase Auth
+5. For a quick sign-in, the store's `signInWithQuickAccount()` sets the pending name to
+   `quickAccountName` (first name `Quick`, last name `User`) and then calls the service, which signs
+   in with Firebase `signInAnonymously`. The store passes the same name to the profile ensure. The
+   early auth callback, the per-UID deduplication, and the publish in step 9 work as they do for
+   Apple.
+6. `ensureUserProfile` reads `users/{uid}` through `userRef(uid)`. The typed ref and Firebase Auth
    instance come from
    [`@hipefit/firebase/react-native`](../../packages/firebase/src/react-native/index.ts); collection
    paths and persisted validation come from
    [`@hipefit/schemas`](../../packages/schemas/src/index.ts).
-6. If the document is missing, `createUserProfile` validates and writes exactly one document with
+7. If the document is missing, `createUserProfile` validates and writes exactly one document with
    `setDoc`. There is no batch and no user category copy.
-7. If the document exists, the decoder validates it. Missing Apple name fields and an empty display
-   name are filled only when Apple supplied values. A schema version below the current version is
+8. If the document exists, the decoder validates it. Missing name fields and an empty display name
+   are filled only when the sign-in supplied values. A schema version below the current version is
    advanced. Existing non-empty user-edited names are not overwritten.
-8. The auth store publishes `user`, `isLoggedIn: true`, and `isLoading: false`. The protected tree
+9. The auth store publishes `user`, `isLoggedIn: true`, and `isLoading: false`. The protected tree
    mounts, and
    [`apps/mobile/src/hooks/use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts)
    starts the user and exercise stores. Those stores delegate listener setup and Firebase operations
    to app services.
-9. [`apps/mobile/app/index.tsx`](../../apps/mobile/app/index.tsx) redirects to Home. Surfaces backed by
-   live stores manage their own loading presentation; Home limits profile redaction to its header.
+10. [`apps/mobile/app/index.tsx`](../../apps/mobile/app/index.tsx) redirects to Home. Surfaces backed by
+    live stores manage their own loading presentation; Home limits profile redaction to its header.
 
 The profile ensure also runs for a restored session. If the document was deleted while the Firebase
 session survived, launch recreates it before the app reports the user signed in. This is self-healing
@@ -100,6 +121,11 @@ Apple normally returns the person's name only on the first authorization. A Fire
 not reset that Apple authorization. A recreated profile may therefore start with empty names unless
 the user revokes Hipefit under Sign in with Apple before signing in again; Edit Profile remains the
 in-app recovery path.
+
+A quick account's document is created with `firstName: 'Quick'`, `lastName: 'User'`,
+`displayName: 'Quick User'`, and `email: null`. Its other fields are the defaults above. The name is
+supplied only during the interactive sign-in, so a quick profile that is deleted and then recreated
+on a restored session starts with empty names.
 
 ## Profile and settings controls
 
@@ -143,11 +169,22 @@ Settings now includes native menu pickers for Theme, Language, and Units:
 
 No profile, measurement, template, workout, or Auth user is deleted by sign-out.
 
+Signing out of a quick account leaves its anonymous Auth user and its `users/{uid}` document in the
+Firebase project. Nothing can sign in to that account again. The next Quick Login tap creates a new
+account and a new profile document.
+
 ## Alternative and error paths
 
 - Apple Sign-In unavailable: the store warns and returns; the screen shows no explanation.
 - User cancels Apple's sheet: cancellation is logged and rethrown, then swallowed by the screen.
 - Missing identity token or Firebase failure: logged, rethrown, and swallowed; there is no error UI.
+- Anonymous provider disabled in the Firebase project: Firebase rejects the quick sign-in. The store
+  logs the error and rethrows it, and the screen swallows it with no error UI. The user stays on the
+  login screen.
+- Firebase project not on the quick sign-in allowlist: the service's `signInWithQuickAccount()`
+  throws before it calls Firebase. The store logs and rethrows, and there is no error UI. The button
+  is not rendered for such a project, so only a caller that skips the availability flag reaches this
+  path.
 - Missing profile on any authenticated callback: recreated as one default document.
 - Malformed existing profile: logged and left in place; the auth store publishes a signed-out state,
   so the protected app remains closed even though Firebase Auth still has the session.
@@ -161,10 +198,11 @@ No profile, measurement, template, workout, or Auth user is deleted by sign-out.
 
 ## Completion state
 
-After successful sign-in, Firebase Auth holds the session, one valid `users/{uid}` document exists,
-the two domain stores are subscribed, and the protected tab tree is visible. No global category data
-was copied and no user subcollection was created unless the user saved a weigh-in.
+After successful sign-in with either provider, Firebase Auth holds the session, one valid
+`users/{uid}` document exists, the two domain stores are subscribed, and the protected tab tree is
+visible. No global category data was copied and no user subcollection was created unless the user
+saved a weigh-in.
 
 After sign-out, Auth state is null, data listeners and in-memory user data are cleared, and the login
 route is visible. Server data remains unchanged. There is still no account erasure or Apple credential
-revocation flow.
+revocation flow. A signed-out quick account also remains, with no way to sign in to it again.

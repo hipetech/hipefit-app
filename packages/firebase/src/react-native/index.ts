@@ -1,4 +1,8 @@
-export { getFirebaseAuth, getFirebaseFirestore } from './instances';
+export {
+  getFirebaseAuth,
+  getFirebaseFirestore,
+  getFirebaseProjectId,
+} from './instances';
 export {
   bodyMeasurementsRef,
   customExerciseCategoriesRef,

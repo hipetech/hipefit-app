@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Button, Host } from '@expo/ui';
@@ -8,6 +9,8 @@ import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useAuthStore } from '@/stores/use-auth-store';
 import { colors } from '@/theme/colors';
 import { layout } from '@/theme/styles';
+
+import { QuickLoginButton } from './quick-login-button';
 
 const styles = StyleSheet.create({
   screen: {
@@ -34,9 +37,16 @@ const styles = StyleSheet.create({
   },
 });
 
-export function AuthScreen() {
-  const { isLoading, isLoggedIn, initialize, signInWithApple, signOut } =
-    useAuthStore();
+export const AuthScreen: React.FC = () => {
+  const {
+    isLoading,
+    isLoggedIn,
+    isQuickSignInAvailable,
+    initialize,
+    signInWithApple,
+    signInWithQuickAccount,
+    signOut,
+  } = useAuthStore();
   const colorScheme = useAppColorScheme();
 
   useEffect(() => {
@@ -47,6 +57,14 @@ export function AuthScreen() {
   const handleSignIn = async () => {
     try {
       await signInWithApple();
+    } catch {
+      // Error is already logged in the store
+    }
+  };
+
+  const handleQuickSignIn = async () => {
+    try {
+      await signInWithQuickAccount();
     } catch {
       // Error is already logged in the store
     }
@@ -85,21 +103,28 @@ export function AuthScreen() {
               </Button>
             </Host>
           ) : (
-            <View style={styles.appleButtonWrapper}>
-              <AppleAuthentication.AppleAuthenticationButton
-                buttonType={
-                  AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
-                }
-                buttonStyle={
-                  AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-                }
-                cornerRadius={8}
-                style={styles.appleButton}
-                onPress={handleSignIn}
-              />
-            </View>
+            <>
+              <View style={styles.appleButtonWrapper}>
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={
+                    AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+                  }
+                  buttonStyle={
+                    AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                  }
+                  cornerRadius={8}
+                  style={styles.appleButton}
+                  onPress={handleSignIn}
+                />
+              </View>
+              {/* The flag is true only for the development and staging
+                  Firebase projects. */}
+              {isQuickSignInAvailable && (
+                <QuickLoginButton onPress={handleQuickSignIn} />
+              )}
+            </>
           ))}
       </View>
     </View>
   );
-}
+};

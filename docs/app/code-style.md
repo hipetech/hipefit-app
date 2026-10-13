@@ -2,7 +2,7 @@
 type: app
 status: current
 area: code-style
-updated: 2026-08-21
+updated: 2026-10-13
 ---
 
 # Code style and authoring
@@ -167,7 +167,8 @@ Services import SDK refs from `@hipefit/firebase/react-native` and contracts, de
 assertions from `@hipefit/schemas`.
 
 - [`auth-service.ts`](../../apps/mobile/src/services/auth-service.ts) owns auth subscription, Apple
-  credential exchange, sign-out, and user-profile provisioning.
+  credential exchange, anonymous quick sign-in and the project allowlist check that decides whether
+  it is available, sign-out, and user-profile provisioning.
 - [`user-service.ts`](../../apps/mobile/src/services/user-service.ts) owns profile and newest
   measurement listeners plus user writes.
 - [`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts) owns the five exercise
