@@ -1,0 +1,8 @@
+{
+  "name": "@hipefit/worktree-devices",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Per-worktree iOS simulators and Metro ports for developing several Git worktrees at once.",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}
