@@ -2,7 +2,7 @@
 type: template
 status: current
 area: documentation
-updated: 2026-08-31
+updated: 2026-10-13
 ---
 
 # Template: plan document
@@ -80,6 +80,21 @@ this section is where this initiative answers them.
 An initiative is not complete when the code lands. It is complete when every document named here
 exists and describes what the code now does.
 
+## Test plan
+
+Written **before** implementation starts, like the section above. Tests come first: the Maestro
+flows for this work are written before the code they drive, and `docs/app/testing.md` describes the
+suite they join.
+
+- **Flows.** Each flow under `e2e/flows/` this work adds or changes, and what it proves. Write
+  "none" and the reason when the work changes nothing a flow can observe, such as a refactor with
+  no behavior change or tooling outside the app.
+- **Identifier contract.** A table of every identifier and text anchor the flows use: the value,
+  the element it sits on, and the task that puts it there. The flows task and the implementation
+  tasks both build from this table, which is what lets the flows exist before the code does.
+- **Who runs them.** A person, with `bun run e2e`, after the last wave. Agents check flow files with
+  `maestro check-syntax` only.
+
 ## Implementation phases
 
 Phases only when the work does not fit in one sitting; a short plan can use a flat checklist. A
@@ -114,16 +129,24 @@ Execution moves this plan's `status:` too: `active` while a run is in progress, 
 task or a wave's checks stop it, and `completed` only once every task note is `done` and every
 document under **Documentation impact** describes what the code now does.
 
-```
-Wave 1 (parallel)
-  - tasks/schema-fields.md      owns: packages/schemas/src/workout.ts
-  - tasks/service-queries.md    owns: apps/mobile/src/services/workout-service.ts
+When the **Test plan** names flows, the task that writes them is in wave 1, and every task that
+implements behavior those flows cover lists it in `deps:`.
 
-Wave 2 (after wave 1)
+```
+Wave 1
+  - tasks/e2e-flows.md          owns: e2e/flows/start-workout.yaml
+
+Wave 2 (after wave 1, parallel)
+  - tasks/schema-fields.md      deps: e2e-flows
+                                owns: packages/schemas/src/workout.ts
+  - tasks/service-queries.md    deps: e2e-flows
+                                owns: apps/mobile/src/services/workout-service.ts
+
+Wave 3 (after wave 2)
   - tasks/store-wiring.md       deps: schema-fields, service-queries
                                 owns: apps/mobile/src/stores/use-workout-store.ts
 
-Wave 3 (after wave 2)
+Wave 4 (after wave 3)
   - tasks/screen-ui.md          deps: store-wiring
                                 owns: apps/mobile/src/features/workouts/**
 ```
@@ -138,12 +161,21 @@ workspace, so a sibling task's half-finished edit fails them.
 bun run type-check
 bun run lint
 bun run format:check
+for f in e2e/flows/*.yaml e2e/subflows/*.yaml; do maestro check-syntax "$f" || exit 1; done
+```
+
+Manual, by a person after the last wave, when the **Test plan** names flows:
+
+```bash
+bun run e2e
 ```
 
 ## Acceptance criteria
 
 - [ ] <observable, checkable statement>
 - [ ] <one criterion per outcome, not per task>
+- [ ] Every flow named under **Test plan** passes in `bun run e2e`, or the plan says why it names
+      none.
 - [ ] Every document named under **Documentation impact** updated or created, and any new one
       indexed in `docs/README.md`.
 

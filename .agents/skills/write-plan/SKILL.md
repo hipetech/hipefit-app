@@ -37,6 +37,8 @@ committing belongs to the `commit` skill, and `docs/plans/` is gitignored anyway
 - The documents the subject triggers, listed under **Required Reading** in `AGENTS.md`:
   `docs/app/code-style.md` for any code change, plus `ui.md`, `navigation.md`, `database.md`,
   `docs/db-structure.md`, and the affected `docs/flows/` as they apply.
+- `docs/app/testing.md` and the existing flows under `e2e/`, whenever the work changes anything a
+  user can see. The plan writes tests before implementation, and this is the suite they join.
 
 ## 3. Research before proposing anything
 
@@ -61,6 +63,12 @@ The split is what this skill produces. Get it right before writing a file.
   `docs/flows/` document, `docs/README.md`) gets exactly one owner, and the others depend on it.
 - **`deps:` point backwards only.** Every dependency sits in a strictly earlier wave. Wave 1 tasks
   have none.
+- **Tests come first.** When the work adds or changes a journey that ships, one task writes its
+  Maestro flows under `e2e/`, and that task is in wave 1. Every task that implements behavior the
+  flows cover lists it in `deps:`, so no implementation starts before its test exists. The flows
+  can precede the code because the plan fixes the identifiers and text anchors both sides use.
+  A plan with no flows task says why under **Test plan**: the work changes nothing a flow can
+  observe.
 - **Cut along the layers in `docs/app/architecture.md`**, which is where the seams already are:
   `packages/schemas`, then `packages/firebase`, then `apps/mobile/src/services`, then
   `apps/mobile/src/stores`, then `apps/mobile/src/features/<name>`, then `apps/mobile/app`. A
@@ -77,8 +85,8 @@ The split is what this skill produces. Get it right before writing a file.
 ## 5. Confirm the split before writing anything
 
 Ask with **`AskUserQuestion`**: one question, selectable options plus the free-text "Other" the tool
-always appends. State the initiative directory name, the outcome in one sentence, and the waves with
-each task's `owns:`, then offer:
+always appends. State the initiative directory name, the outcome in one sentence, the flows the
+plan writes first (or why it writes none), and the waves with each task's `owns:`, then offer:
 
 - **Write it as shown**, the split above
 - **Resplit**, same scope with different task boundaries; name what to merge or divide
@@ -93,6 +101,10 @@ replaces. The graph lists every task note exactly once.
 - Frontmatter: `type: plan`, `status: proposed`, the `area:`, and today's date in `created:`.
 - **Documentation impact** is written now, not after implementation. Check each `docs/flows/`
   document against the flow-change triggers in `docs/README.md` rather than from memory.
+- **Test plan** is written now too. List each flow the work adds or changes and what it proves,
+  then the identifier contract: every identifier and text anchor the flows use, the element it
+  sits on, and the task that puts it there. Verify each existing anchor against source, and follow
+  the selector conventions in `docs/app/testing.md`.
 - Record the alternatives you rejected and why. That is the part of a plan that outlives it.
 - Links are standard Markdown and repository-relative from the plan directory
   (`../../../apps/mobile/src/...`), with angle brackets around any path containing parentheses.
@@ -113,12 +125,16 @@ one file per task in the graph.
 - `verify:` carries commands only, `bun run type-check` then `bun run lint` for code. A check that
   needs a running app goes in **Definition of done** as a manual step instead: the executing skill
   never launches the app or the simulator, and reports such checks for the user.
+- The flows task's `verify:` runs `maestro check-syntax` on each flow file it writes. Whether the
+  flows pass needs a running app, so `bun run e2e` goes in its **Definition of done** as a manual
+  step for the user. An implementation task that the flows cover lists the flow files in
+  `context:`, and its **Notes** name the identifiers from the contract that it must set.
 - **Definition of done** names the durable documents this task edits and what each has to say
   afterwards, or the reason none is affected.
 
 Then cross-check the set: every task in the graph has a note, every note is in the graph, no two
-tasks in one wave share a path in `owns:`, and the union of `owns:` covers everything the plan
-expects to change.
+tasks in one wave share a path in `owns:`, the union of `owns:` covers everything the plan
+expects to change, and every identifier in the contract has exactly one task that sets it.
 
 ## 8. Report
 

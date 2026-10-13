@@ -62,7 +62,7 @@ across more than one implementation area.
 
 **Small fixes do not need a ceremonial plan — but every behavior change, plan or no plan, must
 still assess and update its durable documentation impact.** The plan is what scales with size; the
-reconciliation in step 5 does not. A one-line change to what the user sees is a flow edit that also
+reconciliation in step 6 does not. A one-line change to what the user sees is a flow edit that also
 happens to touch code, and shipping it without the flow edit leaves a document that rule 2 above
 calls a bug.
 
@@ -72,16 +72,23 @@ calls a bug.
    documents it affects, and identify whether new durable documents are needed.
 3. **Prepare execution context.** When task notes are useful, put the exact durable documents and
    source files in their `context:` arrays.
-4. **Implement against proposed intent.** Behavior that has not shipped stays in the plan; it does
+4. **Write the tests first.** When the work adds or changes a journey that ships, write its Maestro
+   flows under `e2e/` before the code they drive. The plan fixes the identifiers and text anchors
+   both sides use, the flows task sits in the first wave of the execution graph, and every task
+   that implements the behavior depends on it. Work that changes nothing a flow can observe says so
+   in the plan instead. [`app/testing.md`](app/testing.md) describes the suite.
+5. **Implement against proposed intent.** Behavior that has not shipped stays in the plan; it does
    not get described as current in `docs/app/` or `docs/flows/`.
-5. **Reconcile durable documentation.** Before completion, update the existing app and flow
+6. **Reconcile durable documentation.** Before completion, update the existing app and flow
    documents, or create and index the new documents the shipped behavior requires.
-6. **Verify and complete.** Run the required checks, mark task notes done, and mark the initiative
-   plan `completed` only once the code and the durable documentation agree.
+7. **Verify and complete.** Run the required checks, mark task notes done, and mark the initiative
+   plan `completed` only once the code and the durable documentation agree. A person runs the flows
+   with `bun run e2e`; until that run passes, the plan reports it as an outstanding manual check.
 
 Two skills carry this lifecycle, both under `.agents/skills/`. The `write-plan` skill produces steps
-2 and 3, the plan and its task notes under `docs/plans/<initiative-name>/`. The `implement` skill
-runs steps 4 through 6 for a plan that has an execution graph.
+2 and 3, the plan and its task notes under `docs/plans/<initiative-name>/`, and places the flows
+task of step 4 first in the execution graph. The `implement` skill runs steps 4 through 7 for a
+plan that has an execution graph.
 
 ### When a flow must change
 

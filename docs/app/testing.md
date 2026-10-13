@@ -162,7 +162,9 @@ Home mounts.
 ## Adding a flow
 
 A journey that starts shipping gets a flow in the same change as its flow document under
-[`docs/flows/`](../flows). The journeys that do not ship have none: start workout, log workout,
+[`docs/flows/`](../flows). The flow is written before the code it drives: a plan fixes the
+identifiers and text anchors first, and its flows task runs in the first wave, as the feature
+lifecycle in [`../README.md`](../README.md) describes. The journeys that do not ship have none: start workout, log workout,
 create routine, and the create panel's actions.
 
 A new flow goes in `e2e/flows/`, carries the `smoke` tag, starts with the same clean `launchApp`,
