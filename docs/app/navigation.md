@@ -2,7 +2,7 @@
 type: app
 status: current
 area: navigation
-updated: 2026-08-21
+updated: 2026-10-13
 ---
 
 # Navigation
@@ -25,7 +25,7 @@ apps/mobile/app/
 ├── (public)/
 │   └── login.tsx            Apple Sign-In
 └── (private)/
-    ├── _layout.tsx          NativeTabs (4 tabs + Create) + the native panel
+    ├── _layout.tsx          NativeTabs (4 tabs + Create), the native panel, the custom exercise sheet
     ├── create.tsx           No screen — the Create tab item's required route
     ├── (home)/              path "/"
     │   ├── _layout.tsx
@@ -166,8 +166,9 @@ One sharp edge is recorded in the Exercises screen:
 
 [`apps/mobile/app/(private)/_layout.tsx`](<../../apps/mobile/app/(private)/_layout.tsx>) is the only
 interesting layout. It
-renders two siblings inside one flex `View`: the `NativeTabs` navigator — which contains **five**
-triggers, the four tabs plus Create — and the action panel that overlays it.
+renders three siblings inside one flex `View`: the `NativeTabs` navigator — which contains **five**
+triggers, the four tabs plus Create — the action panel that overlays it, and the custom exercise
+sheet described under [Sheets](#sheets), which takes no space in the layout.
 
 ### The tabs are the system's
 
@@ -260,8 +261,14 @@ The panel closes on all of the following, and every one of them routes through t
   overlay covers the tab bar, so that tap arrives as `onDismissRequest` with `reason: 'backdrop'`, not
   as a second `tabPress`.
 - **The VoiceOver escape gesture**, which arrives as `onDismissRequest` with `reason: 'escape'`.
-- **Any navigation** — a push, a presented sheet, a deep link, or the redirect that follows a session
-  change. The adapter listens to the navigation container's `state` event rather than watching route
+- **Pressing Custom Exercise.** The `onActionPress` handler in
+  [`navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx) calls
+  `close()` explicitly before it opens the custom exercise sheet. The navigation listener in the
+  next rule does not cover this case: the sheet is a SwiftUI presentation driven by store state, so
+  the navigation container emits no `state` event when it appears. A panel left expanded would keep
+  its modal scrim and `accessibilityViewIsModal` under the sheet.
+- **Any navigation** — a push, a sheet presented as a route, a deep link, or the redirect that
+  follows a session change. The adapter listens to the navigation container's `state` event rather than watching route
   state in an effect. Not a tab switch while the panel is up: the scrim is modal and swallows it.
 - **The app entering the background.** `'background'` only, never `'inactive'`: iOS reports
   `inactive` for Control Center, a notification banner and a system alert, and the user is still
@@ -292,11 +299,14 @@ Create/Close button, from VoiceOver while the panel is up. The escape gesture is
 through `accessibilityPerformEscape`. The practical consequence for QA: while the panel is open,
 `Close` cannot be found by an accessibility-driven driver and must be tapped by coordinate.
 
-One haptic fires: `hapticImpact()` when Create **opens** the panel. Nothing fires on close, on the
-scrim, on the escape gesture, or on an action. Opening puts something new on screen, which is what
-that intent name means; dismissal does not, and iOS itself stays silent when a sheet goes away. It
-fires from the press handler in the tab layout rather than from a store updater — an updater must be
-pure and may be called twice, which would be a doubled tap.
+Two events fire a haptic, both `hapticImpact()`: Create **opening** the panel, and a press on
+Custom Exercise, which presents the custom exercise sheet. Nothing fires on close, on the scrim, or
+on the escape gesture. Opening the panel and presenting the sheet each put something new on screen,
+which is what that intent name means; dismissal does not, and iOS itself stays silent when a sheet
+goes away. Both fire from a press handler rather than from a store updater: an updater must be pure
+and may be called twice, which would be a doubled tap. The Create handler is in the tab layout, and
+the Custom Exercise handler is in
+[`navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx).
 
 ### Being an overlay rather than an accessory
 
@@ -333,22 +343,26 @@ draws, so there is nothing floating in the content layer and nothing Android-fla
 the former floating-action-button feature is deleted. What remains of the trade is the
 pre-iOS-26 rendering noted above.
 
-### The actions are stubs
+### The actions
 
-**The panel's three actions — Start Workout, New Workout Template, Custom Exercise — are disabled
-stubs.**
-They render, they are unreachable, and there is nowhere to send them: no route in `apps/mobile/app/`
-creates a
-workout, a template, or an exercise. Each descriptor in
+**Two of the panel's three actions, Start Workout and New Workout Template, are disabled stubs.
+Custom Exercise is live.**
+
+The two stubs render, they are unreachable, and there is nowhere to send them: nothing in the app
+creates a workout or a workout template. Their descriptors in
 [`apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts)
-ships `enabled: false`, and the native control is disabled with `isEnabled = false` rather than by
+ship `enabled: false`, and the native control is disabled with `isEnabled = false` rather than by
 switching off user interaction — so a disabled action **swallows** its touch instead of dropping it
-through to the panel behind. `onActionPress` is wired to an empty handler rather than left off, so
-the seam stays visible: an unhandled event is how a stub quietly becomes a navigation to the wrong
-place later.
+through to the panel behind. Going live means flipping `enabled` and giving `onActionPress` a
+destination, which is a state change and so also earns a haptic.
 
-Going live means flipping `enabled` and giving `onActionPress` a destination, which is a state change
-and so also earns a haptic.
+Custom Exercise ships `enabled: true`. The `onActionPress` handler in
+[`navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx) receives
+the action `id` and compares it with `CUSTOM_EXERCISE_ACTION_ID`. On a match it does three things:
+it fires `hapticImpact()`, closes the panel through `useNavigationDockStore`, and calls `open()` on
+`useCustomExerciseSheetStore`, which presents the sheet described under [Sheets](#sheets). The
+handler ignores every other `id`, so a stub that is enabled before it has a destination does
+nothing instead of navigating somewhere unintended.
 
 ## Sheets
 
@@ -362,6 +376,17 @@ detail in
 [`apps/mobile/src/features/exercises/exercise-detail-sheet.tsx`](../../apps/mobile/src/features/exercises/exercise-detail-sheet.tsx)
 is driven by component state, so it has no URL, no back-stack entry, and no route file. Reach for
 a route only when the sheet should be addressable or survive a push; otherwise keep it local.
+
+The custom exercise sheet in
+[`apps/mobile/src/features/exercises/custom-exercise-sheet.tsx`](../../apps/mobile/src/features/exercises/custom-exercise-sheet.tsx)
+is the same kind of SwiftUI presentation, with two differences. Its presentation state is
+`isPresented` in
+[`apps/mobile/src/stores/use-custom-exercise-sheet-store.ts`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts)
+instead of component state, because the dock action that opens it and the layout that mounts it do
+not contain each other. And it is mounted once in
+[`apps/mobile/app/(private)/_layout.tsx`](<../../apps/mobile/app/(private)/_layout.tsx>), beside the
+panel, so it presents from every tab. It is not a route because it does not need to be addressable
+or survive a push: it has no URL and no back-stack entry, and nothing links to it.
 
 ## Imperative navigation
 

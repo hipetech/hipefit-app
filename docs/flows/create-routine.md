@@ -2,7 +2,7 @@
 type: flow
 status: current
 area: workout-templates
-updated: 2026-08-21
+updated: 2026-10-13
 ---
 
 # Flow: create a workout template
@@ -32,7 +32,9 @@ the template action always stops there.
 ## Main path today
 
 1. The user opens the create panel from the detached Create tab-bar item.
-2. The panel shows Start Workout, New Workout Template, and Custom Exercise. All three are disabled.
+2. The panel shows Start Workout, New Workout Template, and Custom Exercise. Start Workout and New
+   Workout Template are disabled. Custom Exercise is enabled and opens the sheet described in
+   [create a custom exercise](create-custom-exercise.md).
 3. The user cannot select New Workout Template. No route, sheet, draft, or write follows.
 
 ## Read behavior

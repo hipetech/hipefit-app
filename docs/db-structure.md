@@ -2,7 +2,7 @@
 type: app
 status: current
 area: database
-updated: 2026-08-21
+updated: 2026-10-13
 ---
 
 # Firestore database structure
@@ -29,10 +29,11 @@ users/{uid}
 ```
 
 The three global collections are readable by authenticated clients and have no client write path.
-Everything under `users/{uid}` is owner-scoped. The app currently writes only the user document and
-new body-measurement documents; custom exercises, custom categories, workout templates, and workouts
-have no shipped creation or mutation journey. Workout templates and workouts also have no current
-client read path; their schemas are retained for later implementation.
+Everything under `users/{uid}` is owner-scoped. The app writes the user document, creates
+body-measurement documents, and creates custom exercises. It cannot edit or delete a custom
+exercise, and custom categories, workout templates, and workouts have no shipped creation or
+mutation journey. Workout templates and workouts also have no current client read path; their
+schemas are retained for later implementation.
 
 ## Shared conventions
 
@@ -42,7 +43,7 @@ Firestore document IDs are not repeated inside document data. Stores carry a rea
 `WithId<T> = { id: string; data: T }` from
 [`@hipefit/schemas`](../packages/schemas/src/shared.ts), keeping the ID separate from the persisted
 shape. Global IDs are deterministic lowercase slugs. User-subcollection IDs are Firestore IDs; the
-current weigh-in writer uses an auto ID.
+weigh-in and custom exercise writers use auto IDs.
 
 ### Full references
 
@@ -88,9 +89,12 @@ data supplies both `en` and `uk`. Global text resolves as the selected language 
 
 `UserLocalizedText` allows either locale but requires at least one value. Each custom document has a
 `defaultLocale`, and every localized map on that document must contain that key. User text resolves
-as the selected language, then `defaultLocale`, then the remaining supported locale. No custom
-exercise or category editor ships yet, so these write conventions are represented by types,
-decoders, and rules rather than a user journey.
+as the selected language, then `defaultLocale`, then the remaining supported locale. A value in a
+name map must be non-empty. A value in a custom exercise `description` map may be an empty string.
+
+The custom exercise sheet writes one locale, the user's `settings.language` at the time of the save,
+and sets `defaultLocale` to it. No custom category editor ships, so the category conventions are
+represented by types, decoders, and rules rather than a user journey.
 
 Changing `settings.language` recomputes exercise, category, and equipment view models from the
 already-subscribed locale maps. It does not refetch the collections. Never query or sort by a
@@ -214,21 +218,22 @@ retirement and user hidden refs, not by the archive flag. These catalogue rules 
 
 ### `users/{uid}/customExercises/{id}`
 
-| Field                     | Type                | Meaning                                          |
-| ------------------------- | ------------------- | ------------------------------------------------ |
-| `categoryRef`             | `Ref`               | Global or custom category                        |
-| `forkedFromRef`           | `Ref \| null`       | Global exercise ref when this document is a fork |
-| `name`                    | `UserLocalizedText` | User-localized display name                      |
-| `description`             | `UserLocalizedText` | User-localized instructions                      |
-| `defaultLocale`           | `Locale`            | Required key in both localized maps              |
-| `type`                    | `ExerciseType`      | `strength`, `cardio`, or `bodyweight`            |
-| `equipment`               | `Ref[]`             | Global equipment refs                            |
-| `imageURL`                | `string \| null`    | Optional remote artwork                          |
-| `createdAt` / `updatedAt` | `Timestamp`         | Creation and last update                         |
+| Field                     | Type                | Meaning                                                                                |
+| ------------------------- | ------------------- | -------------------------------------------------------------------------------------- |
+| `categoryRef`             | `Ref`               | Global or custom category                                                              |
+| `forkedFromRef`           | `Ref \| null`       | Global exercise ref when this document is a fork                                       |
+| `name`                    | `UserLocalizedText` | User-localized display name                                                            |
+| `description`             | `UserLocalizedText` | User-localized instructions; the value under the default locale may be an empty string |
+| `defaultLocale`           | `Locale`            | Required key in both localized maps                                                    |
+| `type`                    | `ExerciseType`      | `strength`, `cardio`, or `bodyweight`                                                  |
+| `equipment`               | `Ref[]`             | Global equipment refs; the rules allow at most 20                                      |
+| `imageURL`                | `string \| null`    | Optional remote artwork                                                                |
+| `createdAt` / `updatedAt` | `Timestamp`         | Creation and last update                                                               |
 
-`forkedFromRef` is retained as schema metadata. The current exercise store does not build fork aliases
-or resolve workout/template references. Hidden exercise and category refs remove current catalogue
-entries; they do not alter stored documents.
+`forkedFromRef` is retained as schema metadata. The app's only custom exercise writer always stores
+`null` there and in `imageURL`. The current exercise store does not build fork aliases or resolve
+workout/template references. Hidden exercise and category refs remove current catalogue entries; they
+do not alter stored documents.
 
 ### `users/{uid}/workoutTemplates/{id}`
 
@@ -312,7 +317,7 @@ listener, edit action, or delete action in the app.
 | `equipment`                | One listener in the exercise service          | None                                          |
 | `exercises`                | One listener in the exercise service          | None                                          |
 | `customExerciseCategories` | One listener in the exercise service          | None                                          |
-| `customExercises`          | One listener in the exercise service          | None                                          |
+| `customExercises`          | One listener in the exercise service          | Create only, from the custom exercise sheet   |
 | `workoutTemplates`         | None                                          | None                                          |
 | `workouts`                 | None                                          | None                                          |
 | `bodyMeasurements`         | One newest-first listener in the user service | Append weigh-in only                          |

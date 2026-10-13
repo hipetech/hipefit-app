@@ -85,7 +85,9 @@ the complete prospective shape before sending it:
 - the auth service validates a new or repaired `UserProfile` before replacing validation timestamps
   with server timestamps;
 - the user service validates the merged next profile before issuing settings or profile updates;
-- the user service validates a `BodyMeasurement` before `addDoc`.
+- the user service validates a `BodyMeasurement` before `addDoc`;
+- the exercise service validates a complete `CustomExercise` before replacing validation timestamps
+  with server timestamps and calling `addDoc`.
 
 Write assertions also exist for document types without a shipped client writer. A modified client can
 bypass application assertions, so Firestore rules remain part of the boundary.
@@ -155,13 +157,14 @@ requested, decoded, derived, or rendered. There is no persisted history or stats
 
 ## Current writes
 
-The shipped client exposes five write operations through two stores and implements them in two
+The shipped client exposes six write operations through three stores and implements them in three
 services:
 
-| Store action owner                                               | Service                                                             | Write                                                                                                      |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts) | [`auth-service.ts`](../../apps/mobile/src/services/auth-service.ts) | Create `users/{uid}` when missing; fill missing Apple name fields; advance an older `schemaVersion` marker |
-| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts) | [`user-service.ts`](../../apps/mobile/src/services/user-service.ts) | Update `settings.<key>` fields; update profile and body fields; append a body measurement                  |
+| Store action owner                                                       | Service                                                                     | Write                                                                                                      |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)         | [`auth-service.ts`](../../apps/mobile/src/services/auth-service.ts)         | Create `users/{uid}` when missing; fill missing Apple name fields; advance an older `schemaVersion` marker |
+| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)         | [`user-service.ts`](../../apps/mobile/src/services/user-service.ts)         | Update `settings.<key>` fields; update profile and body fields; append a body measurement                  |
+| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts) | [`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts) | Create one `users/{uid}/customExercises` document                                                          |
 
 Profile creation is one `setDoc`, not a batch. No category or exercise data is copied at sign-up.
 The auth listener calls `ensureUserProfile` for new sign-ins and restored sessions before the auth
@@ -169,8 +172,17 @@ store publishes the user. A missing profile therefore self-heals before domain s
 The current schema-version branch only advances the numeric marker because version `1` is the only
 live shape. An existing malformed profile is logged and is not repaired automatically.
 
-There is no client write to custom categories, custom exercises, workout templates, or workouts. The
-client also does not read workout templates or workouts.
+There is no client write to custom categories, workout templates, or workouts. The client also does
+not read workout templates or workouts.
+
+The custom exercise sheet is the only custom exercise writer, and it only creates. The exercise store
+records the UID from `subscribe(uid)` and takes the locale from the user store's
+`settings.language`; its `createCustomExercise` action throws when either is missing. The service
+writes `name` and `description` under that one locale, sets `defaultLocale` to it, and always writes
+`forkedFromRef: null` and `imageURL: null`. It also rejects more than 20 equipment refs, a bound the
+rules enforce and the write assertion does not. The store publishes no optimistic entry: the
+`customExercises` listener delivers the new document. There is no update or delete action. The
+journey is documented in [create a custom exercise](../flows/create-custom-exercise.md).
 
 The Edit Profile sheet is the only measurement entry point. Saving updates profile fields first and
 then appends a current-time weigh-in when the optional weight field is populated. These are separate
@@ -185,6 +197,8 @@ action.
 - a user can read, create, update, and delete only their own document and five subcollections;
 - user, custom-category, custom-exercise, template, and workout creates and updates validate allowed
   and required top-level keys, scalar bounds, selected enums, and timestamps;
+- a custom exercise name must be non-empty in every locale it carries, while a description may be an
+  empty string. Both maps must contain the document's `defaultLocale`;
 - `createdAt` is server-set and immutable where present, `updatedAt` advances with server time, and
   `Workout.startedAt` is immutable;
 - workout status can remain unchanged or move from `in_progress` to `completed` or `abandoned`, but

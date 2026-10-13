@@ -98,24 +98,34 @@ state lives in
 the trigger and panel are mounted in different parts of the route layout. Its navigation contract is
 documented in [navigation.md](navigation.md).
 
+The private layout also mounts
+[`custom-exercise-sheet.tsx`](../../apps/mobile/src/features/exercises/custom-exercise-sheet.tsx)
+from the exercises feature, so the sheet presents from every tab. The panel's Custom Exercise action
+opens it through
+[`use-custom-exercise-sheet-store.ts`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts),
+because the adapter that handles the action and the layout that mounts the sheet do not contain each
+other.
+
 ## Stores
 
 Zustand stores are module-level singletons created with `create()` under
 [`apps/mobile/src/stores/`](../../apps/mobile/src/stores):
 
-| Store                                                                                 | Holds                                                                                                |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                      | Firebase user, auth loading state, quick sign-in availability, Apple and quick sign-in, and sign-out |
-| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                      | Profile, newest body measurement, current weight, and user write actions                             |
-| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)              | Localized and visibility-filtered exercise catalogue view models                                     |
-| [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts) | Whether the native create panel is expanded                                                          |
+| Store                                                                                            | Holds                                                                                                   |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                                 | Firebase user, auth loading state, quick sign-in availability, Apple and quick sign-in, and sign-out    |
+| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                                 | Profile, newest body measurement, current weight, and user write actions                                |
+| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)                         | Localized and visibility-filtered exercise catalogue view models, and the `createCustomExercise` action |
+| [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts)            | Whether the native create panel is expanded                                                             |
+| [`useCustomExerciseSheetStore`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts) | Whether the custom exercise sheet is presented                                                          |
 
 Zustand is used instead of React context because subscription orchestration drives stores through
 `getState()` outside component trees, while components can select narrow slices.
 
 The two Firestore data stores expose `subscribe(uid)`, which returns a teardown. A teardown removes
 the service listeners and restores the store's initial loading state. They do not expose separate
-`reset()` actions. The navigation-dock store is UI state and has no Firestore lifecycle.
+`reset()` actions. The navigation-dock store and the custom-exercise-sheet store are UI state and
+have no Firestore lifecycle.
 
 Data-store conventions:
 
@@ -303,8 +313,9 @@ code requires running `pod install` from `apps/mobile/ios/` and committing the r
 - There is no workout player. Start and Add to Workout affordances remain disabled. Workout and
   workout-template contracts and validation exist, but there is no app ref, listener, store, or
   write path for either collection.
-- The three global create actions are disabled in
+- Two of the three global create actions, Start Workout and New Workout Template, are disabled in
   [`navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts).
+  Custom Exercise is enabled.
 - There is no automated test runner. `bun run type-check` is the primary code gate, with
   `bun run lint` and `bun run format:check` beside it.
 - There is no Android project. Reviving Android is a project-wide decision recorded in

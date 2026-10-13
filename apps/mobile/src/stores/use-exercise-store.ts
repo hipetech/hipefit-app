@@ -1,18 +1,28 @@
 import type { ExerciseCatalogueSource } from '@/features/exercises/exercise-catalogue';
-import type { ExerciseListenerName } from '@/services/exercise-service';
+import type {
+  CustomExerciseInput,
+  ExerciseListenerName,
+} from '@/services/exercise-service';
 import { create } from 'zustand';
 
 import { buildExerciseCatalogue } from '@/features/exercises/exercise-catalogue';
-import { subscribeToExerciseCatalogue } from '@/services/exercise-service';
+import {
+  createCustomExercise,
+  subscribeToExerciseCatalogue,
+} from '@/services/exercise-service';
 
 import { useUserStore } from './use-user-store';
 
 interface ExerciseState {
+  _uid: string | null;
   exercises: ReturnType<typeof buildExerciseCatalogue>['exercises'];
   categories: ReturnType<typeof buildExerciseCatalogue>['categories'];
   equipment: ReturnType<typeof buildExerciseCatalogue>['equipment'];
   isLoading: boolean;
   subscribe: (uid: string) => () => void;
+  createCustomExercise: (
+    fields: Omit<CustomExerciseInput, 'locale'>
+  ) => Promise<void>;
 }
 
 interface RawData extends ExerciseCatalogueSource {
@@ -21,7 +31,7 @@ interface RawData extends ExerciseCatalogueSource {
 
 const LISTENER_COUNT = 5;
 
-export const useExerciseStore = create<ExerciseState>((set) => {
+export const useExerciseStore = create<ExerciseState>((set, get) => {
   const raw: RawData = {
     globalExercises: [],
     globalCategories: [],
@@ -61,12 +71,14 @@ export const useExerciseStore = create<ExerciseState>((set) => {
   };
 
   return {
+    _uid: null,
     exercises: [],
     categories: [],
     equipment: [],
     isLoading: true,
 
     subscribe: (uid) => {
+      set({ _uid: uid });
       raw.firedListeners.clear();
       const unsubscribeCatalogue = subscribeToExerciseCatalogue(uid, {
         onData: (listener, data) => {
@@ -101,12 +113,30 @@ export const useExerciseStore = create<ExerciseState>((set) => {
         raw.customCategories = [];
         raw.firedListeners.clear();
         set({
+          _uid: null,
           exercises: [],
           categories: [],
           equipment: [],
           isLoading: true,
         });
       };
+    },
+
+    createCustomExercise: async (fields) => {
+      const uid = get()._uid;
+      if (!uid) {
+        throw new Error('Cannot create a custom exercise while signed out');
+      }
+      const profile = useUserStore.getState().profile;
+      if (!profile) {
+        throw new Error(
+          'Cannot create a custom exercise before the profile loads'
+        );
+      }
+      await createCustomExercise(uid, {
+        ...fields,
+        locale: profile.settings.language,
+      });
     },
   };
 });

@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { CustomExerciseSheet } from '@/features/exercises/custom-exercise-sheet';
 import { NavigationDock } from '@/features/navigation-dock/navigation-dock';
 import { hapticImpact } from '@/lib/haptics';
 import { useNavigationDockStore } from '@/stores/use-navigation-dock-store';
@@ -125,6 +126,11 @@ export default function TabsLayout() {
       </NativeTabs>
 
       <NavigationDock />
+      {/*
+        Mounted here, beside the panel whose Custom Exercise action opens it, so
+        the sheet presents from any tab. It reads its own presentation store.
+      */}
+      <CustomExerciseSheet />
     </View>
   );
 }

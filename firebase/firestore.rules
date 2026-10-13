@@ -32,6 +32,15 @@ service cloud.firestore {
         && (!('uk' in value) || (value.uk is string && value.uk.size() > 0 && value.uk.size() <= maxLength));
     }
 
+    // Same shape as validUserLocalizedText, but a present translation may be an empty string.
+    function validEmptyableUserLocalizedText(value, maxLength) {
+      return value is map
+        && value.keys().hasOnly(['en', 'uk'])
+        && value.size() >= 1
+        && (!('en' in value) || (value.en is string && value.en.size() <= maxLength))
+        && (!('uk' in value) || (value.uk is string && value.uk.size() <= maxLength));
+    }
+
     function validDefaultLocale(value, localizedText) {
       return value in ['en', 'uk'] && localizedText.keys().hasAny([value]);
     }
@@ -122,7 +131,7 @@ service cloud.firestore {
           || (data.forkedFromRef is string
             && data.forkedFromRef.matches('^global:[a-z0-9-]+$')))
         && validUserLocalizedText(data.name, 100)
-        && validUserLocalizedText(data.description, 2000)
+        && validEmptyableUserLocalizedText(data.description, 2000)
         && validDefaultLocale(data.defaultLocale, data.name)
         && validDefaultLocale(data.defaultLocale, data.description)
         && validExerciseType(data.type)

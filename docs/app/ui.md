@@ -2,7 +2,7 @@
 type: app
 status: current
 area: ui
-updated: 2026-08-21
+updated: 2026-10-13
 ---
 
 # The UI system
@@ -55,6 +55,21 @@ nothing at all. Row-sized islands are the opposite case and use
 [apps/mobile/src/features/exercises/exercise-row.tsx](../../apps/mobile/src/features/exercises/exercise-row.tsx)
 against
 [apps/mobile/src/features/home/home-content.tsx](../../apps/mobile/src/features/home/home-content.tsx).
+
+The same property decides how a `List` is sized inside a `BottomSheet`.
+[apps/mobile/src/features/exercises/custom-exercise-sheet.tsx](../../apps/mobile/src/features/exercises/custom-exercise-sheet.tsx)
+is the app's only case. Its `Host` is absolutely positioned and takes no space, so the sheet supplies
+the height: the content carries `presentationDetents(['medium', { fraction: 0.9 }])` and not
+`fitToContents`.
+`fitToContents` measures the sheet's children (`BottomSheetView.swift` at `@expo/ui` 57.0.7), and a
+`List` reports no height for it to measure. Under the fixed detents the form is a `VStack` of a
+header row and the `List`, and the `List` takes the height the header leaves. The sheet opens at
+`medium` and stops at 0.9 of the screen, not `large`, because iOS 26 draws a sheet's translucent
+material only below full height, and the `List`
+adds `scrollContentBackground('hidden')` so the opaque `insetGrouped` page background does not
+cover that material. This layout was
+written against the typings and has not been run on a device. The file's comment names `Form` from
+`@expo/ui/swift-ui` as the fallback if the `List` does not fill the sheet or does not scroll.
 
 Remote images inside a `Host` go through `RNHostView` + `expo-image`, **never a second `Host`**:
 SwiftUI's `Image` cannot load a URL. `RNHostView` attaches an `RCTSurfaceTouchHandler` to the hosted

@@ -2,7 +2,7 @@
 type: index
 status: current
 area: documentation
-updated: 2026-09-04
+updated: 2026-10-13
 ---
 
 # Documentation
@@ -172,12 +172,12 @@ is how a document turns into an agent implementing the wrong thing.
 
 ### Flows
 
-Each flow opens with a callout stating how much of it ships. Read that callout before assuming any
-step is reachable: three of the five below do not ship end to end, and the calendar flow renders an
-empty marker array even though its interactions ship.
+A flow that does not fully ship opens with a callout stating how much of it does. Read that callout
+before assuming any step is reachable: three of the six below do not ship end to end, and the
+calendar flow renders an empty marker array even though its interactions ship.
 
 - [`flows/authentication.md`](flows/authentication.md) — Apple Sign-In, first-run profile creation,
-  the auth guard, and logging out. The one flow here that ships end to end.
+  the auth guard, and logging out. Ships end to end.
 - [`flows/browse-home-calendar.md`](flows/browse-home-calendar.md) — paging, expanding, and
   selecting a day in Home's calendar. Every interaction ships; the **marker array is empty** —
   there is no workout read path to fill it — and selecting a day filters nothing.
@@ -185,6 +185,8 @@ empty marker array even though its interactions ship.
   The entry points ship **disabled**.
 - [`flows/log-workout.md`](flows/log-workout.md) — finishing a session and the writes that would
   record it. The **write** half does not ship; the read half renders correctly.
+- [`flows/create-custom-exercise.md`](flows/create-custom-exercise.md) — adding a custom exercise
+  from the create panel's sheet and seeing it in the Exercises list. Ships end to end.
 - [`flows/create-routine.md`](flows/create-routine.md) — building a reusable workout template.
   **Does not ship**; the filename is retained for stable links, and the only affordance is a disabled
   action in the native create panel.
