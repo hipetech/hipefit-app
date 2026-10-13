@@ -5,6 +5,7 @@ import {
   ensureUserProfile,
   noAppleName,
   signInWithAppleAccount,
+  signInWithTestAccount as signInWithTestAccountCredentials,
   signOutCurrentUser,
   subscribeToAuth,
 } from '@/services/auth-service';
@@ -15,6 +16,7 @@ interface AuthState {
   isLoggedIn: boolean;
   initialize: () => () => void;
   signInWithApple: () => Promise<void>;
+  signInWithTestAccount: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -112,6 +114,29 @@ export const useAuthStore = create<AuthState>((set) => {
     }
   };
 
+  const signInWithTestAccount = async (email: string, password: string) => {
+    try {
+      const user = await signInWithTestAccountCredentials(email, password);
+
+      const sequence = ++authChangeSequence;
+      set({ user: null, isLoggedIn: false, isLoading: true });
+      try {
+        await ensureProfileOnce(user, noAppleName);
+        if (sequence === authChangeSequence) {
+          set({ user, isLoggedIn: true, isLoading: false });
+        }
+      } catch (error) {
+        if (sequence === authChangeSequence) {
+          set({ user: null, isLoggedIn: false, isLoading: false });
+        }
+        throw error;
+      }
+    } catch (error) {
+      console.error('[AuthStore] test-account sign-in', error);
+      throw error;
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       await signOutCurrentUser();
@@ -127,6 +152,7 @@ export const useAuthStore = create<AuthState>((set) => {
     isLoggedIn: false,
     initialize,
     signInWithApple,
+    signInWithTestAccount,
     signOut: handleSignOut,
   };
 });

@@ -19,6 +19,7 @@ import {
 import {
   accessibilityHidden,
   accessibilityHint,
+  accessibilityIdentifier,
   font,
   foregroundStyle,
   lineLimit,
@@ -277,6 +278,7 @@ export const SettingsContent = () => {
               <Button
                 role="destructive"
                 onPress={() => setLogoutAlertPresented(true)}
+                modifiers={[accessibilityIdentifier('settings-log-out')]}
               >
                 <HStack>
                   <Spacer />

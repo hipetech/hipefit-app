@@ -25,7 +25,9 @@
     "db:seed": "bun run firebase/seed/index.ts",
     "db:wipe": "bun run firebase/seed/wipe.ts",
     "db:migrate": "bun run firebase/migrations/migrate.ts",
-    "firebase": "bun run scripts/firebase/run.ts"
+    "firebase": "bun run scripts/firebase/run.ts",
+    "e2e": "bun --env-file=e2e/.env run scripts/e2e/run.ts",
+    "e2e:studio": "maestro studio"
   },
   "dependencies": {
     "@hipefit/schemas": "workspace:*",

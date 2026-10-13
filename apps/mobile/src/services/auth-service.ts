@@ -6,6 +6,7 @@ import {
   OAuthProvider,
   onAuthStateChanged,
   signInWithCredential,
+  signInWithEmailAndPassword,
   signOut,
 } from '@react-native-firebase/auth';
 import {
@@ -16,6 +17,8 @@ import {
   updateDoc,
 } from '@react-native-firebase/firestore';
 import * as AppleAuthentication from 'expo-apple-authentication';
+
+import { isDevelopmentEnvironment } from '@/lib/app-env';
 
 export type AuthUser = User;
 
@@ -186,6 +189,27 @@ export const signInWithAppleAccount = async (
     appleCredential
   );
   return { user, appleName };
+};
+
+export const signInWithTestAccount = async (
+  email: string,
+  password: string
+): Promise<User> => {
+  // The Email/Password provider is disabled on the staging and production
+  // Firebase projects. The guard lives in the service, ahead of any Firebase
+  // call, so a stray call site in a non-development bundle never reaches them.
+  if (!isDevelopmentEnvironment) {
+    throw new Error(
+      'Test-account sign-in is only available in development builds'
+    );
+  }
+
+  const { user } = await signInWithEmailAndPassword(
+    getFirebaseAuth(),
+    email,
+    password
+  );
+  return user;
 };
 
 export const signOutCurrentUser = async (): Promise<void> =>

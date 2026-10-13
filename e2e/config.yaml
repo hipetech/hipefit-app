@@ -1,0 +1,5 @@
+# Maestro workspace for the Hipefit smoke suite. Only the flows listed here run
+# when the workspace folder is passed to `maestro test`; `subflows/` is reached
+# through `runFlow` and never runs on its own.
+flows:
+  - flows/*.yaml

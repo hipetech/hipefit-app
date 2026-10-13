@@ -14,7 +14,9 @@ operations to app services.
 - **Bare workflow.** `apps/mobile/ios/` is authoritative for native configuration; do not synthesize
   it through `apps/mobile/app.config.ts`.
 - **Bun only.** Never use npm or yarn.
-- **No test runner.** `bun run type-check` is the primary code gate.
+- **No unit test runner.** `bun run type-check` is the primary code gate. Maestro end-to-end flows
+  live in `e2e/`; a person runs them with `bun run e2e` against a booted simulator, and agents do
+  not run them.
 
 ## Workflow
 
@@ -31,6 +33,7 @@ bun install
 bun run ios:development     # also ios:staging, ios:production
 bun run type-check          # required first for code
 bun run lint                # required after type-check
+bun run e2e                 # Maestro flows; run by a person, never by an agent
 bunx prettier --write <files-touched>
 bun run db:seed --seed exercises --env development   # both flags required; --env has no default
 bun run db:wipe --env development                    # destructive; prompts for the env name
@@ -77,6 +80,7 @@ Read only the documents triggered by the task:
 - **UI:** read `docs/app/ui.md` before editing. It overrides conflicting bundled Expo skills.
 - **Navigation:** read `docs/app/navigation.md`.
 - **Data or schema:** read `docs/app/database.md` and, when relevant, `docs/db-structure.md`.
+- **E2E flows or accessibility identifiers:** read `docs/app/testing.md`.
 - **User-visible behavior:** read and update the affected `docs/flows/` in the same change. A new
   user goal or independent journey requires a flow from `docs/templates/flow.md`, indexed in
   `docs/README.md`.

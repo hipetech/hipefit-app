@@ -2,7 +2,7 @@
 type: app
 status: current
 area: architecture
-updated: 2026-08-21
+updated: 2026-10-13
 ---
 
 # Application architecture
@@ -31,7 +31,8 @@ Cross-cutting mobile code sits beside those layers under
 [`apps/mobile/src/`](../../apps/mobile/src): [`theme/`](../../apps/mobile/src/theme) holds shared
 modifier arrays and React Native styles, [`components/`](../../apps/mobile/src/components) holds
 app-owned React Native wrappers, [`lib/`](../../apps/mobile/src/lib) holds formatting, constants,
-and haptics, and [`hooks/`](../../apps/mobile/src/hooks) holds cross-feature hooks.
+haptics, and the environment helper, and [`hooks/`](../../apps/mobile/src/hooks) holds cross-feature
+hooks.
 
 Workspace packages under [`packages/`](../../packages) are imported through package contracts.
 Portable Firestore contracts belong to `@hipefit/schemas`, and SDK-bound refs belong to
@@ -105,7 +106,7 @@ Zustand stores are module-level singletons created with `create()` under
 
 | Store                                                                                 | Holds                                                                    |
 | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                      | Firebase user, auth loading state, Apple sign-in, and sign-out           |
+| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                      | Firebase user, auth loading state, sign-in actions, and sign-out         |
 | [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                      | Profile, newest body measurement, current weight, and user write actions |
 | [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)              | Localized and visibility-filtered exercise catalogue view models         |
 | [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts) | Whether the native create panel is expanded                              |
@@ -145,7 +146,13 @@ filters hidden or retired entries, and returns the published view models.
 [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts) does not use the data stores'
 `subscribe(uid)` shape because it produces the UID. It delegates SDK work to
 [`auth-service.ts`](../../apps/mobile/src/services/auth-service.ts) and exposes `initialize()`,
-`signInWithApple()`, and `signOut()`.
+`signInWithApple()`, `signInWithTestAccount()`, and `signOut()`.
+
+`signInWithTestAccount(email, password)` is the store's third action and works in development builds
+only. It signs in with an email and password, then runs the same profile ensure as Apple sign-in
+with no Apple name. The auth service throws before it calls Firebase when the bundle's environment
+is not `development`, and the login screen renders the form that calls the action only in that
+environment. The Maestro flows sign in through it; see [testing.md](testing.md).
 
 `initialize()` is idempotent because the root layout, entry redirect, login route, and auth screen
 all call it. The guard prevents each call from replacing the shared unsubscribe slot or letting one
@@ -272,6 +279,12 @@ Environment selection is native. All three Firebase plist files are bundled, and
 [`AppDelegate.swift`](../../apps/mobile/ios/Hipefit/AppDelegate.swift) selects one from the bundle
 identifier before configuring Firebase. Stores and screens do not choose a Firebase environment.
 
+JavaScript reads the environment in one place.
+[`lib/app-env.ts`](../../apps/mobile/src/lib/app-env.ts) reads `EXPO_PUBLIC_APP_ENV`, which Expo
+inlines at bundle time, and exports `appEnvironment` and `isDevelopmentEnvironment`. Any value other
+than `development` or `staging` resolves to `production`, including an unset variable. The helper
+decides only whether the test-account sign-in exists, as described in [testing.md](testing.md).
+
 Root `ios:*` scripts in [`package.json`](../../package.json) delegate to
 [`apps/mobile/package.json`](../../apps/mobile/package.json), which copies the matching root
 `.env.<environment>` file to `apps/mobile/.env.local` and launches the correct scheme.
@@ -292,8 +305,9 @@ code requires running `pod install` from `apps/mobile/ios/` and committing the r
   write path for either collection.
 - The three global create actions are disabled in
   [`navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts).
-- There is no automated test runner. `bun run type-check` is the primary code gate, with
-  `bun run lint` and `bun run format:check` beside it.
+- There is no unit test runner. `bun run type-check` is the primary code gate, with `bun run lint`
+  and `bun run format:check` beside it. The Maestro end-to-end suite is described in
+  [testing.md](testing.md).
 - There is no Android project. Reviving Android is a project-wide decision recorded in
   [`AGENTS.md`](../../AGENTS.md).
 - [`apps/mobile/ios/hipefit-watch Watch App/`](<../../apps/mobile/ios/hipefit-watch Watch App>) is an

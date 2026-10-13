@@ -4283,7 +4283,7 @@ SPEC CHECKSUMS:
   "gRPC-C++": cc207623316fb041a7a3e774c252cf68a058b9e8
   gRPC-Core: 860978b7db482de8b4f5e10677216309b5ff6330
   GTMSessionFetcher: 127211aeec0b1e904fc49f4f6f895dcc535b0ecf
-  hermes-engine: 42b9a1e6ce8c1d92de455c4d905b853d70b242e2
+  hermes-engine: 77d6d12f2c15d3970e69fc9367616d68441e0257
   HipefitNavigationDock: f62a016c41971ddd91bd5cbd257c8f54c0b3f50a
   leveldb-library: cc8b8f8e013647a295ad3f8cd2ddf49a6f19be19
   libavif: 5f8e715bea24debec477006f21ef9e95432e254d

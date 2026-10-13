@@ -53,6 +53,10 @@ scripts/service-account.*.json
 scripts/*-firebase-adminsdk-*.json
 scripts/*-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].json
 
+# Maestro e2e credentials and run artifacts
+e2e/.env
+e2e/output/
+
 # Agent tmp files
 /qa-artifacts
 /docs/plans/

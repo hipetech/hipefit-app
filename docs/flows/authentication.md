@@ -2,15 +2,16 @@
 type: flow
 status: current
 area: auth
-updated: 2026-08-21
+updated: 2026-10-13
 ---
 
 # Flow: sign in with Apple
 
 > **This journey ships end to end.** A user can sign in with Apple, receive or recover one Firestore
 > profile document, enter the protected tabs, edit profile/settings, and sign out. The login screen
-> remains a developer-grade placeholder, sign-in failures are logged but not shown, and there is no
-> account-deletion path.
+> remains a developer-grade placeholder, Apple sign-in failures are logged but not shown, and there
+> is no account-deletion path. In development builds the login screen also shows a test-account form
+> that signs in with an email and password.
 
 ## User goal
 
@@ -28,21 +29,27 @@ before exposing the private app.
   plist is selected from the bundle identifier by
   [`apps/mobile/ios/Hipefit/AppDelegate.swift`](../../apps/mobile/ios/Hipefit/AppDelegate.swift);
   JavaScript does not select the Firebase environment.
+- The test-account form needs the Email/Password provider, which is enabled on `hipefit-app-dev`
+  only, and a test account created in that project.
 
 The global exercise seed is not a sign-in prerequisite. Profile creation no longer reads or copies
 categories. An unseeded global library produces an empty Exercises screen, not a partial profile.
 
 ## Entry points
 
-| Entry point        | Location                                                                                                                 | Current behavior                                     |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
-| Cold launch        | [`apps/mobile/app/index.tsx`](../../apps/mobile/app/index.tsx)                                                           | Redirects according to auth state                    |
-| Login route        | [`apps/mobile/app/(public)/login.tsx`](<../../apps/mobile/app/(public)/login.tsx>)                                       | Renders `AuthScreen`; redirects if already signed in |
-| Sign in with Apple | [`apps/mobile/src/features/auth/index.tsx`](../../apps/mobile/src/features/auth/index.tsx)                               | The only sign-in provider                            |
-| Edit Profile       | [`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx) | Opens the existing route-based profile form sheet    |
-| Log Out            | [`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx) | Destructive alert, then Firebase sign-out            |
+| Entry point        | Location                                                                                                                 | Current behavior                                                            |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| Cold launch        | [`apps/mobile/app/index.tsx`](../../apps/mobile/app/index.tsx)                                                           | Redirects according to auth state                                           |
+| Login route        | [`apps/mobile/app/(public)/login.tsx`](<../../apps/mobile/app/(public)/login.tsx>)                                       | Renders `AuthScreen`; redirects if already signed in                        |
+| Sign in with Apple | [`apps/mobile/src/features/auth/index.tsx`](../../apps/mobile/src/features/auth/index.tsx)                               | The only sign-in provider outside development builds                        |
+| Test-account form  | [`apps/mobile/src/features/auth/test-account-sign-in.tsx`](../../apps/mobile/src/features/auth/test-account-sign-in.tsx) | Development builds only; email and password against the development project |
+| Edit Profile       | [`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx) | Opens the existing route-based profile form sheet                           |
+| Log Out            | [`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx) | Destructive alert, then Firebase sign-out                                   |
 
-There is no email/password, guest, or alternate-provider path.
+Outside development builds there is no email/password, guest, or alternate-provider path.
+`AuthScreen` renders the test-account form only when `isDevelopmentEnvironment` from
+[`apps/mobile/src/lib/app-env.ts`](../../apps/mobile/src/lib/app-env.ts) is true, and the auth
+service's `signInWithTestAccount` throws before it calls Firebase in any other environment.
 
 ## Main path
 
@@ -75,6 +82,9 @@ There is no email/password, guest, or alternate-provider path.
    to app services.
 9. [`apps/mobile/app/index.tsx`](../../apps/mobile/app/index.tsx) redirects to Home. Surfaces backed by
    live stores manage their own loading presentation; Home limits profile redaction to its header.
+
+The test-account sign-in skips the Apple name step in item 4 and runs the same profile ensure with
+no Apple name. A profile created this way has empty first and last names and the account's email.
 
 The profile ensure also runs for a restored session. If the document was deleted while the Firebase
 session survived, launch recreates it before the app reports the user signed in. This is self-healing
@@ -148,6 +158,10 @@ No profile, measurement, template, workout, or Auth user is deleted by sign-out.
 - Apple Sign-In unavailable: the store warns and returns; the screen shows no explanation.
 - User cancels Apple's sheet: cancellation is logged and rethrown, then swallowed by the screen.
 - Missing identity token or Firebase failure: logged, rethrown, and swallowed; there is no error UI.
+- Rejected test-account credentials: the store logs the failure under `[AuthStore]` and rethrows,
+  and the form shows a one-line error under the submit button. A profile ensure that fails after the
+  credentials are accepted is logged the same way, but the loading state remounts the form, so the
+  login screen returns without the message.
 - Missing profile on any authenticated callback: recreated as one default document.
 - Malformed existing profile: logged and left in place; the auth store publishes a signed-out state,
   so the protected app remains closed even though Firebase Auth still has the session.

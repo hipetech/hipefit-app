@@ -2,7 +2,7 @@
 type: index
 status: current
 area: documentation
-updated: 2026-09-04
+updated: 2026-10-13
 ---
 
 # Documentation
@@ -165,6 +165,8 @@ is how a document turns into an agent implementing the wrong thing.
 - [`app/code-style.md`](app/code-style.md) — module shapes, authoring recipes, naming, the comment
   policy, and the decomposition standard the codebase is being moved to.
 - [`app/database.md`](app/database.md) — the boundary the app draws around Firestore.
+- [`app/testing.md`](app/testing.md) covers the Maestro end-to-end suite: the runner and its
+  preflight checks, the development-only sign-in, selectors, and the flow list.
 - [`db-structure.md`](db-structure.md) — the schema itself. Still at the repository root of `docs/`
   because `AGENTS.md` already references it there.
 - [`db-diagram.md`](db-diagram.md) — the same schema as an entity–relationship diagram: collections,
@@ -176,8 +178,9 @@ Each flow opens with a callout stating how much of it ships. Read that callout b
 step is reachable: three of the five below do not ship end to end, and the calendar flow renders an
 empty marker array even though its interactions ship.
 
-- [`flows/authentication.md`](flows/authentication.md) — Apple Sign-In, first-run profile creation,
-  the auth guard, and logging out. The one flow here that ships end to end.
+- [`flows/authentication.md`](flows/authentication.md) — Apple Sign-In, the development-only
+  test-account sign-in, first-run profile creation, the auth guard, and logging out. The one flow
+  here that ships end to end.
 - [`flows/browse-home-calendar.md`](flows/browse-home-calendar.md) — paging, expanding, and
   selecting a day in Home's calendar. Every interaction ships; the **marker array is empty** —
   there is no workout read path to fill it — and selecting a day filters nothing.

@@ -1,0 +1,16 @@
+# The Home calendar expands to the month and collapses back to the week.
+# Show month and Show week are the toggle's accessibility labels.
+appId: com.kyrylokorota.hipefitapp.development
+tags:
+  - smoke
+---
+# Firebase Auth keeps its session in the keychain, so clearState alone would
+# relaunch the app signed in.
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: ../subflows/sign-in-test-account.yaml
+- tapOn: Show month
+- assertVisible: Show week
+- tapOn: Show week
+- assertVisible: Show month

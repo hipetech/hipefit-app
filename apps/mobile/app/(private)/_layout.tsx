@@ -72,7 +72,7 @@ export default function TabsLayout() {
   return (
     <View style={styles.root}>
       <NativeTabs minimizeBehavior="never">
-        <NativeTabs.Trigger name="(home)">
+        <NativeTabs.Trigger name="(home)" testID="tab-home">
           <NativeTabs.Trigger.Icon
             sf={{ default: 'house', selected: 'house.fill' }}
             md="home"
@@ -80,7 +80,7 @@ export default function TabsLayout() {
           <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
 
-        <NativeTabs.Trigger name="workouts">
+        <NativeTabs.Trigger name="workouts" testID="tab-workouts">
           <NativeTabs.Trigger.Icon
             sf={{ default: 'dumbbell', selected: 'dumbbell.fill' }}
             md="fitness_center"
@@ -88,12 +88,12 @@ export default function TabsLayout() {
           <NativeTabs.Trigger.Label>Workouts</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
 
-        <NativeTabs.Trigger name="exercises">
+        <NativeTabs.Trigger name="exercises" testID="tab-exercises">
           <NativeTabs.Trigger.Icon sf="checklist" md="checklist" />
           <NativeTabs.Trigger.Label>Exercises</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
 
-        <NativeTabs.Trigger name="settings">
+        <NativeTabs.Trigger name="settings" testID="tab-settings">
           <NativeTabs.Trigger.Icon
             sf={{ default: 'gearshape', selected: 'gearshape.fill' }}
             md="settings"

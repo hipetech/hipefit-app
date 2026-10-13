@@ -1,0 +1,23 @@
+# Log Out in Settings returns to the login screen.
+appId: com.kyrylokorota.hipefitapp.development
+tags:
+  - smoke
+---
+# Firebase Auth keeps its session in the keychain, so clearState alone would
+# relaunch the app signed in.
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: ../subflows/sign-in-test-account.yaml
+- tapOn:
+    id: tab-settings
+- tapOn:
+    id: settings-log-out
+- assertVisible: Log Out?
+# The alert action shares its label with the trigger behind the alert, so the
+# tap is scoped below the alert message. Maestro matches text as a full regular
+# expression.
+- tapOn:
+    text: Log Out
+    below: You will be signed out.*
+- assertVisible: Not Logged In

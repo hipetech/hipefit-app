@@ -5,9 +5,12 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 
 import { Text } from '@/components/text';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
+import { isDevelopmentEnvironment } from '@/lib/app-env';
 import { useAuthStore } from '@/stores/use-auth-store';
 import { colors } from '@/theme/colors';
 import { layout } from '@/theme/styles';
+
+import { TestAccountSignIn } from './test-account-sign-in';
 
 const styles = StyleSheet.create({
   screen: {
@@ -24,9 +27,10 @@ const styles = StyleSheet.create({
   statusText: {
     fontWeight: '700',
   },
-  appleButtonWrapper: {
+  signInColumn: {
     width: '100%',
     maxWidth: 320,
+    gap: 16,
   },
   appleButton: {
     width: '100%',
@@ -85,7 +89,7 @@ export function AuthScreen() {
               </Button>
             </Host>
           ) : (
-            <View style={styles.appleButtonWrapper}>
+            <View style={styles.signInColumn}>
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={
                   AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
@@ -96,7 +100,13 @@ export function AuthScreen() {
                 cornerRadius={8}
                 style={styles.appleButton}
                 onPress={handleSignIn}
+                testID="sign-in-apple"
               />
+              {/* Gated on `EXPO_PUBLIC_APP_ENV`, not `__DEV__`. `__DEV__` is
+                  false in a Release-configuration build of the development
+                  scheme, while the variable follows the environment the build
+                  was made for. */}
+              {isDevelopmentEnvironment ? <TestAccountSignIn /> : null}
             </View>
           ))}
       </View>

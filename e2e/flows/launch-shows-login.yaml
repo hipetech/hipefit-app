@@ -1,0 +1,15 @@
+# A clean launch lands on the login screen with both sign-in paths.
+appId: com.kyrylokorota.hipefitapp.development
+tags:
+  - smoke
+---
+# Firebase Auth keeps its session in the keychain, so clearState alone would
+# relaunch the app signed in.
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- assertVisible: Not Logged In
+- assertVisible:
+    id: sign-in-apple
+- assertVisible:
+    id: test-account-submit

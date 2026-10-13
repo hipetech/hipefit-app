@@ -1,0 +1,19 @@
+# Signs in through the development-only test-account form. The caller has
+# already launched the app signed out. The credentials come from the runner's
+# environment and appear in this workspace only as variable references.
+appId: com.kyrylokorota.hipefitapp.development
+---
+- tapOn:
+    id: test-account-email
+- inputText: ${MAESTRO_E2E_EMAIL}
+- tapOn:
+    id: test-account-password
+- inputText: ${MAESTRO_E2E_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: test-account-submit
+# Sign-in waits for the profile ensure and the first Firestore read before Home
+# mounts, so the default assertion timeout is too short.
+- extendedWaitUntil:
+    visible: Activity
+    timeout: 20000
