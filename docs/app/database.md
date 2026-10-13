@@ -2,7 +2,7 @@
 type: app
 status: current
 area: database
-updated: 2026-08-21
+updated: 2026-10-13
 ---
 
 # Data layer
@@ -15,14 +15,14 @@ trust, subscription lifetime, store ownership, rules, and admin tooling.
 
 The data boundary is split by portability and responsibility:
 
-| Location                                                                                                                                                                                      | Owns                                                                                                         |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [`packages/schemas/src/`](../../packages/schemas/src)                                                                                                                                         | Persisted interfaces, embedded shapes, runtime decoders, write assertions, `Ref`, `WithId`, and path strings |
-| [`exercise-catalogue.ts`](../../apps/mobile/src/features/exercises/exercise-catalogue.ts) and [`exercise-localization.ts`](../../apps/mobile/src/features/exercises/exercise-localization.ts) | Exercise catalogue merge, localization, and published view models                                            |
-| [`packages/firebase/src/react-native/`](../../packages/firebase/src/react-native)                                                                                                             | React Native Firebase Auth and Firestore instances plus refs for paths the app accesses                      |
-| [`apps/mobile/src/services/`](../../apps/mobile/src/services)                                                                                                                                 | App-specific queries, snapshot listeners, auth provisioning, and writes                                      |
-| [`apps/mobile/src/stores/`](../../apps/mobile/src/stores)                                                                                                                                     | Published state, loading state, actions, and service callback handling                                       |
-| [`apps/mobile/src/hooks/use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts)                                                                          | Auth-scoped lifetime of the two live data stores                                                             |
+| Location                                                                                                                                                                                      | Owns                                                                                                                                                 |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`packages/schemas/src/`](../../packages/schemas/src)                                                                                                                                         | Persisted interfaces, embedded shapes, runtime decoders, write assertions, `Ref`, `WithId`, and path strings                                         |
+| [`exercise-catalogue.ts`](../../apps/mobile/src/features/exercises/exercise-catalogue.ts) and [`exercise-localization.ts`](../../apps/mobile/src/features/exercises/exercise-localization.ts) | Exercise catalogue merge, localization, and published view models                                                                                    |
+| [`packages/firebase/src/react-native/`](../../packages/firebase/src/react-native)                                                                                                             | React Native Firebase Auth and Firestore instances, the configured project ID accessor `getFirebaseProjectId()`, and refs for paths the app accesses |
+| [`apps/mobile/src/services/`](../../apps/mobile/src/services)                                                                                                                                 | App-specific queries, snapshot listeners, auth provisioning, and writes                                                                              |
+| [`apps/mobile/src/stores/`](../../apps/mobile/src/stores)                                                                                                                                     | Published state, loading state, actions, and service callback handling                                                                               |
+| [`apps/mobile/src/hooks/use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts)                                                                          | Auth-scoped lifetime of the two live data stores                                                                                                     |
 
 There is no app-local `@/database` barrel. Mobile code imports persisted contracts from
 `@hipefit/schemas`, feature-specific catalogue logic through the `@/` alias, and refs from
