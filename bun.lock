@@ -117,6 +117,19 @@
       "name": "@hipefit/schemas",
       "version": "1.0.0",
     },
+    "packages/sortable-list": {
+      "name": "@hipefit/sortable-list",
+      "version": "1.0.0",
+      "peerDependencies": {
+        "@legendapp/list": "^3.3.3",
+        "react": "*",
+        "react-native": "*",
+        "react-native-gesture-handler": "*",
+        "react-native-reanimated": "*",
+        "react-native-safe-area-context": "*",
+        "react-native-worklets": "*",
+      },
+    },
     "packages/ui": {
       "name": "@hipefit/ui",
       "version": "1.0.0",
@@ -508,6 +521,8 @@
     "@hipefit/navigation-dock": ["@hipefit/navigation-dock@workspace:packages/navigation-dock"],
 
     "@hipefit/schemas": ["@hipefit/schemas@workspace:packages/schemas"],
+
+    "@hipefit/sortable-list": ["@hipefit/sortable-list@workspace:packages/sortable-list"],
 
     "@hipefit/ui": ["@hipefit/ui@workspace:packages/ui"],
 
