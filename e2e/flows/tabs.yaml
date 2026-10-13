@@ -9,7 +9,7 @@ tags:
 - launchApp:
     clearState: true
     clearKeychain: true
-- runFlow: ../subflows/sign-in-test-account.yaml
+- runFlow: ../subflows/sign-in-quick-login.yaml
 - tapOn:
     id: tab-workouts
 - assertVisible: No workouts yet

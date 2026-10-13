@@ -31,8 +31,7 @@ Cross-cutting mobile code sits beside those layers under
 [`apps/mobile/src/`](../../apps/mobile/src): [`theme/`](../../apps/mobile/src/theme) holds shared
 modifier arrays and React Native styles, [`components/`](../../apps/mobile/src/components) holds
 app-owned React Native wrappers, [`lib/`](../../apps/mobile/src/lib) holds formatting, constants,
-haptics, and the environment helper, and [`hooks/`](../../apps/mobile/src/hooks) holds cross-feature
-hooks.
+and haptics, and [`hooks/`](../../apps/mobile/src/hooks) holds cross-feature hooks.
 
 Workspace packages under [`packages/`](../../packages) are imported through package contracts.
 Portable Firestore contracts belong to `@hipefit/schemas`, and SDK-bound refs belong to
@@ -104,12 +103,12 @@ documented in [navigation.md](navigation.md).
 Zustand stores are module-level singletons created with `create()` under
 [`apps/mobile/src/stores/`](../../apps/mobile/src/stores):
 
-| Store                                                                                 | Holds                                                                    |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                      | Firebase user, auth loading state, sign-in actions, and sign-out         |
-| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                      | Profile, newest body measurement, current weight, and user write actions |
-| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)              | Localized and visibility-filtered exercise catalogue view models         |
-| [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts) | Whether the native create panel is expanded                              |
+| Store                                                                                 | Holds                                                                                                |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                      | Firebase user, auth loading state, quick sign-in availability, Apple and quick sign-in, and sign-out |
+| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                      | Profile, newest body measurement, current weight, and user write actions                             |
+| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)              | Localized and visibility-filtered exercise catalogue view models                                     |
+| [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts) | Whether the native create panel is expanded                                                          |
 
 Zustand is used instead of React context because subscription orchestration drives stores through
 `getState()` outside component trees, while components can select narrow slices.
@@ -146,17 +145,21 @@ filters hidden or retired entries, and returns the published view models.
 [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts) does not use the data stores'
 `subscribe(uid)` shape because it produces the UID. It delegates SDK work to
 [`auth-service.ts`](../../apps/mobile/src/services/auth-service.ts) and exposes `initialize()`,
-`signInWithApple()`, `signInWithTestAccount()`, and `signOut()`.
-
-`signInWithTestAccount(email, password)` is the store's third action and works in development builds
-only. It signs in with an email and password, then runs the same profile ensure as Apple sign-in
-with no Apple name. The auth service throws before it calls Firebase when the bundle's environment
-is not `development`, and the login screen renders the form that calls the action only in that
-environment. The Maestro flows sign in through it; see [testing.md](testing.md).
+`signInWithApple()`, `signInWithQuickAccount()`, and `signOut()`, plus the `isQuickSignInAvailable`
+flag.
 
 `initialize()` is idempotent because the root layout, entry redirect, login route, and auth screen
 all call it. The guard prevents each call from replacing the shared unsubscribe slot or letting one
-caller's cleanup remove another caller's listener.
+caller's cleanup remove another caller's listener. The first call also sets
+`isQuickSignInAvailable` from the service, so the store does not call the Firebase SDK at import
+time.
+
+`signInWithQuickAccount()` signs in with an anonymous Firebase account. The service allows it only
+when the configured Firebase project is the development or staging project, and it throws for any
+other project. The action hands the fixed name `Quick User` to the profile ensure and shares its
+ensure-and-publish step with `signInWithApple()`. The journey is documented in
+[the authentication flow](../flows/authentication.md). The Maestro flows sign in through it; see
+[testing.md](testing.md).
 
 The auth service also owns first-run profile provisioning and restored-session repair. Every
 authenticated callback ensures `users/{uid}` exists before the store publishes the user to the
@@ -278,12 +281,10 @@ Connect record:
 Environment selection is native. All three Firebase plist files are bundled, and
 [`AppDelegate.swift`](../../apps/mobile/ios/Hipefit/AppDelegate.swift) selects one from the bundle
 identifier before configuring Firebase. Stores and screens do not choose a Firebase environment.
-
-JavaScript reads the environment in one place.
-[`lib/app-env.ts`](../../apps/mobile/src/lib/app-env.ts) reads `EXPO_PUBLIC_APP_ENV`, which Expo
-inlines at bundle time, and exports `appEnvironment` and `isDevelopmentEnvironment`. Any value other
-than `development` or `staging` resolves to `production`, including an unset variable. The helper
-decides only whether the test-account sign-in exists, as described in [testing.md](testing.md).
+JavaScript reads the result in one place:
+[`auth-service.ts`](../../apps/mobile/src/services/auth-service.ts) calls `getFirebaseProjectId()`
+from `@hipefit/firebase/react-native` and compares the configured project ID with an allowlist of
+`hipefit-app-dev` and `hipefit-app-stage` to decide whether quick sign-in is available.
 
 Root `ios:*` scripts in [`package.json`](../../package.json) delegate to
 [`apps/mobile/package.json`](../../apps/mobile/package.json), which copies the matching root

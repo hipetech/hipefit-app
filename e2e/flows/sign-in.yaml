@@ -1,4 +1,4 @@
-# The test account signs in and lands on Home.
+# Quick Login signs in and lands on Home.
 appId: com.kyrylokorota.hipefitapp.development
 tags:
   - smoke
@@ -8,7 +8,7 @@ tags:
 - launchApp:
     clearState: true
     clearKeychain: true
-- runFlow: ../subflows/sign-in-test-account.yaml
+- runFlow: ../subflows/sign-in-quick-login.yaml
 - assertVisible: Activity
 - assertVisible:
     id: weekly-calendar

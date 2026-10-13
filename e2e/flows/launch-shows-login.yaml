@@ -12,4 +12,4 @@ tags:
 - assertVisible:
     id: sign-in-apple
 - assertVisible:
-    id: test-account-submit
+    id: quick-login

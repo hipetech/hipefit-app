@@ -11,17 +11,9 @@ const WORKSPACE_PATH = 'e2e';
 const OUTPUT_PATH = 'e2e/output';
 
 // The development row of the Environments table in docs/app/architecture.md.
-// The flows run against the development build only, because the test-account
-// sign-in form exists nowhere else.
+// The flows run against the development build only: they sign in with Quick
+// Login, which creates an anonymous account in that build's Firebase project.
 const DEVELOPMENT_BUNDLE_IDENTIFIER = 'com.kyrylokorota.hipefitapp.development';
-
-// Maestro exposes shell variables with the MAESTRO_ prefix to flows, so these
-// reach the child through the inherited environment and never appear on the
-// command line.
-const CREDENTIAL_VARIABLES = [
-  'MAESTRO_E2E_EMAIL',
-  'MAESTRO_E2E_PASSWORD',
-] as const;
 
 // Names the simulator to test when more than one is booted.
 const DEVICE_VARIABLE = 'E2E_DEVICE';
@@ -42,7 +34,7 @@ const assertMaestroInstalled = (): void => {
   const result = spawnSync('maestro', ['--version'], { stdio: 'ignore' });
   if (result.error || result.status !== 0) {
     throw new Error(
-      'Preflight 1 of 5 failed: the Maestro CLI did not run. Install it ' +
+      'Preflight 1 of 4 failed: the Maestro CLI did not run. Install it ' +
         '(https://docs.maestro.dev/getting-started/installing-maestro) and ' +
         'check that `maestro --version` works in this shell.'
     );
@@ -88,7 +80,7 @@ const resolveTargetDevice = (): BootedDevice => {
       ? errorMessage(result.error)
       : result.stderr.trim();
     throw new Error(
-      'Preflight 2 of 5 failed: `xcrun simctl list devices booted -j` did ' +
+      'Preflight 2 of 4 failed: `xcrun simctl list devices booted -j` did ' +
         `not run${detail ? ` (${detail})` : ''}. Install Xcode and its ` +
         'command line tools.'
     );
@@ -99,13 +91,13 @@ const resolveTargetDevice = (): BootedDevice => {
     bootedDevices = readBootedDevices(result.stdout);
   } catch (error) {
     throw new Error(
-      'Preflight 2 of 5 failed: could not read the simulator list ' +
+      'Preflight 2 of 4 failed: could not read the simulator list ' +
         `(${errorMessage(error)}).`
     );
   }
   if (bootedDevices.length === 0) {
     throw new Error(
-      'Preflight 2 of 5 failed: no iOS Simulator is booted. Boot one from ' +
+      'Preflight 2 of 4 failed: no iOS Simulator is booted. Boot one from ' +
         'Simulator.app or with `xcrun simctl boot <device>`.'
     );
   }
@@ -117,7 +109,7 @@ const resolveTargetDevice = (): BootedDevice => {
     );
     if (!requested) {
       throw new Error(
-        `Preflight 2 of 5 failed: ${DEVICE_VARIABLE} names ${requestedUdid}, ` +
+        `Preflight 2 of 4 failed: ${DEVICE_VARIABLE} names ${requestedUdid}, ` +
           'which is not a booted simulator. Booted simulators:\n' +
           describeDevices(bootedDevices)
       );
@@ -128,7 +120,7 @@ const resolveTargetDevice = (): BootedDevice => {
   const [onlyDevice] = bootedDevices;
   if (bootedDevices.length > 1 || !onlyDevice) {
     throw new Error(
-      `Preflight 2 of 5 failed: ${bootedDevices.length} simulators are ` +
+      `Preflight 2 of 4 failed: ${bootedDevices.length} simulators are ` +
         `booted. Set ${DEVICE_VARIABLE} to the UDID of the one to test, in ` +
         '`e2e/.env` or the shell. `bun run ios:worktree:list` shows the ' +
         'simulator assigned to each worktree. Booted simulators:\n' +
@@ -146,23 +138,10 @@ const assertDevelopmentAppInstalled = (device: BootedDevice): void => {
   );
   if (result.error || result.status !== 0) {
     throw new Error(
-      'Preflight 3 of 5 failed: the development build ' +
+      'Preflight 3 of 4 failed: the development build ' +
         `(${DEVELOPMENT_BUNDLE_IDENTIFIER}) is not installed on ` +
         `${device.name} (${device.udid}). Run \`bun run ios:development\` ` +
         'or, in a worktree, `bun run ios:worktree` first.'
-    );
-  }
-};
-
-const assertCredentialsSet = (): void => {
-  const missing = CREDENTIAL_VARIABLES.filter(
-    (name) => !process.env[name]?.trim()
-  );
-  if (missing.length > 0) {
-    throw new Error(
-      `Preflight 4 of 5 failed: ${missing.join(' and ')} ` +
-        `${missing.length === 1 ? 'is' : 'are'} not set. Copy ` +
-        '`e2e/.env.example` to `e2e/.env` and fill it in.'
     );
   }
 };
@@ -191,7 +170,7 @@ const warnWhenMetroIsDown = async (): Promise<void> => {
   const port = resolveMetroPort();
   if (await isMetroRunning(port)) return;
   console.warn(
-    `Preflight 5 of 5 warning: Metro did not answer on port ${port}. A ` +
+    `Preflight 4 of 4 warning: Metro did not answer on port ${port}. A ` +
       'Debug build cannot load without it, so start it with ' +
       '`bun run ios:development` or `bun run ios:worktree`. A worktree run ' +
       'serves Metro on its own port; set RCT_METRO_PORT to it. A Release ' +
@@ -224,7 +203,6 @@ const run = async (): Promise<number> => {
   assertMaestroInstalled();
   const device = resolveTargetDevice();
   assertDevelopmentAppInstalled(device);
-  assertCredentialsSet();
   await warnWhenMetroIsDown();
 
   const extraArguments = process.argv

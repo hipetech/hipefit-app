@@ -1,12 +1,16 @@
 import type { UserProfile } from '@hipefit/schemas';
 import type { User } from '@react-native-firebase/auth';
-import { getFirebaseAuth, userRef } from '@hipefit/firebase/react-native';
+import {
+  getFirebaseAuth,
+  getFirebaseProjectId,
+  userRef,
+} from '@hipefit/firebase/react-native';
 import { assertUserProfileWrite, decodeUserProfile } from '@hipefit/schemas';
 import {
   OAuthProvider,
   onAuthStateChanged,
+  signInAnonymously,
   signInWithCredential,
-  signInWithEmailAndPassword,
   signOut,
 } from '@react-native-firebase/auth';
 import {
@@ -17,8 +21,6 @@ import {
   updateDoc,
 } from '@react-native-firebase/firestore';
 import * as AppleAuthentication from 'expo-apple-authentication';
-
-import { isDevelopmentEnvironment } from '@/lib/app-env';
 
 export type AuthUser = User;
 
@@ -34,7 +36,19 @@ export interface AppleSignInResult {
 
 const CURRENT_SCHEMA_VERSION = 1;
 
+// An allowlist of the development and staging projects, not a check that excludes production. A
+// denylist would enable quick sign-in for any project ID nobody anticipated.
+const QUICK_SIGN_IN_PROJECT_IDS: readonly string[] = [
+  'hipefit-app-dev',
+  'hipefit-app-stage',
+];
+
 export const noAppleName: AppleName = { firstName: null, lastName: null };
+
+export const quickAccountName: AppleName = {
+  firstName: 'Quick',
+  lastName: 'User',
+};
 
 const buildDisplayName = (
   firstName: string | null,
@@ -191,24 +205,15 @@ export const signInWithAppleAccount = async (
   return { user, appleName };
 };
 
-export const signInWithTestAccount = async (
-  email: string,
-  password: string
-): Promise<User> => {
-  // The Email/Password provider is disabled on the staging and production
-  // Firebase projects. The guard lives in the service, ahead of any Firebase
-  // call, so a stray call site in a non-development bundle never reaches them.
-  if (!isDevelopmentEnvironment) {
-    throw new Error(
-      'Test-account sign-in is only available in development builds'
-    );
+export const isQuickSignInAvailable = (): boolean =>
+  QUICK_SIGN_IN_PROJECT_IDS.includes(getFirebaseProjectId());
+
+export const signInWithQuickAccount = async (): Promise<User> => {
+  if (!isQuickSignInAvailable()) {
+    throw new Error('Quick sign-in is not available for this Firebase project');
   }
 
-  const { user } = await signInWithEmailAndPassword(
-    getFirebaseAuth(),
-    email,
-    password
-  );
+  const { user } = await signInAnonymously(getFirebaseAuth());
   return user;
 };
 

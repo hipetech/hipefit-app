@@ -3,9 +3,11 @@ import { create } from 'zustand';
 
 import {
   ensureUserProfile,
+  isQuickSignInAvailable,
   noAppleName,
+  quickAccountName,
   signInWithAppleAccount,
-  signInWithTestAccount as signInWithTestAccountCredentials,
+  signInWithQuickAccount,
   signOutCurrentUser,
   subscribeToAuth,
 } from '@/services/auth-service';
@@ -14,9 +16,10 @@ interface AuthState {
   user: AuthUser | null;
   isLoading: boolean;
   isLoggedIn: boolean;
+  isQuickSignInAvailable: boolean;
   initialize: () => () => void;
   signInWithApple: () => Promise<void>;
-  signInWithTestAccount: (email: string, password: string) => Promise<void>;
+  signInWithQuickAccount: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -42,10 +45,30 @@ export const useAuthStore = create<AuthState>((set) => {
     return pending;
   };
 
+  const ensureProfileAndPublish = async (
+    user: AuthUser,
+    appleName: AppleName
+  ): Promise<void> => {
+    const sequence = ++authChangeSequence;
+    set({ user: null, isLoggedIn: false, isLoading: true });
+    try {
+      await ensureProfileOnce(user, appleName);
+      if (sequence === authChangeSequence) {
+        set({ user, isLoggedIn: true, isLoading: false });
+      }
+    } catch (error) {
+      if (sequence === authChangeSequence) {
+        set({ user: null, isLoggedIn: false, isLoading: false });
+      }
+      throw error;
+    }
+  };
+
   const initialize = () => {
     // The auth listener is app-lifetime and initialize has several callers.
     if (unsubscribe) return () => {};
 
+    set({ isQuickSignInAvailable: isQuickSignInAvailable() });
     unsubscribe = subscribeToAuth((user) => {
       const sequence = ++authChangeSequence;
       if (!user) {
@@ -84,19 +107,7 @@ export const useAuthStore = create<AuthState>((set) => {
       });
       if (!result) return;
 
-      const sequence = ++authChangeSequence;
-      set({ user: null, isLoggedIn: false, isLoading: true });
-      try {
-        await ensureProfileOnce(result.user, result.appleName);
-        if (sequence === authChangeSequence) {
-          set({ user: result.user, isLoggedIn: true, isLoading: false });
-        }
-      } catch (error) {
-        if (sequence === authChangeSequence) {
-          set({ user: null, isLoggedIn: false, isLoading: false });
-        }
-        throw error;
-      }
+      await ensureProfileAndPublish(result.user, result.appleName);
     } catch (error) {
       const code =
         typeof error === 'object' && error !== null && 'code' in error
@@ -114,26 +125,19 @@ export const useAuthStore = create<AuthState>((set) => {
     }
   };
 
-  const signInWithTestAccount = async (email: string, password: string) => {
+  const handleQuickSignIn = async () => {
+    // The auth listener can fire before the service call returns, and it ensures the profile with
+    // the pending name. Assigning the name after the call lets the listener create the profile
+    // with empty names.
+    pendingAppleName = quickAccountName;
     try {
-      const user = await signInWithTestAccountCredentials(email, password);
-
-      const sequence = ++authChangeSequence;
-      set({ user: null, isLoggedIn: false, isLoading: true });
-      try {
-        await ensureProfileOnce(user, noAppleName);
-        if (sequence === authChangeSequence) {
-          set({ user, isLoggedIn: true, isLoading: false });
-        }
-      } catch (error) {
-        if (sequence === authChangeSequence) {
-          set({ user: null, isLoggedIn: false, isLoading: false });
-        }
-        throw error;
-      }
+      const user = await signInWithQuickAccount();
+      await ensureProfileAndPublish(user, quickAccountName);
     } catch (error) {
-      console.error('[AuthStore] test-account sign-in', error);
+      console.error('Quick Sign-In Error:', error);
       throw error;
+    } finally {
+      pendingAppleName = null;
     }
   };
 
@@ -150,9 +154,10 @@ export const useAuthStore = create<AuthState>((set) => {
     user: null,
     isLoading: true,
     isLoggedIn: false,
+    isQuickSignInAvailable: false,
     initialize,
     signInWithApple,
-    signInWithTestAccount,
+    signInWithQuickAccount: handleQuickSignIn,
     signOut: handleSignOut,
   };
 });

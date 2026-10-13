@@ -1,0 +1,12 @@
+# Signs in with Quick Login, which creates a new anonymous account in the
+# development Firebase project. The caller has already launched the app signed
+# out.
+appId: com.kyrylokorota.hipefitapp.development
+---
+- tapOn:
+    id: quick-login
+# Sign-in waits for the profile ensure and the first Firestore read before Home
+# mounts, so the default assertion timeout is too short.
+- extendedWaitUntil:
+    visible: Activity
+    timeout: 20000

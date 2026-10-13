@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Button, Host } from '@expo/ui';
@@ -5,12 +6,11 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 
 import { Text } from '@/components/text';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
-import { isDevelopmentEnvironment } from '@/lib/app-env';
 import { useAuthStore } from '@/stores/use-auth-store';
 import { colors } from '@/theme/colors';
 import { layout } from '@/theme/styles';
 
-import { TestAccountSignIn } from './test-account-sign-in';
+import { QuickLoginButton } from './quick-login-button';
 
 const styles = StyleSheet.create({
   screen: {
@@ -27,10 +27,9 @@ const styles = StyleSheet.create({
   statusText: {
     fontWeight: '700',
   },
-  signInColumn: {
+  appleButtonWrapper: {
     width: '100%',
     maxWidth: 320,
-    gap: 16,
   },
   appleButton: {
     width: '100%',
@@ -38,9 +37,16 @@ const styles = StyleSheet.create({
   },
 });
 
-export function AuthScreen() {
-  const { isLoading, isLoggedIn, initialize, signInWithApple, signOut } =
-    useAuthStore();
+export const AuthScreen: React.FC = () => {
+  const {
+    isLoading,
+    isLoggedIn,
+    isQuickSignInAvailable,
+    initialize,
+    signInWithApple,
+    signInWithQuickAccount,
+    signOut,
+  } = useAuthStore();
   const colorScheme = useAppColorScheme();
 
   useEffect(() => {
@@ -51,6 +57,14 @@ export function AuthScreen() {
   const handleSignIn = async () => {
     try {
       await signInWithApple();
+    } catch {
+      // Error is already logged in the store
+    }
+  };
+
+  const handleQuickSignIn = async () => {
+    try {
+      await signInWithQuickAccount();
     } catch {
       // Error is already logged in the store
     }
@@ -89,27 +103,29 @@ export function AuthScreen() {
               </Button>
             </Host>
           ) : (
-            <View style={styles.signInColumn}>
-              <AppleAuthentication.AppleAuthenticationButton
-                buttonType={
-                  AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
-                }
-                buttonStyle={
-                  AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-                }
-                cornerRadius={8}
-                style={styles.appleButton}
-                onPress={handleSignIn}
-                testID="sign-in-apple"
-              />
-              {/* Gated on `EXPO_PUBLIC_APP_ENV`, not `__DEV__`. `__DEV__` is
-                  false in a Release-configuration build of the development
-                  scheme, while the variable follows the environment the build
-                  was made for. */}
-              {isDevelopmentEnvironment ? <TestAccountSignIn /> : null}
-            </View>
+            <>
+              <View style={styles.appleButtonWrapper}>
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={
+                    AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+                  }
+                  buttonStyle={
+                    AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                  }
+                  cornerRadius={8}
+                  style={styles.appleButton}
+                  testID="sign-in-apple"
+                  onPress={handleSignIn}
+                />
+              </View>
+              {/* The flag is true only for the development and staging
+                  Firebase projects. */}
+              {isQuickSignInAvailable && (
+                <QuickLoginButton onPress={handleQuickSignIn} />
+              )}
+            </>
           ))}
       </View>
     </View>
   );
-}
+};

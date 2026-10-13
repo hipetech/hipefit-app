@@ -53,7 +53,7 @@ scripts/service-account.*.json
 scripts/*-firebase-adminsdk-*.json
 scripts/*-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].json
 
-# Maestro e2e credentials and run artifacts
+# Maestro e2e local settings and run artifacts
 e2e/.env
 e2e/output/
 

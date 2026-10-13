@@ -318,7 +318,7 @@ bun run e2e
 ```
 
 `bun run e2e` needs Maestro, a booted simulator with the development build from
-`bun run ios:development` or `bun run ios:worktree`, and the test-account credentials in `e2e/.env`.
+`bun run ios:development` or `bun run ios:worktree`, and, when several simulators are booted, `E2E_DEVICE` in `e2e/.env`.
 [`docs/app/testing.md`](docs/app/testing.md) describes the suite and its prerequisites.
 
 `@hipefit/worktree-devices` has five assertion scripts that run directly with Bun against temporary
