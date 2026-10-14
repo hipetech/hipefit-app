@@ -46,6 +46,9 @@ const [items, setItems] = useState<Item[]>(initialItems);
   height lives in the caller, keyed by item.
 - `extraData` carries that state. Rows re-render when `data` or `extraData` changes identity, and
   not when `renderItem` does.
+- A new `data` array while a row is lifting, lifted, or settling ends the drag without calling
+  `onReorder`, and the rows return to the new array's order. The user holds the row again to drag
+  it.
 - `onLift` and `onSlotChange` are where the caller plays feedback. The package fires none of its
   own, so it does not depend on a haptics module.
 - With `contentInsetAdjustmentBehavior` set to anything but `'never'`, a drag scrolls and stops at

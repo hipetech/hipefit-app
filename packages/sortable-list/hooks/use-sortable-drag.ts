@@ -80,9 +80,10 @@ export interface SortableSnapshot {
   /**
    * Index of each key in `layout`. A row reads its index from here and not
    * from the `index` it was rendered with, so one lookup serves every row and
-   * no row depends on having re-rendered since the last reorder.
+   * no row depends on having re-rendered since the last reorder. A `Map`, so
+   * a key such as `__proto__` is an ordinary entry.
    */
-  indexByKey: Record<string, number>;
+  indexByKey: ReadonlyMap<string, number>;
 }
 
 /** Where the overlay copy sits, relative to the list's frame. */
@@ -215,7 +216,7 @@ const buildSnapshot = <T>(
   const keys: string[] = [];
   const offsets: number[] = [];
   const sizes: number[] = [];
-  const indexByKey: Record<string, number> = {};
+  const indexByKey = new Map<string, number>();
   let nextTop = 0;
 
   data.forEach((item, index) => {
@@ -231,7 +232,7 @@ const buildSnapshot = <T>(
     keys.push(key);
     offsets.push(top);
     sizes.push(size);
-    indexByKey[key] = index;
+    indexByKey.set(key, index);
     nextTop = top + size;
   });
 
@@ -289,6 +290,7 @@ export const useSortableDrag = <T>({
    * a hook dependency.
    */
   const phase = useSharedValue(DRAG_IDLE);
+  /** Counts lifts. Each hold gets its id here, before the JS thread hears of it. */
   const dragId = useSharedValue(0);
   const snapshot = useSharedValue<SortableSnapshot | null>(null);
   const activeKey = useSharedValue<string | null>(null);
@@ -298,6 +300,8 @@ export const useSortableDrag = <T>({
   const translationY = useSharedValue(0);
   const lift = useSharedValue(0);
   const scrollOffset = useSharedValue(0);
+  /** The `data` version the UI thread has seen. A lift carries it to the JS thread. */
+  const dataVersion = useSharedValue(0);
 
   /** Captured at the lift. All positions are in the coordinates of `measure`. */
   const liftFingerY = useSharedValue(0);
@@ -316,10 +320,18 @@ export const useSortableDrag = <T>({
   const [overlay, setOverlay] = useState<SortableOverlay | null>(null);
   const [settleCount, setSettleCount] = useState(0);
 
-  /** The drag the JS thread knows about, from snapshot to cleanup. */
-  const dragRef = useRef<{ id: number; key: string } | null>(null);
-  const lastDragId = useRef(0);
+  /**
+   * The drag the JS thread knows about, from snapshot to cleanup. `data` is
+   * the array the snapshot was built from.
+   */
+  const dragRef = useRef<{
+    id: number;
+    key: string;
+    data: readonly T[];
+  } | null>(null);
   const refreshHandle = useRef<number | null>(null);
+  /** Counts `data` arrays. `dataVersion` mirrors it on the UI thread. */
+  const dataVersionRef = useRef(0);
 
   /**
    * The latest props, for callbacks that worklets hold on to. Reading them
@@ -433,6 +445,17 @@ export const useSortableDrag = <T>({
     translationY,
   ]);
 
+  /**
+   * A lift that has not reached the JS thread yet leaves no drag for the
+   * effect below to reset. Its row was measured in the old array, so
+   * `beginDrag` compares the version the lift carries with this one and
+   * abandons the lift when they differ.
+   */
+  useLayoutEffect(() => {
+    dataVersionRef.current += 1;
+    dataVersion.set(dataVersionRef.current);
+  }, [data, dataVersion]);
+
   useLayoutEffect(() => {
     if (dragRef.current !== null) {
       scheduleOnUI(resetDrag);
@@ -444,11 +467,16 @@ export const useSortableDrag = <T>({
    * when the row was dropped where it started and when the caller declined
    * the new order. A caller that applies the order later, in another render,
    * sees the rows return to the old order first.
+   *
+   * A drop queued for the JS thread can arrive after `data` has changed. The
+   * layout effect has already scheduled the reset by then, and `from` and `to`
+   * index the old array, so the drop is discarded.
    */
   const finishDrop = useCallback((id: number, from: number, to: number) => {
     const drag = dragRef.current;
 
     if (drag === null || drag.id !== id) return;
+    if (latest.current.data !== drag.data) return;
 
     if (from !== to) {
       const props = latest.current;
@@ -463,19 +491,16 @@ export const useSortableDrag = <T>({
     setSettleCount((count) => count + 1);
   }, []);
 
+  /**
+   * The finger can be gone before the JS thread answers, and a new hold can
+   * have started in its place, on the same row. Only the lift `id` names
+   * tells the two apart.
+   */
   const activateDrag = useCallback(
-    (
-      id: number,
-      key: string,
-      index: number,
-      next: SortableSnapshot,
-      range: number
-    ) => {
+    (id: number, index: number, next: SortableSnapshot, range: number) => {
       'worklet';
-      // The finger can be gone before the JS thread answers.
-      if (phase.get() !== DRAG_PENDING || activeKey.get() !== key) return;
+      if (phase.get() !== DRAG_PENDING || dragId.get() !== id) return;
 
-      dragId.set(id);
       snapshot.set(next);
       activeIndex.set(index);
       targetIndex.set(index);
@@ -483,31 +508,27 @@ export const useSortableDrag = <T>({
       scrollRange.set(range);
       phase.set(DRAG_ACTIVE);
     },
-    [
-      activeIndex,
-      activeKey,
-      dragId,
-      liftOffset,
-      phase,
-      scrollRange,
-      snapshot,
-      targetIndex,
-    ]
+    [activeIndex, dragId, liftOffset, phase, scrollRange, snapshot, targetIndex]
   );
 
   const abandonLift = useCallback(
-    (key: string) => {
+    (id: number) => {
       'worklet';
-      if (phase.get() !== DRAG_PENDING || activeKey.get() !== key) return;
+      if (phase.get() !== DRAG_PENDING || dragId.get() !== id) return;
 
       activeKey.set(null);
       phase.set(DRAG_IDLE);
     },
-    [activeKey, phase]
+    [activeKey, dragId, phase]
   );
 
   const beginDrag = useCallback(
-    (key: string, frame: SortableOverlayFrame) => {
+    (id: number, version: number, key: string, frame: SortableOverlayFrame) => {
+      if (version !== dataVersionRef.current) {
+        scheduleOnUI(abandonLift, id);
+        return;
+      }
+
       const state = listRef.current?.getState();
       const props = latest.current;
       const next = state
@@ -518,23 +539,19 @@ export const useSortableDrag = <T>({
             props.estimatedItemSize ?? 0
           )
         : null;
-      const index = next?.indexByKey[key];
+      const index = next?.indexByKey.get(key);
 
       if (!state || !next || index === undefined) {
-        scheduleOnUI(abandonLift, key);
+        scheduleOnUI(abandonLift, id);
         return;
       }
 
-      const id = lastDragId.current + 1;
-
-      lastDragId.current = id;
-      dragRef.current = { id, key };
+      dragRef.current = { id, key, data: props.data };
       setOverlay({ id, key, index, frame });
       autoScroll.setActive(true);
       scheduleOnUI(
         activateDrag,
         id,
-        key,
         index,
         next,
         state.contentLength - state.scrollLength
@@ -676,7 +693,11 @@ export const useSortableDrag = <T>({
 
       if (container === null) return;
 
+      const id = dragId.get() + 1;
+      const version = dataVersion.get();
+
       phase.set(DRAG_PENDING);
+      dragId.set(id);
       activeKey.set(key);
       translationY.set(0);
       liftFingerY.set(fingerY);
@@ -685,7 +706,7 @@ export const useSortableDrag = <T>({
       activeHeight.set(row.height);
       containerPageY.set(container.pageY);
       containerHeight.set(container.height);
-      scheduleOnRN(beginDrag, key, {
+      scheduleOnRN(beginDrag, id, version, key, {
         top: row.pageY - container.pageY,
         left: row.pageX - container.pageX,
         width: row.width,
@@ -698,6 +719,8 @@ export const useSortableDrag = <T>({
       containerHeight,
       containerPageY,
       containerRef,
+      dataVersion,
+      dragId,
       liftFingerY,
       liftPageY,
       liftScroll,

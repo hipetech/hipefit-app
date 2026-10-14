@@ -124,7 +124,7 @@ export const SortableItem: React.FC<SortableItemProps> = ({
 
       if (current === null) return null;
 
-      const index = current.indexByKey[itemKey];
+      const index = current.indexByKey.get(itemKey);
 
       if (index === undefined) return 0;
 

@@ -447,7 +447,10 @@ and `onReorder` fires once, after the dropped row has settled, with the new arra
 again under the finger on every slot change, and it could unmount the row that owns the gesture.
 The caller commits the array inside `onReorder`. The transforms reset in the layout effect of the
 commit that delivers the new `data`, so a caller that commits later sees the old order return
-first.
+first. A new `data` array that arrives while a row is lifted or settling ends the drag, and a drop
+still queued for the JS thread is discarded instead of applied to indexes of the old array. A lift
+still queued for the JS thread carries the `data` version its row was measured in, and is abandoned
+when that version is no longer current.
 
 **The lifted row is drawn by a copy in an overlay above the list.** `LegendList` puts each row in
 its own absolutely positioned container, and those containers are siblings the app does not render.
