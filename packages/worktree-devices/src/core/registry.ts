@@ -192,7 +192,12 @@ export const reconcileState = (
   inventory: SimulatorInventory
 ): RegistryState => {
   const devices = existingDeviceMap(inventory);
-  const simulators = state.simulators.filter(({ udid }) => devices.has(udid));
+  // The device is the authority on its own name, so a rename the registry
+  // never recorded cannot leave a name that no simulator answers to.
+  const simulators = state.simulators.flatMap(({ udid }) => {
+    const device = devices.get(udid);
+    return device ? [{ udid, name: device.name }] : [];
+  });
   const managedUdids = new Set(simulators.map(({ udid }) => udid));
   const assignments = state.assignments.filter(
     ({ worktree, simulatorUdid }) =>

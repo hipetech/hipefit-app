@@ -158,23 +158,108 @@ export const selectSimulatorTemplate = (
   };
 };
 
+const namesOfOtherDevices = (
+  inventory: SimulatorInventory,
+  udid?: string
+): Set<string> =>
+  new Set(
+    inventory.devices
+      .filter((device) => device.udid !== udid)
+      .map(({ name }) => name)
+  );
+
+// The name of a simulator no worktree holds. `udid` is the simulator being
+// named, whose current name does not count as taken.
 export const nextSimulatorName = (
   inventory: SimulatorInventory,
-  prefix: string
+  prefix: string,
+  udid?: string
 ): string => {
-  const names = new Set(inventory.devices.map(({ name }) => name));
+  const names = namesOfOtherDevices(inventory, udid);
   for (let suffix = 1; ; suffix += 1) {
     const name = `${prefix} ${suffix}`;
     if (!names.has(name)) return name;
   }
 };
 
-export const createSimulator = (
+const isPoolName = (name: string, prefix: string): boolean =>
+  name.startsWith(`${prefix} `) && /^\d+$/.test(name.slice(prefix.length + 1));
+
+// The name of a simulator while a worktree holds it. Two worktrees can share a
+// label, for example the same directory name on two detached HEADs, so a taken
+// name gets a number.
+export const worktreeSimulatorName = (
+  inventory: SimulatorInventory,
+  prefix: string,
+  label: string,
+  udid?: string
+): string => {
+  const names = namesOfOtherDevices(inventory, udid);
+  const base = `${prefix} ${label}`;
+  if (!names.has(base)) return base;
+  for (let suffix = 2; ; suffix += 1) {
+    const name = `${base} ${suffix}`;
+    if (!names.has(name)) return name;
+  }
+};
+
+// A name is a label, so failing to change it must not fail the command. The
+// inventory is updated as well, because later names in the same command are
+// chosen against it.
+export const renameSimulator = (
   context: GitContext,
   inventory: SimulatorInventory,
-  template: SimulatorTemplate
+  simulator: ManagedSimulator,
+  name: string
+): void => {
+  if (simulator.name === name) return;
+  try {
+    commandOutput(
+      'xcrun',
+      ['simctl', 'rename', simulator.udid, name],
+      context.worktree
+    );
+  } catch (error: unknown) {
+    console.warn(
+      `Warning: could not rename ${simulator.name} (${simulator.udid}) to ${name}: ${errorMessage(error)}`
+    );
+    return;
+  }
+  const device = inventory.devices.find(({ udid }) => udid === simulator.udid);
+  if (device) device.name = name;
+  simulator.name = name;
+};
+
+// A simulator keeps its worktree's name when the worktree is removed without a
+// detach, or when a detach could not write the registry. A writing command
+// gives every free simulator a pool name again before it saves.
+export const renameFreeSimulators = (
+  context: GitContext,
+  state: RegistryState,
+  inventory: SimulatorInventory
+): void => {
+  const prefix = context.config.simulatorNamePrefix;
+  const assigned = new Set(
+    state.assignments.map(({ simulatorUdid }) => simulatorUdid)
+  );
+  for (const simulator of state.simulators) {
+    if (assigned.has(simulator.udid) || isPoolName(simulator.name, prefix)) {
+      continue;
+    }
+    renameSimulator(
+      context,
+      inventory,
+      simulator,
+      nextSimulatorName(inventory, prefix, simulator.udid)
+    );
+  }
+};
+
+export const createSimulator = (
+  context: GitContext,
+  template: SimulatorTemplate,
+  name: string
 ): ManagedSimulator => {
-  const name = nextSimulatorName(inventory, context.config.simulatorNamePrefix);
   const udid = commandOutput(
     'xcrun',
     [

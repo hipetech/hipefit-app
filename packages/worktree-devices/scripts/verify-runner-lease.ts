@@ -167,6 +167,11 @@ const simctl = () => {
     succeed(createdUdid + '\\n');
   }
   if (!findDevice(inventory, udid)) reject();
+  if (action === 'rename' && args.length === 4) {
+    findDevice(inventory, udid).name = args[3];
+    writeInventory(inventory);
+    succeed();
+  }
   if (action === 'boot' && args.length === 3) {
     setState(udid, 'Booted');
     succeed();

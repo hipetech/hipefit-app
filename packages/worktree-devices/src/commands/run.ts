@@ -7,6 +7,7 @@ import type {
   PlannedAllocation,
   RegistryState,
   RunnerLease,
+  SimulatorInventory,
 } from '../types';
 
 import {
@@ -14,10 +15,12 @@ import {
   createSimulator,
   deleteSimulator,
   getFreeManagedSimulator,
-  nextSimulatorName,
+  renameFreeSimulators,
+  renameSimulator,
   selectSimulatorTemplate,
   setMetroLocation,
   shutdownReleasedSimulators,
+  worktreeSimulatorName,
 } from '../core/devices';
 import {
   checkRunPrerequisites,
@@ -44,11 +47,27 @@ import {
   takeRunnerLease,
 } from '../core/runner';
 import { errorMessage } from '../lib/command';
-import { getCanonicalWorktrees } from '../lib/git';
+import { getWorktreeBranches, worktreeLabel } from '../lib/git';
 
 const warn = (message: string): void => {
   console.warn(`Warning: ${message}`);
 };
+
+// A simulator carries its worktree's branch for as long as the worktree holds
+// it. `udid` is the simulator being named, so that its current name is free
+// for it to keep.
+const simulatorNameFor = (
+  context: GitContext,
+  inventory: SimulatorInventory,
+  branches: Map<string, string | undefined>,
+  udid?: string
+): string =>
+  worktreeSimulatorName(
+    inventory,
+    context.config.simulatorNamePrefix,
+    worktreeLabel(context.worktree, branches.get(context.worktree)),
+    udid
+  );
 
 // Expo offers another port when the one it was given is taken, and nothing
 // would carry that choice back to the registry or to RCT_jsLocation. So the
@@ -81,10 +100,10 @@ const allocateRun = async (
 ): Promise<Allocation> =>
   withRegistryLock(context.lockPath, async () => {
     const inventory = getSimulatorInventory(context);
-    const worktrees = await getCanonicalWorktrees(context.worktree);
+    const branches = await getWorktreeBranches(context.worktree);
     const stored = await readState(context);
     const baseline = serializeState(stored);
-    const state = reconcileState(stored, worktrees, inventory);
+    const state = reconcileState(stored, new Set(branches.keys()), inventory);
     shutdownReleasedSimulators(context, stored, state, inventory);
     dropDeadRunnerLeases(state);
     // Validate an explicit template even when this run will not create a
@@ -111,6 +130,15 @@ const allocateRun = async (
         existing,
         holdsLease
       );
+      // The branch may have changed since the last run. Renaming waits until
+      // nothing before the write can still fail.
+      renameSimulator(
+        context,
+        inventory,
+        simulator,
+        simulatorNameFor(context, inventory, branches, simulator.udid)
+      );
+      renameFreeSimulators(context, state, inventory);
       await persistIfChanged(context.statePath, state, baseline);
       if (portWarning) warn(portWarning);
       return {
@@ -125,9 +153,20 @@ const allocateRun = async (
     const port = await allocatePort(state, context.config);
     let simulator = getFreeManagedSimulator(state, usableDeviceMap(inventory));
     let created = false;
-    if (!simulator) {
+    if (simulator) {
+      renameSimulator(
+        context,
+        inventory,
+        simulator,
+        simulatorNameFor(context, inventory, branches, simulator.udid)
+      );
+    } else {
       const template = requested ?? selectSimulatorTemplate(inventory);
-      simulator = createSimulator(context, inventory, template);
+      simulator = createSimulator(
+        context,
+        template,
+        simulatorNameFor(context, inventory, branches)
+      );
       state.simulators.push(simulator);
       created = true;
     }
@@ -138,6 +177,7 @@ const allocateRun = async (
       runner: lease,
     };
     state.assignments.push(assignment);
+    renameFreeSimulators(context, state, inventory);
     try {
       await writeState(context.statePath, state);
     } catch (error: unknown) {
@@ -167,8 +207,12 @@ const planRun = async (
   templateUdid?: string
 ): Promise<PlannedAllocation> => {
   const inventory = getSimulatorInventory(context);
-  const worktrees = await getCanonicalWorktrees(context.worktree);
-  const state = reconcileState(await readState(context), worktrees, inventory);
+  const branches = await getWorktreeBranches(context.worktree);
+  const state = reconcileState(
+    await readState(context),
+    new Set(branches.keys()),
+    inventory
+  );
   const requested = templateUdid
     ? selectSimulatorTemplate(inventory, templateUdid)
     : undefined;
@@ -186,7 +230,12 @@ const planRun = async (
     }
     return {
       assignment: existing,
-      simulatorName: simulator.name,
+      simulatorName: simulatorNameFor(
+        context,
+        inventory,
+        branches,
+        simulator.udid
+      ),
       source: 'existing',
     };
   }
@@ -199,16 +248,18 @@ const planRun = async (
         simulatorUdid: simulator.udid,
         port,
       },
-      simulatorName: simulator.name,
+      simulatorName: simulatorNameFor(
+        context,
+        inventory,
+        branches,
+        simulator.udid
+      ),
       source: 'pooled',
     };
   }
   const template = requested ?? selectSimulatorTemplate(inventory);
   return {
-    simulatorName: nextSimulatorName(
-      inventory,
-      context.config.simulatorNamePrefix
-    ),
+    simulatorName: simulatorNameFor(context, inventory, branches),
     source: 'created',
     template,
     assignment: {

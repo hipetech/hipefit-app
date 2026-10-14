@@ -23,6 +23,7 @@ import type {
   RegistryState,
 } from '../src/types';
 
+import { detach } from '../src/commands/detach';
 import { remove } from '../src/commands/remove';
 import { run } from '../src/commands/run';
 import { bootSimulator, deleteSimulator } from '../src/core/devices';
@@ -68,7 +69,7 @@ const UNAVAILABLE_RUNTIME = 'com.apple.CoreSimulator.SimRuntime.iOS-90-0';
 const DEVICE_TYPE = 'com.apple.CoreSimulator.SimDeviceType.iPhone-Fixture';
 const TEMPLATE_UDID = 'FIXTURE-TEMPLATE-0000';
 const CREATED_UDID = 'FIXTURE-CREATED-0001';
-const CREATED_NAME = `${CONFIG.simulatorNamePrefix} 1`;
+const CREATED_NAME = `${CONFIG.simulatorNamePrefix} worktree`;
 
 const contextFor = (root: string): GitContext => {
   const worktree = join(root, 'worktree');
@@ -162,6 +163,11 @@ const simctl = () => {
     succeed(scenario.createdUdid + '\\n');
   }
   if (!findDevice(inventory, udid)) reject();
+  if (action === 'rename' && args.length === 4) {
+    findDevice(inventory, udid).name = args[3];
+    writeInventory(inventory);
+    succeed();
+  }
   if (action === 'boot' && args.length === 3) {
     setState(udid, 'Booted');
     succeed();
@@ -205,7 +211,13 @@ if (tool === 'xcrun') {
 }
 if (tool === 'git') {
   if (!equals(['worktree', 'list', '--porcelain', '-z'])) reject();
-  succeed(scenario.worktrees.map((path) => 'worktree ' + path + '\\0HEAD 0000\\0\\0').join(''));
+  const branchField = (path) =>
+    scenario.branches[path] ? 'branch refs/heads/' + scenario.branches[path] + '\\0' : '';
+  succeed(
+    scenario.worktrees
+      .map((path) => 'worktree ' + path + '\\0HEAD 0000\\0' + branchField(path) + '\\0')
+      .join('')
+  );
 }
 if (tool === 'pod') {
   if (!equals(['--version'])) reject();
@@ -244,6 +256,9 @@ interface FixtureSetup {
   deleteFailures?: Record<string, DeleteFailure>;
   shutdownFailures?: string[];
   readOnlyRegistry?: boolean;
+  // The branch of this worktree. Without one the fake git reports a detached
+  // HEAD, as it does for every other worktree.
+  branch?: string;
 }
 
 interface Fixture {
@@ -366,6 +381,7 @@ const createFixture = (setup: FixtureSetup): Fixture => {
       worktrees: [context.worktree, fixture.worktreeB, fixture.worktreeC],
       deleteFailures: setup.deleteFailures ?? {},
       shutdownFailures: setup.shutdownFailures ?? [],
+      branches: setup.branch ? { [context.worktree]: setup.branch } : {},
     })
   );
   if (setup.registry) {
@@ -961,6 +977,7 @@ const pooledRollbackCase = (): void => {
         'pod --version',
         'simctl list',
         'git worktree',
+        'simctl rename',
       ]);
       assert.ok(inventoryUdids(fixture).includes(pooled.udid));
       assert.equal(
@@ -969,6 +986,100 @@ const pooledRollbackCase = (): void => {
       );
     }
   );
+};
+
+const inventoryNames = (fixture: Fixture): Record<string, string> => {
+  const value: unknown = JSON.parse(
+    readFileSync(join(fixture.root, 'inventory.json'), 'utf8')
+  );
+  if (!isRecord(value) || !isRecord(value.devices)) {
+    throw new Error('Malformed fixture inventory.');
+  }
+  const names: Record<string, string> = {};
+  for (const entries of Object.values(value.devices)) {
+    if (!Array.isArray(entries)) continue;
+    for (const entry of entries) {
+      if (isRecord(entry)) names[String(entry.udid)] = String(entry.name);
+    }
+  }
+  return names;
+};
+
+const renames = (fixture: Fixture): string[] =>
+  simctlCalls(fixture, 'rename').map(({ args }) => args.slice(2).join(' -> '));
+
+// The pooled simulator takes the last segment of the branch, the simulator a
+// removed worktree left behind goes back to a pool name, and a detach does the
+// same for this worktree's own.
+const branchNameCase = (): void => {
+  const prefix = CONFIG.simulatorNamePrefix;
+  const pooled = { udid: 'FIXTURE-NAME-0001', name: `${prefix} 1` };
+  const orphan = { udid: 'FIXTURE-NAME-0002', name: `${prefix} gone` };
+  const taken = { udid: 'FIXTURE-NAME-0003', name: `${prefix} naming` };
+  const setup: FixtureSetup = {
+    devices: [
+      { ...pooled, state: 'Shutdown' },
+      { ...orphan, state: 'Shutdown' },
+      // Not managed, and it already holds the name this worktree would take.
+      { ...taken, state: 'Shutdown' },
+    ],
+    branch: 'owner/feature/naming',
+  };
+  withFixture(setup, (fixture) => {
+    const removed = {
+      worktree: fixture.worktreeGone,
+      simulatorUdid: orphan.udid,
+      port: port(5),
+    };
+    writeFileSync(
+      fixture.context.statePath,
+      serializeState(state([pooled, orphan], [removed]))
+    );
+
+    const dryRun = runChild(fixture, ['run', '--dry-run']);
+    assert.equal(dryRun.status, 0, dryRun.stderr);
+    assert.match(
+      dryRun.stdout,
+      new RegExp(`Simulator: ${prefix} naming 2 \\(${pooled.udid}\\)`)
+    );
+    assert.deepEqual(renames(fixture), [], 'a dry run renames nothing');
+
+    const first = runChild(fixture, ['run']);
+    assert.equal(first.status, 0, first.stderr);
+    assert.deepEqual(renames(fixture), [
+      `${pooled.udid} -> ${prefix} naming 2`,
+      `${orphan.udid} -> ${prefix} 1`,
+    ]);
+    assert.match(
+      first.stdout,
+      new RegExp(`Simulator: ${prefix} naming 2 \\(${pooled.udid}\\)`)
+    );
+    assert.deepEqual(readRegistry(fixture).simulators, [
+      { udid: pooled.udid, name: `${prefix} naming 2` },
+      { udid: orphan.udid, name: `${prefix} 1` },
+    ]);
+
+    // A run on the same branch has nothing to rename.
+    const second = runChild(fixture, ['run']);
+    assert.equal(second.status, 0, second.stderr);
+    assert.equal(renames(fixture).length, 2);
+
+    const detached = runChild(fixture, ['detach']);
+    assert.equal(detached.status, 0, detached.stderr);
+    assert.deepEqual(renames(fixture).slice(2), [
+      `${pooled.udid} -> ${prefix} 2`,
+    ]);
+    assert.deepEqual(readRegistry(fixture).simulators, [
+      { udid: pooled.udid, name: `${prefix} 2` },
+      { udid: orphan.udid, name: `${prefix} 1` },
+    ]);
+    assert.deepEqual(inventoryNames(fixture), {
+      [TEMPLATE_UDID]: 'iPhone Fixture',
+      [pooled.udid]: `${prefix} 2`,
+      [orphan.udid]: `${prefix} 1`,
+      [taken.udid]: `${prefix} naming`,
+    });
+  });
 };
 
 interface VerificationCase {
@@ -1076,6 +1187,11 @@ const CASES: VerificationCase[] = [
     evidence: READ_ONLY,
     check: pooledRollbackCase,
   },
+  {
+    name: 'names: branch on allocation, pool name on release and after a removed worktree',
+    evidence: UNMODIFIED,
+    check: branchNameCase,
+  },
 ];
 
 const verify = (): void => {
@@ -1132,13 +1248,24 @@ const runChildAction = async (
   if (action === 'run') {
     const result = await run(context, {
       command: 'run',
-      dryRun: false,
+      dryRun: rest.includes('--dry-run'),
       force: false,
       help: false,
       all: false,
       confirmed: false,
     });
     return typeof result === 'number' ? result : 1;
+  }
+  if (action === 'detach') {
+    await detach(context, {
+      command: 'detach',
+      dryRun: false,
+      force: false,
+      help: false,
+      all: false,
+      confirmed: false,
+    });
+    return 0;
   }
   throw new Error(`Unknown fixture action: ${action ?? ''}`);
 };
