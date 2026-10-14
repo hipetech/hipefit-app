@@ -55,6 +55,16 @@ export const hapticImpact = () =>
   fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
 
 /**
+ * The user picked something up to move it: a row lifting out of a list under
+ * a long press. `Medium`, a step above `hapticImpact`, because the lift is the
+ * moment the gesture takes hold and nothing else on screen confirms it as
+ * early. The slot changes that follow use `hapticSelection`, and the drop is
+ * silent.
+ */
+export const hapticLift = () =>
+  fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
+
+/**
  * An operation the user committed to actually completed — a write that landed.
  * Only on genuine success; the failure path stays silent, since a failure the
  * user must read about is announced by the UI, not by the Taptic Engine.

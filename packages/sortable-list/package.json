@@ -1,0 +1,17 @@
+{
+  "name": "@hipefit/sortable-list",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Virtualized React Native list on LegendList whose rows reorder by long press and drag.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "peerDependencies": {
+    "@legendapp/list": "^3.3.3",
+    "react": "*",
+    "react-native": "*",
+    "react-native-gesture-handler": "*",
+    "react-native-reanimated": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-worklets": "*"
+  }
+}

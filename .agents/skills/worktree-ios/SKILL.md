@@ -1,14 +1,15 @@
 ---
 name: worktree-ios
-description: Manages Hipefit's per-worktree iOS workflow. Use when the user says "run iOS in this worktree", "set up the worktree simulator", "stop worktree Metro", or "detach the worktree simulator", or invokes "/worktree-ios"; not for app interaction or code implementation.
+description: Manages Hipefit's per-worktree iOS workflow. Use when the user says "run iOS in this worktree", "set up the worktree simulator", "stop worktree Metro", or "detach the worktree simulator", or invokes "/worktree-ios"; not for app interaction, code implementation, or deleting a worktree's caches and build output, which is `worktree-cleanup`.
 ---
 
 # Worktree iOS
 
 Operate the existing `@hipefit/worktree-devices` commands without changing their implementation.
 
-App interaction belongs to `agent-device`, planned code changes to `implement`, and commits to
-`commit`. Do not edit source, native configuration, READMEs, or agent rules here.
+App interaction belongs to `agent-device`, planned code changes to `implement`, commits to
+`commit`, and deleting a worktree's caches and build output to `worktree-cleanup`. Do not edit
+source, native configuration, READMEs, or agent rules here.
 
 ## 1. Refuse unsafe actions
 
