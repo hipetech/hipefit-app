@@ -114,6 +114,7 @@ export const AuthScreen: React.FC = () => {
                   }
                   cornerRadius={8}
                   style={styles.appleButton}
+                  testID="sign-in-apple"
                   onPress={handleSignIn}
                 />
               </View>

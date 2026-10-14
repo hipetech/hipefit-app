@@ -23,7 +23,12 @@ export const QuickLoginButton: React.FC<QuickLoginButtonProps> = ({
 
   return (
     <Host matchContents colorScheme={colorScheme}>
-      <Button variant="outlined" label="Quick Login" onPress={onPress} />
+      <Button
+        variant="outlined"
+        label="Quick Login"
+        testID="quick-login"
+        onPress={onPress}
+      />
     </Host>
   );
 };

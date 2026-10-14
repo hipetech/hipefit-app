@@ -1,0 +1,25 @@
+# Each of the four tabs opens. Tabs are tapped by identifier because Home
+# renders a row titled Workouts inside Activity.
+appId: com.kyrylokorota.hipefitapp.development
+tags:
+  - smoke
+---
+# Firebase Auth keeps its session in the keychain, so clearState alone would
+# relaunch the app signed in.
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: ../subflows/sign-in-quick-login.yaml
+- tapOn:
+    id: tab-workouts
+- assertVisible: No workouts yet
+- tapOn:
+    id: tab-exercises
+- assertVisible: Exercises
+- tapOn:
+    id: tab-settings
+- assertVisible:
+    id: settings-log-out
+- tapOn:
+    id: tab-home
+- assertVisible: Activity

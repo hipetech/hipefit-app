@@ -12,7 +12,7 @@ Hipefit is an iOS-only fitness app in a Bun workspace. The mobile app uses React
 | `firebase/`    | Firebase configuration, rules, seed data, and migrations                     |
 | `scripts/`     | Repository CLI wrappers and CI helpers                                       |
 | `docs/`        | Current architecture, product flows, plans, and templates                    |
-| `e2e/`         | Reserved empty scaffold for future end-to-end tests                          |
+| `e2e/`         | Maestro end-to-end flows and their workspace config                          |
 
 The root `package.json` owns workspace scripts. Run commands from the repository root unless a
 document says otherwise.
@@ -316,7 +316,17 @@ bun run lint
 bun run format:check
 ```
 
-The repository has no automated test runner. Pull requests run these three checks in CI.
+The repository has no unit test runner. Pull requests run these three checks in CI.
+
+The Maestro end-to-end flows under `e2e/` run locally:
+
+```bash
+bun run e2e
+```
+
+`bun run e2e` needs Maestro, a booted simulator with the development build from
+`bun run ios:development` or `bun run ios:worktree`, and, when several simulators are booted, `E2E_DEVICE` in `e2e/.env`.
+[`docs/app/testing.md`](docs/app/testing.md) describes the suite and its prerequisites.
 
 `@hipefit/worktree-devices` has five assertion scripts that run directly with Bun against temporary
 fixtures. Its [README](packages/worktree-devices/README.md#assertion-scripts) lists them.

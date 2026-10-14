@@ -158,7 +158,8 @@ time.
 when the configured Firebase project is the development or staging project, and it throws for any
 other project. The action hands the fixed name `Quick User` to the profile ensure and shares its
 ensure-and-publish step with `signInWithApple()`. The journey is documented in
-[the authentication flow](../flows/authentication.md).
+[the authentication flow](../flows/authentication.md). The Maestro flows sign in through it; see
+[testing.md](testing.md).
 
 The auth service also owns first-run profile provisioning and restored-session repair. Every
 authenticated callback ensures `users/{uid}` exists before the store publishes the user to the
@@ -305,8 +306,9 @@ code requires running `pod install` from `apps/mobile/ios/` and committing the r
   write path for either collection.
 - The three global create actions are disabled in
   [`navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts).
-- There is no automated test runner. `bun run type-check` is the primary code gate, with
-  `bun run lint` and `bun run format:check` beside it.
+- There is no unit test runner. `bun run type-check` is the primary code gate, with `bun run lint`
+  and `bun run format:check` beside it. The Maestro end-to-end suite is described in
+  [testing.md](testing.md).
 - There is no Android project. Reviving Android is a project-wide decision recorded in
   [`AGENTS.md`](../../AGENTS.md).
 - [`apps/mobile/ios/hipefit-watch Watch App/`](<../../apps/mobile/ios/hipefit-watch Watch App>) is an

@@ -1,0 +1,14 @@
+# Quick Login signs in and lands on Home.
+appId: com.kyrylokorota.hipefitapp.development
+tags:
+  - smoke
+---
+# Firebase Auth keeps its session in the keychain, so clearState alone would
+# relaunch the app signed in.
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: ../subflows/sign-in-quick-login.yaml
+- assertVisible: Activity
+- assertVisible:
+    id: weekly-calendar

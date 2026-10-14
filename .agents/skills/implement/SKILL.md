@@ -101,6 +101,12 @@ and `docs/db-structure.md` for data or schema, and the affected `docs/flows/` fo
 behavior. `docs/plans/` is intent, never evidence: verify anything the plan claims is already true
 against the source before building on it.
 
+Tests were written first. If your note's `context:` lists flow files under `e2e/`, they are the
+acceptance test for your work: set the identifiers and keep the text anchors they use exactly as
+written, and report any step your implementation cannot satisfy instead of changing the flow. If
+your task writes the flows, build them from the plan's identifier contract; the code they drive
+does not exist yet. Either way, `maestro check-syntax <file>` is the only Maestro command you run.
+
 Stay inside `owns:`. It is the complete set of paths you may create or modify, not a starting point.
 If the work needs a file outside it, stop and report it. Do not edit it, do not work around it, do
 not create a parallel copy: a sibling agent may be inside that file right now, and your report is
