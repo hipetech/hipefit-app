@@ -88,11 +88,18 @@ in the primary worktree it changes nothing, because those files are the source. 
 not copy anything between worktrees: it stops with an error naming the missing file, so run
 `env:sync` first.
 
-The first run in a worktree claims a released simulator from the managed pool, or creates one named
-`Hipefit Worktree <n>` from an available iPhone device type and iOS runtime. It reserves a Metro
-port between `18081` and `18180`, copies `.env.development` to `apps/mobile/.env.local`, boots the
-simulator, points the app at the reserved port, and runs the `Hipefit-dev` scheme on it. Later runs
-in the same worktree reuse the same simulator and port.
+The first run in a worktree claims a released simulator from the managed pool, or creates one from
+an available iPhone device type and iOS runtime. It reserves a Metro port between `18081` and
+`18180`, copies `.env.development` to `apps/mobile/.env.local`, boots the simulator, points the app
+at the reserved port, and runs the `Hipefit-dev` scheme on it. Later runs in the same worktree reuse
+the same simulator and port.
+
+The simulator is named after the worktree's branch for as long as the worktree holds it:
+`Hipefit Worktree <branch>`, where `<branch>` is the last segment of the branch name, so
+`hipetech/quick-login` gives `Hipefit Worktree quick-login`. A worktree on a detached HEAD uses its
+directory name instead, and a name that another simulator already has gets a number after it. Each
+run applies the name again, so a simulator follows a branch switch on the next `ios:worktree`. A
+simulator in the pool is named `Hipefit Worktree <n>`.
 
 While it runs, `ios:worktree` records itself in the registry as the worktree's runner: its process
 ID, the host, and the time it started. It removes that record when Expo exits or the command fails.
@@ -147,7 +154,7 @@ building. `stop` says so and signals nothing. Interrupt the runner in its termin
 
 ```bash
 bun run ios:worktree:stop
-bun run ios:worktree:stop "Hipefit Worktree 2"
+bun run ios:worktree:stop "Hipefit Worktree quick-login"
 bun run ios:worktree:stop 18082
 ```
 
@@ -186,8 +193,8 @@ stops: the devices and their apps keep running.
 
 ```bash
 bun run ios:worktree:show
-bun run ios:worktree:show "Hipefit Worktree 2"
-bun run ios:worktree:hide "Hipefit Worktree 2"
+bun run ios:worktree:show "Hipefit Worktree quick-login"
+bun run ios:worktree:hide "Hipefit Worktree quick-login"
 bun run ios:worktree:hide --all
 ```
 
@@ -255,8 +262,8 @@ Assignments live in `hipefit-ios-worktrees.json` inside the repository's shared 
 outside every worktree and outside version control. Every command reconciles that file against
 `git worktree list` and `xcrun simctl list`, so entries for removed worktrees and deleted
 simulators clear themselves. Deleting the file resets every assignment, but it also forgets the
-pool: the simulators survive and keep whatever they had installed, yet nothing reuses them and the
-next created one takes a higher number. `ios:worktree:remove` cannot reach those simulators either,
+pool: the simulators survive and keep whatever they had installed and whatever name they had, yet
+nothing reuses them. `ios:worktree:remove` cannot reach those simulators either,
 because the registry no longer knows them, so clearing up after such a reset stays manual:
 
 ```bash

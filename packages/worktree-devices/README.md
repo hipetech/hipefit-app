@@ -52,7 +52,7 @@ The repository wraps each subcommand in a root script, which is how they are mea
 
 | Subcommand | What it does                                                               |
 | ---------- | -------------------------------------------------------------------------- |
-| `run`      | Reuses or allocates a simulator and port, then runs Expo on them           |
+| `run`      | Reuses or allocates a simulator and port, names it, then runs Expo on them |
 | `detach`   | Shuts this worktree's simulator down and returns it to the pool            |
 | `list`     | Reports every assignment with its runner, the free pool, and stale entries |
 | `show`     | Opens a managed simulator in a window, booting it if needed                |
@@ -130,6 +130,33 @@ A `run` in a worktree that already has an assignment has to save its runner leas
 moved to. If that write fails, the run fails at the same point, before the environment copy, the
 boot, and the Expo launch.
 
+### Simulator names
+
+A simulator's name says who holds it.
+
+| Simulator              | Name                                                   |
+| ---------------------- | ------------------------------------------------------ |
+| Assigned to a worktree | `<prefix> <label>`, or `<prefix> <label> <n>` if taken |
+| Free in the pool       | `<prefix> <n>`, the lowest number no simulator has     |
+
+The label is the last segment of the worktree's branch, so `owner/feature/login` gives `login`. A
+worktree on a detached HEAD has no branch and uses its directory name. The branch comes from the
+same `git worktree list` call that reconciliation reads. A name counts as taken when any other
+simulator on the machine has it, managed or not, and numbering then starts at 2.
+
+`run` names the simulator on every run: it creates a new one under the name, and renames a pooled or
+already assigned one with `xcrun simctl rename`, which also works on a booted simulator. A branch
+switch therefore reaches the name on the next `run`. A run that finds its port occupied with no free
+port left fails before it renames anything.
+
+`run` and `detach` give every free simulator a pool name before they write the registry. That
+covers the simulator `detach` has just released and one left behind by a worktree that was removed
+without a detach. `--dry-run` renames nothing and prints the name a real run would use.
+
+A failed rename prints a warning and the command continues under the old name. Reconciliation
+copies each simulator's name from `simctl` into the registry, so the registry follows a rename made
+in Xcode, and one that a failed registry write did not record. Targets match on that name.
+
 ## Configuration
 
 `worktree-devices.json` in the repository root holds everything specific to the app. The package
@@ -142,7 +169,7 @@ reads it and never hardcodes a scheme, an identifier, or a path.
 | `bundleIdentifier`     | yes      |                    | The installed app, used to point it at Metro     |
 | `environmentFile`      | no       | `.env.development` | Environment file in the worktree root            |
 | `environmentLocalName` | no       | `.env.local`       | What the app directory expects it copied to      |
-| `simulatorNamePrefix`  | no       | `Worktree`         | Managed simulators are `<prefix> <n>`            |
+| `simulatorNamePrefix`  | no       | `Worktree`         | First part of every managed simulator's name     |
 | `registryName`         | no       | `worktree-devices` | Basename of the registry file and its lock       |
 | `ports`                | no       | `18081` to `18180` | Range Metro ports are allocated from             |
 | `reservedPorts`        | no       | `[8081]`           | Ports left to commands that do not use this tool |
@@ -376,7 +403,8 @@ Each prints one line per case and exits nonzero if any case fails. None of them 
 simulator, the Simulator application, or the shared registry.
 
 [`verify-startup-deletion.ts`](scripts/verify-startup-deletion.ts) covers startup, `deleteSimulator`
-failures, `remove` batches, registry write failures, and allocation rollback. Every case runs the
+failures, `remove` batches, registry write failures, allocation rollback, and simulator names. Every
+case runs the
 unmodified modules in a child process whose `PATH` holds only fake `xcrun`, `git`, and `pod`
 programs written into a temporary fixture. The fakes accept exact argument shapes and exit with an
 error on anything else. A registry write is made to fail by making the fixture's registry directory

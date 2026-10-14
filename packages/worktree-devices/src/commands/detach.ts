@@ -1,6 +1,10 @@
 import type { CliOptions, GitContext } from '../types';
 
-import { shutdownReleasedSimulators, shutdownSimulator } from '../core/devices';
+import {
+  renameFreeSimulators,
+  shutdownReleasedSimulators,
+  shutdownSimulator,
+} from '../core/devices';
 import { checkSimctlPrerequisite } from '../core/expo';
 import { existingDeviceMap, getSimulatorInventory } from '../core/inventory';
 import { withRegistryLock } from '../core/lock';
@@ -97,6 +101,8 @@ export const detach = async (
     state.assignments = state.assignments.filter(
       ({ worktree }) => worktree !== context.worktree
     );
+    // The simulator stops carrying this worktree's branch once it is free.
+    renameFreeSimulators(context, state, inventory);
     await writeState(context.statePath, state);
     console.log(
       wasShutDown

@@ -249,6 +249,7 @@ packages are:
 | [`@hipefit/firebase`](../../packages/firebase/src/react-native/index.ts)        | SDK-bound TypeScript  | Target-specific Firebase instances and refs       |
 | [`@hipefit/navigation-dock`](../../packages/navigation-dock/index.ts)           | Expo native view      | UIKit create panel, scrim, and bridge types       |
 | [`@hipefit/schemas`](../../packages/schemas/src/index.ts)                       | Pure TypeScript       | Persisted contracts, validation, and path strings |
+| [`@hipefit/sortable-list`](../../packages/sortable-list/index.ts)               | React Native          | `SortableList` and `SortableDragExclusion`        |
 | [`@hipefit/ui`](../../packages/ui/src/index.ts)                                 | SwiftUI through React | `Card`, `Chip`, `Separator`, and semantic colors  |
 
 Package contracts are imported by name, never through a relative path into `packages/`. Each
@@ -262,7 +263,11 @@ and React Native Firebase so non-mobile consumers can reuse it.
 
 `@hipefit/navigation-dock` has Swift source, a podspec, `expo-module.config.json`, and a typed
 `requireNativeView` bridge. `@hipefit/expandable-accessory` is React-only because it coordinates a
-provider across the NativeTabs and root Stack trees. The mobile adapter for the native package stays
+provider across the NativeTabs and root Stack trees. `@hipefit/sortable-list` is React Native only:
+it wraps `LegendList` with a Gesture Handler and Reanimated drag, and it imports nothing from the
+app. The caller passes its haptics in as callbacks, so the package does not reach into
+[`apps/mobile/src/lib/haptics.ts`](../../apps/mobile/src/lib/haptics.ts). Its rules for app code are
+in [ui.md](ui.md#the-sortable-list). The mobile adapter for the native package stays
 in
 [`navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx), where it
 can read app state and navigation.

@@ -446,6 +446,57 @@ Empty sections are a plain secondary-label row plus a `Section` footer, never a
 `ContentUnavailableView` — that is a whole-view treatment, and dropping one into a row recreates the
 tall centred empty card the grouped-list migration deleted.
 
+### The sortable list
+
+`SortableList`, from the [`@hipefit/sortable-list`](../../packages/sortable-list/README.md) package,
+is for a list the user reorders that is too long for a SwiftUI `List`. A bounded list should stay a
+`List`, which is the default idiom above. `SortableList` wraps `AnimatedLegendList`, so it is virtualized, and its
+rows follow the same rule as the catalogue: a row is plain React Native or its own `Host` island.
+The user holds a row to lift it and drags it among rows of any height, and the list scrolls while
+the row is near its top or bottom edge. No screen in the app uses it yet.
+
+**The order is committed once, on drop.** `data` does not change while a row is lifted. The other
+rows move aside with Reanimated transforms computed from a snapshot of every row's offset and size,
+and `onReorder` fires once, after the dropped row has settled, with the new array and the
+`{ from, to, key }` of the move. Reordering `data` during the drag would make `LegendList` lay out
+again under the finger on every slot change, and it could unmount the row that owns the gesture.
+The caller commits the array inside `onReorder`. The transforms reset in the layout effect of the
+commit that delivers the new `data`, so a caller that commits later sees the old order return
+first. A new `data` array that arrives while a row is lifted or settling ends the drag, and a drop
+still queued for the JS thread is discarded instead of applied to indexes of the old array. A lift
+still queued for the JS thread carries the `data` version its row was measured in, and is abandoned
+when that version is no longer current.
+
+**The lifted row is drawn by a copy in an overlay above the list.** `LegendList` puts each row in
+its own absolutely positioned container, and those containers are siblings the app does not render.
+`zIndex` on a row orders it inside its own container only, so a row dragged in place would pass
+under every row after it. The row in the list stays mounted, hidden, and keeps the gesture.
+`SortableList` therefore calls `renderItem` twice for the lifted row, the second time with
+`isActive: true`, and both calls must draw the same row. State that changes a row's look or height,
+such as an expanded `DisclosureGroup` or a counter, lives in the screen keyed by item and reaches
+the rows through `extraData`. For a SwiftUI row the copy is a second `Host`, a sibling island and
+not a nested one. `isActive` is for a lifted look of the row's own: the copy already carries the
+list's scale and shadow, and inside a `Host` any further motion is SwiftUI's.
+
+A control inside a row that has its own long press needs one of two patterns, or the row lifts
+first:
+
+- **A React Native control** goes inside
+  `SortableDragExclusion`, exported by the same package.
+  A touch that starts inside the wrapper never lifts the row, and the control's long press fires.
+- **A SwiftUI control** goes in its own `Host` beside the row's main `Host`, and that sibling
+  `Host` goes inside `SortableDragExclusion`. The wrapper is a React Native view and cannot go
+  inside a `Host`. Two sibling hosts in one row are allowed; nested hosts are not.
+
+A SwiftUI long press inside the row's main `Host`, with no wrapper, is not a supported arrangement.
+
+[`sortable-metrics.ts`](../../packages/sortable-list/helpers/sortable-metrics.ts) holds the
+lift delay, the edge zone, the scroll speed, and the lifted row's scale and shadow. **Those values
+are estimates until they are tuned on a device.** Do not cite them as measured, and record the
+device and OS beside each one when it is tuned, as `row-metrics.ts` does. A plain row's lift has
+been checked on a simulator. The drag, the auto-scroll, and the long press patterns have been
+checked against the library sources only.
+
 ## The calendar: a React Native island inside the `List`
 
 Home's expandable calendar
@@ -522,10 +573,15 @@ do.
 
 Feedback goes through
 [apps/mobile/src/lib/haptics.ts](../../apps/mobile/src/lib/haptics.ts) under **intent names** —
-`hapticSelection`, `hapticImpact`, `hapticSuccess` — never raw `expo-haptics`. The wrapper is
+`hapticSelection`, `hapticImpact`, `hapticLift`, `hapticSuccess` — never raw `expo-haptics`. The wrapper is
 iOS-gated and fire-and-forget, so a haptic that fails (no Taptic Engine, Low Power Mode, simulator)
 cannot reject into the interaction it decorates. It also keeps the mapping from event kind to
 generator in one place.
+
+`hapticLift` means the user picked something up to move it. It is a `Medium` impact for the moment
+a row of the [sortable list](#the-sortable-list) lifts. The package fires no feedback of its own, so
+each call site passes `hapticLift` as `onLift` and `hapticSelection` as `onSlotChange`, which fires
+on each change of the slot under the dragged row. The drop is silent.
 
 `@expo/ui` exposes **no** `sensoryFeedback` modifier — verified against the modifier export list at
 57.0.7 — so feedback must fire from JS inside the existing event callback.
@@ -542,8 +598,8 @@ motion is SwiftUI's: Reanimated cannot reach in to animate SwiftUI content, so i
 the `List`-based screens, and where a transition already exists natively — a `DisclosureGroup`'s
 chevron rotation and reveal — use it, since UIKit's own animation cannot desync from a recycled row
 the way a `useAnimatedStyle` pair could. Inside a plain React Native island, motion is **Reanimated's**
-— the calendar's open/close is the app's only example, and `@expo/ui`'s modifiers are not available
-to it at all.
+— the calendar's open/close and the [sortable list](#the-sortable-list)'s drag are the app's two
+examples, and `@expo/ui`'s modifiers are not available to either.
 
 Two different engines, then, and the difference that bites is Reduce Motion: Reanimated honours it
 automatically and `@expo/ui` does not. Both halves are spelled out below.
