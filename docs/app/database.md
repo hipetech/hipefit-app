@@ -2,7 +2,7 @@
 type: app
 status: current
 area: database
-updated: 2026-10-13
+updated: 2026-10-15
 ---
 
 # Data layer
@@ -22,7 +22,7 @@ The data boundary is split by portability and responsibility:
 | [`packages/firebase/src/react-native/`](../../packages/firebase/src/react-native)                                                                                                             | React Native Firebase Auth and Firestore instances, the configured project ID accessor `getFirebaseProjectId()`, and refs for paths the app accesses |
 | [`apps/mobile/src/services/`](../../apps/mobile/src/services)                                                                                                                                 | App-specific queries, snapshot listeners, auth provisioning, and writes                                                                              |
 | [`apps/mobile/src/stores/`](../../apps/mobile/src/stores)                                                                                                                                     | Published state, loading state, actions, and service callback handling                                                                               |
-| [`apps/mobile/src/hooks/use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts)                                                                          | Auth-scoped lifetime of the two live data stores                                                                                                     |
+| [`apps/mobile/src/hooks/use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts)                                                                          | Auth-scoped lifetime of the three live data stores                                                                                                   |
 
 There is no app-local `@/database` barrel. Mobile code imports persisted contracts from
 `@hipefit/schemas`, feature-specific catalogue logic through the `@/` alias, and refs from
@@ -30,10 +30,13 @@ There is no app-local `@/database` barrel. Mobile code imports persisted contrac
 
 Stores do not call React Native Firebase operations directly. They delegate reads and writes to
 [`auth-service.ts`](../../apps/mobile/src/services/auth-service.ts),
-[`user-service.ts`](../../apps/mobile/src/services/user-service.ts), and
-[`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts). Stores retain ownership
-of app state and actions; services own SDK execution; the exercise feature owns its pure catalogue
-derivation.
+[`user-service.ts`](../../apps/mobile/src/services/user-service.ts),
+[`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts), and
+[`workout-template-service.ts`](../../apps/mobile/src/services/workout-template-service.ts). Stores
+retain ownership of app state and actions; services own SDK execution; the exercise feature owns its
+pure catalogue derivation. The exercise and workout template services share their snapshot decoding
+and pending-timestamp handling through
+[`firestore-timestamps.ts`](../../apps/mobile/src/services/firestore-timestamps.ts).
 
 ## Paths and refs
 
@@ -46,11 +49,11 @@ The React Native package exports refs with current app callers:
 
 - global collections: `exerciseCategoriesRef()`, `equipmentRef()`, and `exercisesRef()`;
 - the user document: `userRef(uid)`;
-- user collections: `customExerciseCategoriesRef(uid)`, `customExercisesRef(uid)`, and
-  `bodyMeasurementsRef(uid)`.
+- user collections: `customExerciseCategoriesRef(uid)`, `customExercisesRef(uid)`,
+  `workoutTemplatesRef(uid)`, and `bodyMeasurementsRef(uid)`.
 
-There are no app refs for workouts or workout templates because the mobile client does not access
-those collections. Their persisted contracts remain in `@hipefit/schemas`. Mobile features and
+There is no app ref for workouts because the mobile client does not access that collection. Its
+persisted contract remains in `@hipefit/schemas`. Mobile features and
 services do not construct Firestore paths inline.
 
 Persisted pointers use the schema's full string `Ref` convention, `global:<slug>` or
@@ -85,7 +88,11 @@ the complete prospective shape before sending it:
 - the auth service validates a new or repaired `UserProfile` before replacing validation timestamps
   with server timestamps;
 - the user service validates the merged next profile before issuing settings or profile updates;
-- the user service validates a `BodyMeasurement` before `addDoc`.
+- the user service validates a `BodyMeasurement` before `addDoc`;
+- the exercise service validates a complete `CustomExercise` before replacing validation timestamps
+  with server timestamps and calling `addDoc`;
+- the workout template service validates a complete `WorkoutTemplate` the same way before
+  `addDoc`.
 
 Write assertions also exist for document types without a shipped client writer. A modified client can
 bypass application assertions, so Firestore rules remain part of the boundary.
@@ -95,21 +102,24 @@ bypass application assertions, so Firestore rules remain part of the boundary.
 [`use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts) is
 mounted once from [`apps/mobile/app/_layout.tsx`](../../apps/mobile/app/_layout.tsx), above the
 protected route tree. When auth publishes a user, it starts
-[`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts) and
-[`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts) with `subscribe(uid)`.
-Effect cleanup calls both returned teardowns when the user changes or signs out.
+[`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts),
+[`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts), and
+[`useWorkoutTemplateStore`](../../apps/mobile/src/stores/use-workout-template-store.ts) with
+`subscribe(uid)`. Effect cleanup calls the three returned teardowns when the user changes or signs
+out.
 
 Each teardown removes its service listeners and restores the store's initial loading state. The data
 stores do not expose separate `reset()` actions. Auth is separate because it produces the UID. Its
 app-lifetime `initialize()` method delegates `onAuthStateChanged` to the auth service and is
 idempotent because several routes and components call it.
 
-The two data stores own seven Firestore snapshot listeners through their services:
+The three data stores own eight Firestore snapshot listeners through their services:
 
-| Store                                                                    | Service                                                                     | Firestore sources                                                                       | Published state                                                |
-| ------------------------------------------------------------------------ | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)         | [`user-service.ts`](../../apps/mobile/src/services/user-service.ts)         | `users/{uid}` and `bodyMeasurements` ordered by `recordedAt desc`, `limit(1)`           | `profile`, `currentBodyMeasurement`, `currentWeight`           |
-| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts) | [`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts) | Global exercises, global categories, equipment, custom exercises, and custom categories | Localized visible catalogue and category/equipment view models |
+| Store                                                                                   | Service                                                                                     | Firestore sources                                                                       | Published state                                                |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                        | [`user-service.ts`](../../apps/mobile/src/services/user-service.ts)                         | `users/{uid}` and `bodyMeasurements` ordered by `recordedAt desc`, `limit(1)`           | `profile`, `currentBodyMeasurement`, `currentWeight`           |
+| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)                | [`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts)                 | Global exercises, global categories, equipment, custom exercises, and custom categories | Localized visible catalogue and category/equipment view models |
+| [`useWorkoutTemplateStore`](../../apps/mobile/src/stores/use-workout-template-store.ts) | [`workout-template-service.ts`](../../apps/mobile/src/services/workout-template-service.ts) | `workoutTemplates` ordered by `updatedAt desc`, no limit                                | Non-archived `templates`                                       |
 
 The exercise store also subscribes to the user Zustand store. A language, hidden-ref, or user loading
 change reruns its catalogue build without adding a Firestore listener. With a valid profile, it
@@ -139,29 +149,40 @@ The feature helper:
 5. removes retired exercises and exercises hidden directly or through a hidden category;
 6. publishes visible categories and non-retired equipment.
 
-Browse and search consume the published `exercises` list. Workout picker views and canonical-ref
-resolution are absent until workout behavior is implemented.
+Browse, search, and the workout template editor's exercise picker consume the published
+`exercises` list. Workout picker views and canonical-ref resolution are absent until workout
+behavior is implemented.
+
+### Workout templates
+
+[`useWorkoutTemplateStore`](../../apps/mobile/src/stores/use-workout-template-store.ts) keeps the
+latest decoded snapshot and publishes the templates whose `isArchived` is `false`, in the listener's
+`updatedAt desc` order. Workouts renders them as cards in its My Workout Templates section; Home does
+not read the store. The template listener applies the same pending-timestamp fill as the custom
+exercise listener, so a template the user just saved decodes before the server acknowledges it.
 
 ### Preserved workout contracts
 
-Workout and workout-template interfaces, decoders, write assertions, rules, indexes, and admin-tool
-compatibility remain in the repository. The mobile client has no refs, listeners, stores, or
-screen-level requests for either collection.
+Workout interfaces, decoders, write assertions, rules, indexes, and admin-tool compatibility remain
+in the repository. The mobile client has no refs, listeners, stores, or screen-level requests for
+the workouts collection.
 
 Home displays zero workout counts and streaks plus empty template and history sections. Workouts
-displays empty template and history sections immediately. Documents inserted outside the app are not
-requested, decoded, derived, or rendered. There is no persisted history or stats collection, and
+displays an empty history section. Workout documents inserted outside the app are not requested,
+decoded, derived, or rendered. There is no persisted history or stats collection, and
 [`firebase/firestore.indexes.json`](../../firebase/firestore.indexes.json) is empty.
 
 ## Current writes
 
-The shipped client exposes five write operations through two stores and implements them in two
+The shipped client exposes seven write operations through four stores and implements them in four
 services:
 
-| Store action owner                                               | Service                                                             | Write                                                                                                      |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts) | [`auth-service.ts`](../../apps/mobile/src/services/auth-service.ts) | Create `users/{uid}` when missing; fill missing Apple name fields; advance an older `schemaVersion` marker |
-| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts) | [`user-service.ts`](../../apps/mobile/src/services/user-service.ts) | Update `settings.<key>` fields; update profile and body fields; append a body measurement                  |
+| Store action owner                                                                      | Service                                                                                     | Write                                                                                                      |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                        | [`auth-service.ts`](../../apps/mobile/src/services/auth-service.ts)                         | Create `users/{uid}` when missing; fill missing Apple name fields; advance an older `schemaVersion` marker |
+| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                        | [`user-service.ts`](../../apps/mobile/src/services/user-service.ts)                         | Update `settings.<key>` fields; update profile and body fields; append a body measurement                  |
+| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)                | [`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts)                 | Create one `users/{uid}/customExercises` document                                                          |
+| [`useWorkoutTemplateStore`](../../apps/mobile/src/stores/use-workout-template-store.ts) | [`workout-template-service.ts`](../../apps/mobile/src/services/workout-template-service.ts) | Create one `users/{uid}/workoutTemplates` document                                                         |
 
 Profile creation is one `setDoc`, not a batch. No category or exercise data is copied at sign-up.
 The auth listener calls `ensureUserProfile` for new sign-ins and restored sessions before the auth
@@ -169,8 +190,31 @@ store publishes the user. A missing profile therefore self-heals before domain s
 The current schema-version branch only advances the numeric marker because version `1` is the only
 live shape. An existing malformed profile is logged and is not repaired automatically.
 
-There is no client write to custom categories, custom exercises, workout templates, or workouts. The
-client also does not read workout templates or workouts.
+There is no client write to custom categories or workouts, and the client does not read workouts.
+Workout templates are created but never updated or deleted.
+
+The custom exercise form is the only custom exercise writer, and it only creates. It is shown by the
+custom exercise sheet and inside the workout template editor's exercise picker. The exercise store
+records the UID from `subscribe(uid)` and takes the locale from the user store's
+`settings.language`; its `createCustomExercise` action throws when either is missing. The service
+writes `name` and `description` under that one locale, sets `defaultLocale` to it, and always writes
+`forkedFromRef: null` and `imageURL: null`. It returns the new document's `custom:` ref. It also
+rejects more than 20 equipment refs, a bound the rules enforce and the write assertion does not. The store publishes no optimistic entry: the
+`customExercises` listener delivers the new document. There is no update or delete action. The
+journey is documented in [create a custom exercise](../flows/create-custom-exercise.md).
+
+The workout template editor is the only workout template writer, and it only creates. The template
+store records the UID from `subscribe(uid)`, and its `createWorkoutTemplate` action throws when it is
+missing. The editor converts the draft to stored units before the call: weight to kilograms,
+distance to meters, and duration to seconds, from the profile's `settings.units`. The service trims
+the name and always writes `description: null` (the editor has no description field),
+`estimatedDuration: null`, `isArchived: false`, `lastPerformedAt: null`, and `timesPerformed: 0`.
+Each embedded exercise carries `supersetId`, `null` outside a superset; the draft keeps every
+superset a single run of at least two adjacent exercises, which `assertWorkoutTemplateWrite` checks
+and the rules cannot. The store publishes no optimistic entry: the `workoutTemplates` listener
+delivers the new document. There is no update, archive, or delete action, and nothing updates
+`lastPerformedAt` or `timesPerformed`. The journey is documented in
+[create a workout template](../flows/create-routine.md).
 
 The Edit Profile sheet is the only measurement entry point. Saving updates profile fields first and
 then appends a current-time weigh-in when the optional weight field is populated. These are separate
@@ -185,6 +229,9 @@ action.
 - a user can read, create, update, and delete only their own document and five subcollections;
 - user, custom-category, custom-exercise, template, and workout creates and updates validate allowed
   and required top-level keys, scalar bounds, selected enums, and timestamps;
+- a custom exercise name must be non-empty in every locale it carries, while a description may be an
+  empty string. Both maps must contain the document's `defaultLocale`;
+- a workout template's optional `plannedDate` must be a `YYYY-MM-DD` string when present;
 - `createdAt` is server-set and immutable where present, `updatedAt` advances with server time, and
   `Workout.startedAt` is immutable;
 - workout status can remain unchanged or move from `in_progress` to `completed` or `abandoned`, but

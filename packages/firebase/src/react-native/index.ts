@@ -11,4 +11,5 @@ export {
   exerciseCategoriesRef,
   exercisesRef,
   userRef,
+  workoutTemplatesRef,
 } from './refs';

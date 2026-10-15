@@ -32,6 +32,15 @@ service cloud.firestore {
         && (!('uk' in value) || (value.uk is string && value.uk.size() > 0 && value.uk.size() <= maxLength));
     }
 
+    // Same shape as validUserLocalizedText, but a present translation may be an empty string.
+    function validEmptyableUserLocalizedText(value, maxLength) {
+      return value is map
+        && value.keys().hasOnly(['en', 'uk'])
+        && value.size() >= 1
+        && (!('en' in value) || (value.en is string && value.en.size() <= maxLength))
+        && (!('uk' in value) || (value.uk is string && value.uk.size() <= maxLength));
+    }
+
     function validDefaultLocale(value, localizedText) {
       return value in ['en', 'uk'] && localizedText.keys().hasAny([value]);
     }
@@ -122,7 +131,7 @@ service cloud.firestore {
           || (data.forkedFromRef is string
             && data.forkedFromRef.matches('^global:[a-z0-9-]+$')))
         && validUserLocalizedText(data.name, 100)
-        && validUserLocalizedText(data.description, 2000)
+        && validEmptyableUserLocalizedText(data.description, 2000)
         && validDefaultLocale(data.defaultLocale, data.name)
         && validDefaultLocale(data.defaultLocale, data.description)
         && validExerciseType(data.type)
@@ -133,8 +142,8 @@ service cloud.firestore {
     // Rules can bound these lists, but cannot iterate through their maps or nested set lists.
     function validWorkoutTemplate(data) {
       return data.keys().hasOnly([
-          'name', 'description', 'exercises', 'estimatedDuration', 'isArchived',
-          'lastPerformedAt', 'timesPerformed', 'createdAt', 'updatedAt'
+          'name', 'description', 'exercises', 'plannedDate', 'estimatedDuration',
+          'isArchived', 'lastPerformedAt', 'timesPerformed', 'createdAt', 'updatedAt'
         ])
         && data.keys().hasAll([
           'name', 'description', 'exercises', 'estimatedDuration', 'isArchived',
@@ -144,6 +153,9 @@ service cloud.firestore {
         && (data.description == null
           || (data.description is string && data.description.size() <= 2000))
         && data.exercises is list && data.exercises.size() <= 50
+        && (!('plannedDate' in data)
+          || (data.plannedDate is string
+            && data.plannedDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
         && (data.estimatedDuration == null
           || (data.estimatedDuration is int
             && data.estimatedDuration >= 0

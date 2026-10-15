@@ -17,6 +17,7 @@
     "@hipefit/firebase": "workspace:*",
     "@hipefit/navigation-dock": "workspace:*",
     "@hipefit/schemas": "workspace:*",
+    "@hipefit/sortable-list": "workspace:*",
     "@hipefit/ui": "workspace:*",
     "@legendapp/list": "^3.3.3",
     "@marceloterreiro/flash-calendar": "2.0.0",

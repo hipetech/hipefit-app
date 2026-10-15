@@ -2,7 +2,7 @@
 type: app
 status: current
 area: architecture
-updated: 2026-10-13
+updated: 2026-10-15
 ---
 
 # Application architecture
@@ -31,7 +31,7 @@ Cross-cutting mobile code sits beside those layers under
 [`apps/mobile/src/`](../../apps/mobile/src): [`theme/`](../../apps/mobile/src/theme) holds shared
 modifier arrays and React Native styles, [`components/`](../../apps/mobile/src/components) holds
 app-owned React Native wrappers, [`lib/`](../../apps/mobile/src/lib) holds formatting, constants,
-and haptics, and [`hooks/`](../../apps/mobile/src/hooks) holds cross-feature hooks.
+haptics, and unit conversion, and [`hooks/`](../../apps/mobile/src/hooks) holds cross-feature hooks.
 
 Workspace packages under [`packages/`](../../packages) are imported through package contracts.
 Portable Firestore contracts belong to `@hipefit/schemas`, and SDK-bound refs belong to
@@ -98,24 +98,52 @@ state lives in
 the trigger and panel are mounted in different parts of the route layout. Its navigation contract is
 documented in [navigation.md](navigation.md).
 
+The private layout also mounts
+[`custom-exercise-sheet.tsx`](../../apps/mobile/src/features/exercises/custom-exercise-sheet.tsx)
+from the exercises feature, so the sheet presents from every tab. The panel's Custom Exercise action
+opens it through
+[`use-custom-exercise-sheet-store.ts`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts),
+because the adapter that handles the action and the layout that mounts the sheet do not contain each
+other.
+
+The workout template editor is a root-level route,
+[`apps/mobile/app/workout-template.tsx`](../../apps/mobile/app/workout-template.tsx), presented as a
+page sheet. The root layout wraps its `Stack` in
+[`workout-template-expandable.tsx`](../../apps/mobile/src/features/workout-templates/workout-template-expandable.tsx),
+which registers the editor and its tab bar pill with `@hipefit/expandable-accessory`, and the private
+layout renders the pill in the tab bar's bottom accessory. The panel's New Workout Template action
+starts a draft in
+[`use-workout-template-draft-store.ts`](../../apps/mobile/src/stores/use-workout-template-draft-store.ts)
+and pushes the route. The draft lives in a store rather than in the editor because minimizing
+unmounts the editor. Unlike other routes, this one declares no chrome: it renders only the
+package's outlet, and the editor declares its own title and toolbar. The wiring is documented in
+[navigation.md](navigation.md#the-bottom-accessory).
+
 ## Stores
 
 Zustand stores are module-level singletons created with `create()` under
 [`apps/mobile/src/stores/`](../../apps/mobile/src/stores):
 
-| Store                                                                                 | Holds                                                                                                |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                      | Firebase user, auth loading state, quick sign-in availability, Apple and quick sign-in, and sign-out |
-| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                      | Profile, newest body measurement, current weight, and user write actions                             |
-| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)              | Localized and visibility-filtered exercise catalogue view models                                     |
-| [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts) | Whether the native create panel is expanded                                                          |
+| Store                                                                                              | Holds                                                                                                   |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                                   | Firebase user, auth loading state, quick sign-in availability, Apple and quick sign-in, and sign-out    |
+| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                                   | Profile, newest body measurement, current weight, and user write actions                                |
+| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)                           | Localized and visibility-filtered exercise catalogue view models, and the `createCustomExercise` action |
+| [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts)              | Whether the native create panel is expanded                                                             |
+| [`useCustomExerciseSheetStore`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts)   | Whether the custom exercise sheet is presented                                                          |
+| [`useWorkoutTemplateStore`](../../apps/mobile/src/stores/use-workout-template-store.ts)            | Unarchived workout templates, newest update first, and the `createWorkoutTemplate` action               |
+| [`useWorkoutTemplateDraftStore`](../../apps/mobile/src/stores/use-workout-template-draft-store.ts) | The workout template draft being created and the editor state that survives minimizing                  |
 
 Zustand is used instead of React context because subscription orchestration drives stores through
 `getState()` outside component trees, while components can select narrow slices.
 
-The two Firestore data stores expose `subscribe(uid)`, which returns a teardown. A teardown removes
-the service listeners and restores the store's initial loading state. They do not expose separate
-`reset()` actions. The navigation-dock store is UI state and has no Firestore lifecycle.
+The three Firestore data stores, user, exercise, and workout template, expose `subscribe(uid)`,
+which returns a teardown. A teardown removes the service listeners and restores the store's initial
+loading state. They do not expose separate `reset()` actions. The navigation-dock store, the
+custom-exercise-sheet store, and the workout-template-draft store are UI state and have no Firestore
+lifecycle. The draft store is memory only, and
+[`workout-template-expandable.tsx`](../../apps/mobile/src/features/workout-templates/workout-template-expandable.tsx)
+discards its draft when the user signs out.
 
 Data-store conventions:
 
@@ -169,14 +197,14 @@ name remains unchanged.
 ## Subscription orchestration
 
 [`use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts) is the
-only place data subscriptions start. It watches the auth user, starts the user and exercise stores
-for that UID, and returns a teardown for both. The root layout mounts it once in
+only place data subscriptions start. It watches the auth user, starts the user, exercise, and
+workout template stores for that UID, and returns a teardown for all three. The root layout mounts it once in
 [`apps/mobile/app/_layout.tsx`](../../apps/mobile/app/_layout.tsx), above the protected route tree.
 
 This starts data before a feature screen mounts, keeps tab switches from creating duplicate
-listeners, and removes every user-scoped listener on sign-out. The consequence is that all seven
+listeners, and removes every user-scoped listener on sign-out. The consequence is that all eight
 current snapshot listeners remain live for the authenticated session. The app does not subscribe to
-workouts or workout templates.
+workouts.
 
 ## Firebase and data boundaries
 
@@ -235,7 +263,7 @@ packages are:
 | Package                                                                         | Kind                  | Owns                                              |
 | ------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------- |
 | [`@hipefit/config`](../../packages/config/package.json)                         | Shared configuration  | TypeScript and ESLint bases                       |
-| [`@hipefit/expandable-accessory`](../../packages/expandable-accessory/index.ts) | React                 | Router provider, slots, outlets, and zoom trigger |
+| [`@hipefit/expandable-accessory`](../../packages/expandable-accessory/index.ts) | React                 | Router provider, slots, outlets, and trigger      |
 | [`@hipefit/firebase`](../../packages/firebase/src/react-native/index.ts)        | SDK-bound TypeScript  | Target-specific Firebase instances and refs       |
 | [`@hipefit/navigation-dock`](../../packages/navigation-dock/index.ts)           | Expo native view      | UIKit create panel, scrim, and bridge types       |
 | [`@hipefit/schemas`](../../packages/schemas/src/index.ts)                       | Pure TypeScript       | Persisted contracts, validation, and path strings |
@@ -253,7 +281,8 @@ and React Native Firebase so non-mobile consumers can reuse it.
 
 `@hipefit/navigation-dock` has Swift source, a podspec, `expo-module.config.json`, and a typed
 `requireNativeView` bridge. `@hipefit/expandable-accessory` is React-only because it coordinates a
-provider across the NativeTabs and root Stack trees. `@hipefit/sortable-list` is React Native only:
+provider across the NativeTabs and root Stack trees. The app mounts it once, for workout template
+drafts, from the root layout. `@hipefit/sortable-list` is React Native only:
 it wraps `LegendList` with a Gesture Handler and Reanimated drag, and it imports nothing from the
 app. The caller passes its haptics in as callbacks, so the package does not reach into
 [`apps/mobile/src/lib/haptics.ts`](../../apps/mobile/src/lib/haptics.ts). Its rules for app code are
@@ -305,11 +334,13 @@ code requires running `pod install` from `apps/mobile/ios/` and committing the r
 
 ## Deliberately absent
 
-- There is no workout player. Start and Add to Workout affordances remain disabled. Workout and
-  workout-template contracts and validation exist, but there is no app ref, listener, store, or
-  write path for either collection.
-- The three global create actions are disabled in
+- There is no workout player. Start and Add to Workout affordances remain disabled. Workout
+  contracts and validation exist, but there is no app ref, listener, store, or write path for the
+  workouts collection. Workout templates have a ref, a listener, a store, and a create path; the app
+  does not edit, archive, or delete a template.
+- Start Workout is the one disabled global create action in
   [`navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts).
+  New Workout Template and Custom Exercise are enabled.
 - There is no automated test runner. `bun run type-check` is the primary code gate, with
   `bun run lint` and `bun run format:check` beside it.
 - There is no Android project. Reviving Android is a project-wide decision recorded in

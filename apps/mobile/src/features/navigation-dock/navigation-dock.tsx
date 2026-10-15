@@ -1,14 +1,24 @@
+import type { NavigationDockViewProps } from '@hipefit/navigation-dock';
+import type React from 'react';
 import { useEffect } from 'react';
 import { AppState, StyleSheet } from 'react-native';
+import { useExpandableAccessory } from '@hipefit/expandable-accessory';
 import { NavigationDockView } from '@hipefit/navigation-dock';
 import { useNavigationContainerRef } from 'expo-router';
 
-import { NAVIGATION_DOCK_ACTIONS } from '@/features/navigation-dock/navigation-dock-actions';
+import {
+  CUSTOM_EXERCISE_ACTION_ID,
+  NAVIGATION_DOCK_ACTIONS,
+  NEW_WORKOUT_TEMPLATE_ACTION_ID,
+} from '@/features/navigation-dock/navigation-dock-actions';
 import { NAVIGATION_DOCK_BOTTOM_INSET } from '@/features/navigation-dock/navigation-dock-metrics';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { hapticImpact } from '@/lib/haptics';
 import { useAuthStore } from '@/stores/use-auth-store';
+import { useCustomExerciseSheetStore } from '@/stores/use-custom-exercise-sheet-store';
 import { useNavigationDockStore } from '@/stores/use-navigation-dock-store';
+import { useWorkoutTemplateDraftStore } from '@/stores/use-workout-template-draft-store';
 
 /**
  * Mount edge to edge: an inset frame shrinks the safe-area insets UIKit hands
@@ -23,8 +33,8 @@ const styles = StyleSheet.create({
  *
  * **The button is not here**, nor the tabs — all five bottom items are real
  * `UITabBar` items (`app/(private)/_layout.tsx`). This is only the panel the
- * Create trigger opens, which is why it has no press handler and why `expanded`
- * lives in a store both halves can reach.
+ * Create trigger opens, which is why it has no handler for the Create press and
+ * why `expanded` lives in a store both halves can reach.
  *
  * React owns the expanded state and the action descriptors; native owns
  * rendering, animation, materials and accessibility
@@ -32,12 +42,19 @@ const styles = StyleSheet.create({
  * dismissals below subscribe to something outside React rather than watching
  * state, because the things that should close the panel are events, not renders.
  */
-export const NavigationDock = () => {
+export const NavigationDock: React.FC = () => {
   const expanded = useNavigationDockStore((state) => state.expanded);
   const close = useNavigationDockStore((state) => state.close);
+  const openCustomExerciseSheet = useCustomExerciseSheetStore(
+    (state) => state.open
+  );
+  const startWorkoutTemplate = useWorkoutTemplateDraftStore(
+    (state) => state.start
+  );
   const reduceMotion = useReduceMotion();
   const colorScheme = useAppColorScheme();
   const navigationRef = useNavigationContainerRef();
+  const { open: openWorkoutTemplate } = useExpandableAccessory();
 
   /*
    * Any navigation closes the panel — a push, a sheet, a deep link, a redirect.
@@ -81,6 +98,49 @@ export const NavigationDock = () => {
     [close]
   );
 
+  /*
+   * New Workout Template and Custom Exercise are the enabled actions. Start
+   * Workout is disabled natively and never fires, so any other `id` is ignored
+   * rather than guessed at: an unhandled event is how a stub becomes a silent
+   * navigation to the wrong place.
+   *
+   * New Workout Template starts a draft and opens the editor route. `start()`
+   * leaves an existing draft alone, so with a draft minimized in the tab bar
+   * this reopens it instead of replacing it. The accessory provider's `open()`
+   * pushes the route without checking `active`, which in this render is still
+   * false until `start()` re-renders the provider.
+   *
+   * Custom Exercise opens a SwiftUI sheet driven by store state, which emits
+   * no navigation event, so the `state` listener above cannot close the panel
+   * for it, and a panel left expanded would keep its modal scrim and
+   * `accessibilityViewIsModal` under the sheet. Both branches close the panel
+   * explicitly so neither depends on that listener.
+   *
+   * The haptic fires here, in the press handler, for the reason recorded in
+   * `app/(private)/_layout.tsx`: a store updater must be pure and may run
+   * twice. `hapticImpact` is the intent for a tap that puts something new on
+   * screen.
+   */
+  const handleActionPress: NavigationDockViewProps['onActionPress'] = ({
+    nativeEvent,
+  }) => {
+    switch (nativeEvent.id) {
+      case NEW_WORKOUT_TEMPLATE_ACTION_ID:
+        hapticImpact();
+        close();
+        startWorkoutTemplate();
+        openWorkoutTemplate();
+        return;
+      case CUSTOM_EXERCISE_ACTION_ID:
+        hapticImpact();
+        close();
+        openCustomExerciseSheet();
+        return;
+      default:
+        return;
+    }
+  };
+
   return (
     <NavigationDockView
       style={styles.dock}
@@ -95,10 +155,7 @@ export const NavigationDock = () => {
       // `navigation-dock-metrics.ts`, not here.
       bottomInset={NAVIGATION_DOCK_BOTTOM_INSET}
       onDismissRequest={close}
-      // All three actions ship unavailable, so native swallows their touches and
-      // this never fires. Wired to nothing rather than left off: an unhandled
-      // event is how a stub becomes a silent navigation to the wrong place.
-      onActionPress={() => {}}
+      onActionPress={handleActionPress}
     />
   );
 };

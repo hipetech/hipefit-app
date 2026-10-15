@@ -11,5 +11,8 @@ export const customExerciseCategoriesPath = (uid: string): string =>
 export const customExercisesPath = (uid: string): string =>
   `${userPath(uid)}/customExercises`;
 
+export const workoutTemplatesPath = (uid: string): string =>
+  `${userPath(uid)}/workoutTemplates`;
+
 export const bodyMeasurementsPath = (uid: string): string =>
   `${userPath(uid)}/bodyMeasurements`;

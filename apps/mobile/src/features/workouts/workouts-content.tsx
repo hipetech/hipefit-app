@@ -1,3 +1,5 @@
+import type React from 'react';
+import { useState } from 'react';
 import { Host } from '@expo/ui';
 import {
   HStack,
@@ -21,7 +23,12 @@ import {
 } from '@expo/ui/swift-ui/modifiers';
 import { Card } from '@hipefit/ui';
 
+import { WorkoutTemplateCard } from '@/features/workouts/workout-template-card';
+import { WorkoutTemplatePreviewSheet } from '@/features/workouts/workout-template-preview-sheet';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
+import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { hapticImpact } from '@/lib/haptics';
+import { useWorkoutTemplateStore } from '@/stores/use-workout-template-store';
 import { colors } from '@/theme/colors';
 import { mods } from '@/theme/modifiers';
 import { layout } from '@/theme/styles';
@@ -103,8 +110,8 @@ interface SectionHeaderProps {
  *
  * The count does take `monospacedDigit()`, which is font-*refining* rather than
  * font-*setting*, so it leaves that inheritance intact. It is a standalone
- * figure that may change in place once templates are reconnected; proportional
- * digits would make it jump sideways against the trailing edge each time.
+ * figure that changes in place when a template is saved; proportional digits
+ * would make it jump sideways against the trailing edge each time.
  *
  * For the same reason it also supports the rolling `numericText` transition.
  * Both motion modifiers go *after* `monospacedDigit()` (index 0 is innermost),
@@ -132,7 +139,10 @@ const SectionHeader = ({ title, count, animateCount }: SectionHeaderProps) => (
   </HStack>
 );
 
-/** A workout-template skeleton retained for the future data integration. */
+/**
+ * The loading stand-in for a template card, drawn behind
+ * `redacted('placeholder')`.
+ */
 const PlaceholderWorkoutTemplateCard = () => (
   <Card width={200} radius={12} spacing={8}>
     <Text modifiers={mods.headlineLabel}>Placeholder Template</Text>
@@ -172,8 +182,21 @@ const EmptyRow = ({ label }: { label: string }) => (
 /**
  * Body of the Workouts screen.
  *
- * Workout persistence is intentionally disconnected. The screen keeps its
- * presentation components and honest empty states until that behavior returns.
+ * Templates are read from `useWorkoutTemplateStore`, which the central
+ * Firestore subscription starts, so a saved template appears here without a
+ * reload. Workout history is not read: History keeps its empty state, and its
+ * placeholder rows show only while the template store loads, because the whole
+ * `List` is redacted as one unit.
+ *
+ * The template count rolls only once the store has loaded and Reduce Motion is
+ * off. `.animation(_:value:)` does not animate when it is first applied, so
+ * adding it as redaction lifts stops the placeholder count from rolling into the
+ * real one.
+ *
+ * Tapping a template card opens `WorkoutTemplatePreviewSheet`, a sibling
+ * island. The preview reads the template from the store by id, so it follows
+ * the listener while open. The id stays set after dismissal so the sheet keeps
+ * its content through the closing animation.
  *
  * One `Host` filling the screen (`flex: 1`, deliberately **no**
  * `matchContents`) around one SwiftUI `List` with `listStyle('insetGrouped')`.
@@ -191,66 +214,107 @@ const EmptyRow = ({ label }: { label: string }) => (
  * account, and swapping the `List` out for a non-scrolling view takes away the
  * scroll view UIKit uses to collapse the large title.
  */
-export const WorkoutsContent = () => {
+export const WorkoutsContent: React.FC = () => {
   const colorScheme = useAppColorScheme();
-  const isLoading = false;
+  const reduceMotion = useReduceMotion();
+  const templates = useWorkoutTemplateStore((state) => state.templates);
+  const isLoading = useWorkoutTemplateStore((state) => state.isLoading);
+
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [isPreviewPresented, setIsPreviewPresented] = useState(false);
+  const previewTemplate =
+    templates.find((template) => template.id === previewId)?.data ?? null;
+
+  const openPreview = (templateId: string): void => {
+    hapticImpact();
+    setPreviewId(templateId);
+    setIsPreviewPresented(true);
+  };
+
+  const hasTemplates = templates.length > 0;
+  const templateCount = isLoading
+    ? PLACEHOLDER_TEMPLATE_KEYS.length
+    : templates.length;
 
   return (
-    <Host style={layout.groupedScreen} colorScheme={colorScheme}>
-      <List
-        modifiers={
-          isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
-        }
-      >
-        <Section
-          header={<SectionHeader title="My Workout Templates" />}
-          footer={
-            !isLoading ? (
-              <Text>
-                Create a workout template and it will show up here, ready to
-                start in one tap.
-              </Text>
-            ) : undefined
+    <>
+      <Host style={layout.groupedScreen} colorScheme={colorScheme}>
+        <List
+          modifiers={
+            isLoading ? mods.listInsetGroupedRedacted : mods.listInsetGrouped
           }
         >
-          {isLoading ? (
-            <ScrollView
-              axes="horizontal"
-              showsIndicators={false}
-              modifiers={CAROUSEL_ROW_MODIFIERS}
-            >
-              <HStack
-                alignment="top"
-                spacing={12}
-                modifiers={CAROUSEL_CONTENT_MODIFIERS}
+          <Section
+            header={
+              <SectionHeader
+                title="My Workout Templates"
+                count={templateCount}
+                animateCount={!isLoading && !reduceMotion}
+              />
+            }
+            footer={
+              !isLoading && !hasTemplates ? (
+                <Text>
+                  Create a workout template and it will show up here, ready to
+                  start in one tap.
+                </Text>
+              ) : undefined
+            }
+          >
+            {isLoading || hasTemplates ? (
+              <ScrollView
+                axes="horizontal"
+                showsIndicators={false}
+                modifiers={CAROUSEL_ROW_MODIFIERS}
               >
-                {PLACEHOLDER_TEMPLATE_KEYS.map((key) => (
-                  <PlaceholderWorkoutTemplateCard key={key} />
-                ))}
-              </HStack>
-            </ScrollView>
-          ) : (
-            <EmptyRow label="No workout templates yet" />
-          )}
-        </Section>
+                <HStack
+                  alignment="top"
+                  spacing={12}
+                  modifiers={CAROUSEL_CONTENT_MODIFIERS}
+                >
+                  {isLoading
+                    ? PLACEHOLDER_TEMPLATE_KEYS.map((key) => (
+                        <PlaceholderWorkoutTemplateCard key={key} />
+                      ))
+                    : templates.map(({ id, data }) => (
+                        <WorkoutTemplateCard
+                          key={id}
+                          template={data}
+                          onPress={() => openPreview(id)}
+                        />
+                      ))}
+                </HStack>
+              </ScrollView>
+            ) : (
+              <EmptyRow label="No workout templates yet" />
+            )}
+          </Section>
 
-        <Section
-          title="History"
-          footer={
-            !isLoading ? (
-              <Text>Finish a workout and it will appear in your history.</Text>
-            ) : undefined
-          }
-        >
-          {isLoading ? (
-            PLACEHOLDER_HISTORY_KEYS.map((key) => (
-              <PlaceholderHistoryRow key={key} />
-            ))
-          ) : (
-            <EmptyRow label="No workouts yet" />
-          )}
-        </Section>
-      </List>
-    </Host>
+          <Section
+            title="History"
+            footer={
+              !isLoading ? (
+                <Text>
+                  Finish a workout and it will appear in your history.
+                </Text>
+              ) : undefined
+            }
+          >
+            {isLoading ? (
+              PLACEHOLDER_HISTORY_KEYS.map((key) => (
+                <PlaceholderHistoryRow key={key} />
+              ))
+            ) : (
+              <EmptyRow label="No workouts yet" />
+            )}
+          </Section>
+        </List>
+      </Host>
+      <WorkoutTemplatePreviewSheet
+        template={previewTemplate}
+        isPresented={isPreviewPresented && previewTemplate !== null}
+        onClose={() => setIsPreviewPresented(false)}
+      />
+    </>
   );
 };

@@ -2,7 +2,7 @@
 type: app
 status: current
 area: ui
-updated: 2026-10-13
+updated: 2026-10-15
 ---
 
 # The UI system
@@ -55,6 +55,65 @@ nothing at all. Row-sized islands are the opposite case and use
 [apps/mobile/src/features/exercises/exercise-row.tsx](../../apps/mobile/src/features/exercises/exercise-row.tsx)
 against
 [apps/mobile/src/features/home/home-content.tsx](../../apps/mobile/src/features/home/home-content.tsx).
+
+The same property decides how a `List` is sized inside a `BottomSheet`.
+[apps/mobile/src/features/exercises/custom-exercise-sheet.tsx](../../apps/mobile/src/features/exercises/custom-exercise-sheet.tsx)
+is the first case. Its `Host` is absolutely positioned and takes no space, so the sheet supplies
+the height: the content of
+[custom-exercise-bottom-sheet.tsx](../../apps/mobile/src/features/exercises/custom-exercise-bottom-sheet.tsx)
+inside it carries `presentationDetents(['medium', { fraction: 0.9 }])` and not
+`fitToContents`.
+`fitToContents` measures the sheet's children (`BottomSheetView.swift` at `@expo/ui` 57.0.7), and a
+`List` reports no height for it to measure. Under the fixed detents the form is a `VStack` of a
+header row and the `List`, and the `List` takes the height the header leaves. The sheet opens at
+`medium` and stops at 0.9 of the screen, not `large`, because iOS 26 draws a sheet's translucent
+material only below full height, and the `List`
+adds `scrollContentBackground('hidden')` so the opaque `insetGrouped` page background does not
+cover that material. This layout was
+written against the typings and has not been run on a device. The file's comment names `Form` from
+`@expo/ui/swift-ui` as the fallback if the `List` does not fill the sheet or does not scroll. The
+exercise picker in
+[apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx](../../apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx)
+uses the same `VStack` shape, a header row and a search field above either a `ScrollView` holding a
+two-column `Grid` of category cards or the `List`, but opens no `Host` of its own: the template
+editor wraps it in one. It carries `presentationDetents(['medium', 'large'], { selection: 'large' })`,
+so it opens at full height, where iOS 26 draws it opaque, and can be dragged down to `medium`. Its
+rows and cards use the `tertiarySystemFill` fill so they stay visible on the opaque background. The
+search field is drawn by hand, a filled rounded rectangle with a magnifying glass, because a sheet
+without a navigation stack has no `.searchable`. The New Exercise sheet stacks on the picker: the
+picker renders the host-less
+[custom-exercise-bottom-sheet.tsx](../../apps/mobile/src/features/exercises/custom-exercise-bottom-sheet.tsx)
+inside its own sheet's content, so SwiftUI presents it from the picker. A sibling `Host` would ask the
+editor, which is already presenting the picker, to present a second sheet. The nested `BottomSheet`
+sits behind the picker in a `ZStack`, because its native view is a hidden `Rectangle` that would
+otherwise take a share of the `VStack`'s height.
+
+The workout template editor is not a SwiftUI sheet.
+[apps/mobile/src/features/workout-templates/workout-template-editor.tsx](../../apps/mobile/src/features/workout-templates/workout-template-editor.tsx)
+is the body of a route presented as a page sheet, described in
+[navigation.md](navigation.md#the-bottom-accessory), and it is plain React Native with no `Host`
+around it. A [`SortableList`](#the-sortable-list) fills the screen with
+`contentInsetAdjustmentBehavior="automatic"`, as on Exercises, so its content is inset below the
+navigation bar and above the home indicator, and the drag's edge scrolling stops at those insets. The title, Cancel, and Save are `Stack.Screen.Title` and
+`Stack.Toolbar` items declared by the editor, not a SwiftUI header row. The rows are plain React
+Native, and so is Add Exercises in the list footer: it is a `Pressable` drawn like a SwiftUI
+`.bordered` button, because a SwiftUI `Button` there would need a `Host` island of its own.
+
+The exercise picker and the planned date sheet in
+[planned-date-sheet.tsx](../../apps/mobile/src/features/workout-templates/planned-date-sheet.tsx)
+are host-less `BottomSheet` components. The editor has no SwiftUI tree to render them in, so it
+gives each one its own `Host` island, as
+[custom-exercise-sheet.tsx](../../apps/mobile/src/features/exercises/custom-exercise-sheet.tsx)
+does: absolutely positioned so it takes no space in the layout, with `pointerEvents="none"` and the
+app color scheme. The two islands are siblings of the list, never nested in it.
+
+The list sits in its own `GestureHandlerRootView`. Gesture Handler recognizes a gesture only beneath
+one, and the editor's comment records why the root view in
+[apps/mobile/app/\_layout.tsx](../../apps/mobile/app/_layout.tsx) may not serve: as a
+page sheet the route is presented by its own view controller, so its views are not native
+descendants of that root. If the outer root would have served, the nested one is harmless. This
+layout has not been run on a device. If the block drag does not start in the editor, check the
+nested root first.
 
 Remote images inside a `Host` go through `RNHostView` + `expo-image`, **never a second `Host`**:
 SwiftUI's `Image` cannot load a URL. `RNHostView` attaches an `RCTSurfaceTouchHandler` to the hosted
@@ -438,7 +497,11 @@ is for a list the user reorders that is too long for a SwiftUI `List`. A bounded
 `List`, which is the default idiom above. `SortableList` wraps `AnimatedLegendList`, so it is virtualized, and its
 rows follow the same rule as the catalogue: a row is plain React Native or its own `Host` island.
 The user holds a row to lift it and drags it among rows of any height, and the list scrolls while
-the row is near its top or bottom edge. No screen in the app uses it yet.
+the row is near its top or bottom edge. Its first user is the workout template editor in
+[apps/mobile/src/features/workout-templates/workout-template-editor.tsx](../../apps/mobile/src/features/workout-templates/workout-template-editor.tsx),
+the body of a page sheet route, as [`Host` ownership](#host-ownership) describes. Its items are blocks, a
+single exercise or a whole superset, so a superset moves as one. Members move within a superset
+by up and down arrow buttons, not by a nested drag: the package is single level.
 
 **The order is committed once, on drop.** `data` does not change while a row is lifted. The other
 rows move aside with Reanimated transforms computed from a snapshot of every row's offset and size,

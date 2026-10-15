@@ -65,7 +65,7 @@ const TITLE_COLUMN_MODIFIERS = [FILL_LEADING];
 /** Exercise name. */
 const NAME_MODIFIERS = [...mods.bodyLabel, FILL_LEADING];
 
-/** Resolved category name under the exercise name. */
+/** Resolved category name under the exercise name, plus the custom marker. */
 const SUBTITLE_MODIFIERS = [...mods.footnoteSecondaryOneLine, FILL_LEADING];
 
 /** The disclosure's revealed content, spaced off the label above it. */
@@ -168,6 +168,13 @@ export const ExerciseRow = ({
 }: ExerciseRowProps) => {
   const colorScheme = useAppColorScheme();
 
+  // A custom exercise is sorted into its category beside the seeded ones, so
+  // the subtitle is the only thing in the collapsed row that tells them apart.
+  // The separator matches the detail sheet's subtitle.
+  const subtitle = exercise.isCustom
+    ? `${exercise.categoryName} • Custom`
+    : exercise.categoryName;
+
   const equipment =
     exercise.equipment.length > 0
       ? exercise.equipment.join(', ')
@@ -209,9 +216,7 @@ export const ExerciseRow = ({
                 modifiers={TITLE_COLUMN_MODIFIERS}
               >
                 <Text modifiers={NAME_MODIFIERS}>{exercise.name}</Text>
-                <Text modifiers={SUBTITLE_MODIFIERS}>
-                  {exercise.categoryName}
-                </Text>
+                <Text modifiers={SUBTITLE_MODIFIERS}>{subtitle}</Text>
               </VStack>
             </HStack>
           </DisclosureGroup.Label>

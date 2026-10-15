@@ -17,6 +17,7 @@ export const ExpandableAccessory = {
   ZoomSource: ExpandableAccessoryZoomSource,
 };
 
+export { expandedScreenOptions } from './helpers/expanded-screen-options';
 export { useExpandableAccessory } from './hooks/use-expandable-accessory';
 export type {
   AccessoryContentProps,
@@ -25,4 +26,6 @@ export type {
   ExpandableAccessoryTriggerProps,
   ExpandableAccessoryZoomSourceProps,
   ExpandedContentProps,
+  ExpandedPresentation,
+  ExpandedScreenOptions,
 } from './types';

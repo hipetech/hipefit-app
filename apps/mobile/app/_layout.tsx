@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Appearance, StyleSheet, useColorScheme, View } from 'react-native';
+import { expandedScreenOptions } from '@hipefit/expandable-accessory';
 import { Stack } from 'expo-router';
 import {
   DarkTheme,
@@ -10,6 +11,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import {
+  WORKOUT_TEMPLATE_PRESENTATION,
+  WorkoutTemplateExpandable,
+} from '@/features/workout-templates/workout-template-expandable';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useFirestoreSubscriptions } from '@/hooks/use-firestore-subscriptions';
 import { useAuthStore } from '@/stores/use-auth-store';
@@ -57,16 +62,28 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <ThemeProvider value={activeScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <StatusBar style="auto" />
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="(public)/login"
-            options={{ headerShown: false }}
-          />
-          <Stack.Protected guard={isLoggedIn}>
-            <Stack.Screen name="(private)" options={{ headerShown: false }} />
-          </Stack.Protected>
-        </Stack>
+        {/* Above the whole Stack, because the template draft's pill renders in
+            the tab bar inside `(private)` and its editor is the
+            `workout-template` route beside it. */}
+        <WorkoutTemplateExpandable>
+          <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="(public)/login"
+              options={{ headerShown: false }}
+            />
+            <Stack.Protected guard={isLoggedIn}>
+              <Stack.Screen name="(private)" options={{ headerShown: false }} />
+              {/* Presented as `WORKOUT_TEMPLATE_PRESENTATION` says, which the
+                  accessory provider also reads. The editor declares the
+                  header's title and buttons. */}
+              <Stack.Screen
+                name="workout-template"
+                options={expandedScreenOptions(WORKOUT_TEMPLATE_PRESENTATION)}
+              />
+            </Stack.Protected>
+          </Stack>
+        </WorkoutTemplateExpandable>
       </ThemeProvider>
     </GestureHandlerRootView>
   );
