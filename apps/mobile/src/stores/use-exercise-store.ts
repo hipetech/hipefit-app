@@ -3,6 +3,7 @@ import type {
   CustomExerciseInput,
   ExerciseListenerName,
 } from '@/services/exercise-service';
+import type { Ref } from '@hipefit/schemas';
 import { create } from 'zustand';
 
 import { buildExerciseCatalogue } from '@/features/exercises/exercise-catalogue';
@@ -20,9 +21,10 @@ interface ExerciseState {
   equipment: ReturnType<typeof buildExerciseCatalogue>['equipment'];
   isLoading: boolean;
   subscribe: (uid: string) => () => void;
+  /** Resolves with the new exercise's ref once the write is acknowledged. */
   createCustomExercise: (
     fields: Omit<CustomExerciseInput, 'locale'>
-  ) => Promise<void>;
+  ) => Promise<Ref>;
 }
 
 interface RawData extends ExerciseCatalogueSource {
@@ -133,7 +135,7 @@ export const useExerciseStore = create<ExerciseState>((set, get) => {
           'Cannot create a custom exercise before the profile loads'
         );
       }
-      await createCustomExercise(uid, {
+      return createCustomExercise(uid, {
         ...fields,
         locale: profile.settings.language,
       });

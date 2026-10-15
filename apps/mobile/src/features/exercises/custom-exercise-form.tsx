@@ -100,8 +100,17 @@ const SEGMENTED_PICKER_MODIFIERS = [pickerStyle('segmented')];
 const MENU_PICKER_MODIFIERS = [pickerStyle('menu')];
 
 export interface CustomExerciseFormProps {
-  /** Dismisses the sheet. Called by Cancel, and after a save that succeeded. */
+  /** Dismisses the form. Called by Cancel, and after a save that succeeded. */
   onClose: () => void;
+  /**
+   * Called with the new exercise's ref after a save that succeeded, just
+   * before `onClose`.
+   */
+  onSaved?: (ref: Ref) => void;
+  /** The name the form starts with. @default '' */
+  initialName?: string;
+  /** The category the form starts with. @default null */
+  initialCategoryRef?: Ref | null;
   /**
    * Reports whether the sheet must refuse an interactive dismissal: `true`
    * while the form has unsaved input or a save is in flight.
@@ -112,11 +121,14 @@ export interface CustomExerciseFormProps {
 /**
  * The custom exercise form: a header row with Cancel, the title, and Save, above
  * a grouped `List` of fields. Host-less. It renders inside the `BottomSheet` of
- * `custom-exercise-sheet.tsx`, which mounts it once per presentation, so every
- * presentation starts from the initial state below.
+ * `custom-exercise-bottom-sheet.tsx`, which mounts it once per presentation, so
+ * every presentation starts from the initial state below.
  */
 export const CustomExerciseForm: React.FC<CustomExerciseFormProps> = ({
   onClose,
+  onSaved,
+  initialName = '',
+  initialCategoryRef = null,
   onDismissLockChange,
 }) => {
   const categories = useExerciseStore((state) => state.categories);
@@ -126,17 +138,17 @@ export const CustomExerciseForm: React.FC<CustomExerciseFormProps> = ({
     (state) => state.createCustomExercise
   );
 
-  const name = useNativeState('');
+  const name = useNativeState(initialName);
   const description = useNativeState('');
 
   // The native states hold the text. These drafts mirror it through
   // `onTextChange` so validation can run during render, where `.get()` is not
   // available. `save` reads the native states, which are never behind.
-  const [nameDraft, setNameDraft] = useState('');
+  const [nameDraft, setNameDraft] = useState(initialName);
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [type, setType] = useState<ExerciseType>(DEFAULT_EXERCISE_TYPE);
   const [selectedCategoryRef, setSelectedCategoryRef] = useState<Ref | null>(
-    null
+    initialCategoryRef
   );
   const [equipmentRefs, setEquipmentRefs] = useState<Ref[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -229,9 +241,10 @@ export const CustomExerciseForm: React.FC<CustomExerciseFormProps> = ({
     setIsSaving(true);
     setDidFail(false);
     try {
-      await createCustomExercise(fields);
+      const ref = await createCustomExercise(fields);
       if (!isMounted.current) return;
       hapticSuccess();
+      onSaved?.(ref);
       onClose();
     } catch (error) {
       console.error('[CustomExercise] save', error);
@@ -247,6 +260,7 @@ export const CustomExerciseForm: React.FC<CustomExerciseFormProps> = ({
     equipmentRefs,
     name,
     onClose,
+    onSaved,
     type,
   ]);
 

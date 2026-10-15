@@ -112,19 +112,47 @@ create panel overlaps the pill has not been checked on a device.
 
 [`exercise-picker-sheet.tsx`](../../apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx)
 presents over the editor from its own `Host` island. It opens at full height and can be dragged down
-to half height. Its header row has Cancel, the title
-Add Exercises, and Add. Add is disabled until something is selected and then reads `Add (n)`.
+to half height. Its body,
+[`exercise-picker-content.tsx`](../../apps/mobile/src/features/workout-templates/exercise-picker-content.tsx),
+has a header row, a search field, and below them a grid of category cards. The header has Cancel,
+the title Add Exercises, a + button, and Add. Add is disabled until something is selected and then
+reads `Add (n)`.
+
+The grid,
+[`exercise-picker-category-grid.tsx`](../../apps/mobile/src/features/workout-templates/exercise-picker-category-grid.tsx),
+shows two cards per row: All first, then each category that holds at least one visible exercise, in
+the order the exercise store publishes them. A card shows the category's SF Symbol, its name, and
+its exercise count, such as "8 exercises". Once any of its exercises are selected, a badge on the
+card shows how many. All counts the whole catalogue.
+
+Tapping a card opens that category's exercises in the same sheet. The header then has Back in place
+of Cancel and the category name as the title, and the search field reads "Search Chest", for
+example. All opens the whole catalogue as one section per category, titled All Exercises. Back
+returns to the grid. Selections are kept across categories, so the user can pick from several and
+press Add once.
+
+The search field matches any part of the exercise name without regard to case. While it holds text, a
+clear button at its trailing end empties it and keeps the keyboard up. On the grid, typing
+replaces the cards with one list of every matching exercise, and clearing the text brings the cards
+back. Inside a category the search covers only that category. Opening a card or pressing Back
+clears the search.
 
 [`exercise-picker-list.tsx`](../../apps/mobile/src/features/workout-templates/exercise-picker-list.tsx)
-is a grouped SwiftUI `List`. It starts with a Filter by name field, which matches any part of the
-exercise name without regard to case. Below it is one section per category, in the order the
-exercise store publishes. Each row shows the exercise name and `Category · Type`. Tapping a row
-toggles a checkmark and fires `hapticSelection()`. The list shows the store's visible catalogue, so
-retired and hidden exercises are absent. An exercise already in the draft can be selected again and
-is added a second time.
+draws the exercise rows. Each row shows the exercise name and its type, with the category in front
+(`Category · Type`) in search results from the grid. Tapping a row toggles a checkmark and fires
+`hapticSelection()`. The picker shows the store's visible catalogue, so retired and hidden
+exercises are absent. An exercise already in the draft can be selected again and is added a second
+time.
+
+The + button presents the New Exercise sheet from
+[create a custom exercise](create-custom-exercise.md#from-the-exercise-picker) over the picker, at
+half height, with the picker visible behind it. The name starts as the trimmed search text and,
+inside a category, the category starts as that category. Cancel, a swipe down, and a successful save
+close that sheet and leave the picker as it was, search included. A successful save also selects the
+new exercise, so the next Add includes it.
 
 Add returns the selection in catalogue order and closes the picker. Cancel and a swipe down close it
-and add nothing. The filter and the selection start empty on every presentation.
+and add nothing. Every presentation starts on the grid with an empty search and no selection.
 
 ## Planned date
 
@@ -268,9 +296,13 @@ draft.
   and
   [`template-set-row.tsx`](../../apps/mobile/src/features/workout-templates/template-set-row.tsx).
   The picker is
-  [`exercise-picker-sheet.tsx`](../../apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx)
-  and
+  [`exercise-picker-sheet.tsx`](../../apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx),
+  which mounts
+  [`exercise-picker-content.tsx`](../../apps/mobile/src/features/workout-templates/exercise-picker-content.tsx)
+  for the header, the search field, the category grid, and
   [`exercise-picker-list.tsx`](../../apps/mobile/src/features/workout-templates/exercise-picker-list.tsx).
+  [`exercise-picker-catalogue.ts`](../../apps/mobile/src/features/workout-templates/exercise-picker-catalogue.ts)
+  builds the cards and the list sections from the exercise store.
   On Workouts,
   [`workout-template-card.tsx`](../../apps/mobile/src/features/workouts/workout-template-card.tsx)
   renders each card.
@@ -340,9 +372,9 @@ store drops archived templates before publishing.
   rejection, a missing UID, and a failed validation all take this path and show the same message.
 - **Offline.** The editor awaits `addDoc`. What the editor does when the device is offline has not
   been observed.
-- **Catalogue still loading.** The picker shows one redacted placeholder row. With no published
-  exercises it shows "No exercises available", and with a filter that matches nothing, "No matching
-  exercises".
+- **Catalogue still loading.** The picker shows four redacted placeholder cards, or one redacted
+  row if the user has started a search. With no published exercises it shows "No exercises
+  available" in place of the grid, and with a search that matches nothing, "No matching exercises".
 - **Templates loading on Workouts.** The whole Workouts list is redacted, including the History
   section's placeholder rows, and the template header shows a placeholder count.
 - **No templates.** Workouts shows `No workout templates yet` and a footer that reads "Create a

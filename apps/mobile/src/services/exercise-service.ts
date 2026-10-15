@@ -127,7 +127,7 @@ export const createCustomExercise = async (
     categoryRef,
     equipment,
   }: CustomExerciseInput
-): Promise<void> => {
+): Promise<Ref> => {
   if (equipment.length > CUSTOM_EXERCISE_EQUIPMENT_MAX_LENGTH) {
     throw new Error(
       `A custom exercise can have at most ${CUSTOM_EXERCISE_EQUIPMENT_MAX_LENGTH} equipment entries`
@@ -152,9 +152,10 @@ export const createCustomExercise = async (
   assertCustomExerciseWrite(exercise);
 
   const now = serverTimestamp();
-  await addDoc(customExercisesRef(uid), {
+  const created = await addDoc(customExercisesRef(uid), {
     ...exercise,
     createdAt: now,
     updatedAt: now,
   });
+  return `custom:${created.id}`;
 };

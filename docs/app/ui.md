@@ -59,7 +59,9 @@ against
 The same property decides how a `List` is sized inside a `BottomSheet`.
 [apps/mobile/src/features/exercises/custom-exercise-sheet.tsx](../../apps/mobile/src/features/exercises/custom-exercise-sheet.tsx)
 is the first case. Its `Host` is absolutely positioned and takes no space, so the sheet supplies
-the height: the content carries `presentationDetents(['medium', { fraction: 0.9 }])` and not
+the height: the content of
+[custom-exercise-bottom-sheet.tsx](../../apps/mobile/src/features/exercises/custom-exercise-bottom-sheet.tsx)
+inside it carries `presentationDetents(['medium', { fraction: 0.9 }])` and not
 `fitToContents`.
 `fitToContents` measures the sheet's children (`BottomSheetView.swift` at `@expo/ui` 57.0.7), and a
 `List` reports no height for it to measure. Under the fixed detents the form is a `VStack` of a
@@ -72,10 +74,19 @@ written against the typings and has not been run on a device. The file's comment
 `@expo/ui/swift-ui` as the fallback if the `List` does not fill the sheet or does not scroll. The
 exercise picker in
 [apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx](../../apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx)
-uses the same header and `List` `VStack`, but opens no `Host` of its own: the template editor wraps
-it in one. It carries `presentationDetents(['medium', 'large'], { selection: 'large' })`, so it
-opens at full height, where iOS 26 draws it opaque, and can be dragged down to `medium`. Its rows
-keep the system fill so they stay visible on the opaque background.
+uses the same `VStack` shape, a header row and a search field above either a `ScrollView` holding a
+two-column `Grid` of category cards or the `List`, but opens no `Host` of its own: the template
+editor wraps it in one. It carries `presentationDetents(['medium', 'large'], { selection: 'large' })`,
+so it opens at full height, where iOS 26 draws it opaque, and can be dragged down to `medium`. Its
+rows and cards use the `tertiarySystemFill` fill so they stay visible on the opaque background. The
+search field is drawn by hand, a filled rounded rectangle with a magnifying glass, because a sheet
+without a navigation stack has no `.searchable`. The New Exercise sheet stacks on the picker: the
+picker renders the host-less
+[custom-exercise-bottom-sheet.tsx](../../apps/mobile/src/features/exercises/custom-exercise-bottom-sheet.tsx)
+inside its own sheet's content, so SwiftUI presents it from the picker. A sibling `Host` would ask the
+editor, which is already presenting the picker, to present a second sheet. The nested `BottomSheet`
+sits behind the picker in a `ZStack`, because its native view is a hidden `Rectangle` that would
+otherwise take a share of the `VStack`'s height.
 
 The workout template editor is not a SwiftUI sheet.
 [apps/mobile/src/features/workout-templates/workout-template-editor.tsx](../../apps/mobile/src/features/workout-templates/workout-template-editor.tsx)

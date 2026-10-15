@@ -193,12 +193,13 @@ live shape. An existing malformed profile is logged and is not repaired automati
 There is no client write to custom categories or workouts, and the client does not read workouts.
 Workout templates are created but never updated or deleted.
 
-The custom exercise sheet is the only custom exercise writer, and it only creates. The exercise store
+The custom exercise form is the only custom exercise writer, and it only creates. It is shown by the
+custom exercise sheet and inside the workout template editor's exercise picker. The exercise store
 records the UID from `subscribe(uid)` and takes the locale from the user store's
 `settings.language`; its `createCustomExercise` action throws when either is missing. The service
 writes `name` and `description` under that one locale, sets `defaultLocale` to it, and always writes
-`forkedFromRef: null` and `imageURL: null`. It also rejects more than 20 equipment refs, a bound the
-rules enforce and the write assertion does not. The store publishes no optimistic entry: the
+`forkedFromRef: null` and `imageURL: null`. It returns the new document's `custom:` ref. It also
+rejects more than 20 equipment refs, a bound the rules enforce and the write assertion does not. The store publishes no optimistic entry: the
 `customExercises` listener delivers the new document. There is no update or delete action. The
 journey is documented in [create a custom exercise](../flows/create-custom-exercise.md).
 

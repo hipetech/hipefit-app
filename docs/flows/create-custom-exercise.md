@@ -2,7 +2,7 @@
 type: flow
 status: current
 area: exercises
-updated: 2026-10-13
+updated: 2026-10-15
 ---
 
 # Flow: create a custom exercise
@@ -43,8 +43,9 @@ The global create panel declares **Custom Exercise** in
 The action is enabled. The panel opens from the detached Create tab-bar item, so the action is
 reachable from every tab.
 
-There is no second entry point. The Exercises screen has no add button, and its empty state offers no
-action.
+The exercise picker in the workout template editor is the second entry point; see
+[From the exercise picker](#from-the-exercise-picker). The Exercises screen has no add button, and
+its empty state offers no action.
 
 ## Main path
 
@@ -54,21 +55,41 @@ action.
    [`apps/mobile/src/stores/use-custom-exercise-sheet-store.ts`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts).
 2. **The sheet presents over the current tab.**
    [`apps/mobile/src/features/exercises/custom-exercise-sheet.tsx`](../../apps/mobile/src/features/exercises/custom-exercise-sheet.tsx)
-   is a SwiftUI `BottomSheet` that opens at the `medium` detent and can be dragged to 0.9 of the screen height, with
-   a visible drag indicator. It mounts
+   gives
+   [`apps/mobile/src/features/exercises/custom-exercise-bottom-sheet.tsx`](../../apps/mobile/src/features/exercises/custom-exercise-bottom-sheet.tsx)
+   a `Host`. That is a SwiftUI `BottomSheet` that opens at the `medium` detent and can be dragged to
+   0.9 of the screen height, with a visible drag indicator. It mounts
    [`apps/mobile/src/features/exercises/custom-exercise-form.tsx`](../../apps/mobile/src/features/exercises/custom-exercise-form.tsx)
    only while presented, so every presentation starts with an empty form. The form has a header row
    with Cancel, the title New Exercise, and Save, above a grouped list. The name field takes focus.
 3. **The user fills in the form.** The fields and their limits are listed under
    [Fields](#fields). Save is disabled until the trimmed name is not empty and a category is chosen.
 4. **The user presses Save.** The form trims the name and description and calls the exercise store's
-   `createCustomExercise`. Save stays disabled while the write is pending.
+   `createCustomExercise`, which resolves with the new exercise's `custom:` ref. Save stays disabled
+   while the write is pending.
 5. **The write succeeds.** The form fires `hapticSuccess()` and then closes the sheet. The app stays
    on the tab the user was on.
 6. **The exercise appears in the Exercises list.** The existing `customExercises` listener in
    [`apps/mobile/src/services/exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts)
    delivers the new document, and the store rebuilds the catalogue. The store adds no optimistic
    entry of its own.
+
+## From the exercise picker
+
+The + button in the header of the exercise picker, described in
+[create a workout template](create-routine.md#the-exercise-picker), presents the same
+[`custom-exercise-bottom-sheet.tsx`](../../apps/mobile/src/features/exercises/custom-exercise-bottom-sheet.tsx)
+stacked over the picker sheet. The picker renders it inside its own sheet's content, which has a
+`Host` already, so the new sheet needs none of its own. The detents, fields, validation, swipe-down
+rule, and save are the ones on this page, with these differences:
+
+- The name starts as the picker's trimmed search text, and the category starts as the category the
+  picker had open. From the category grid, All, or search results, the category starts on None.
+  Either prefill counts as input, so the sheet refuses a swipe down.
+- Cancel, a swipe down, and a successful save close only this sheet. The picker stays open
+  underneath, with its view and search unchanged.
+- After the save, the form passes the new exercise's ref to the picker, which adds it to the
+  selection. The exercise is in the picker's list once the `customExercises` listener delivers it.
 
 ## Fields
 
@@ -99,7 +120,9 @@ ones, without retired, archived, or hidden categories. The equipment rows list t
   [`apps/mobile/app/(private)/exercises/index.tsx`](<../../apps/mobile/app/(private)/exercises/index.tsx>).
 - **Islands:**
   [`custom-exercise-sheet.tsx`](../../apps/mobile/src/features/exercises/custom-exercise-sheet.tsx)
-  owns the `Host`. Inside it,
+  owns the `Host`, and
+  [`custom-exercise-bottom-sheet.tsx`](../../apps/mobile/src/features/exercises/custom-exercise-bottom-sheet.tsx)
+  inside it owns the `BottomSheet` and the swipe-down lock. Inside that,
   [`custom-exercise-form.tsx`](../../apps/mobile/src/features/exercises/custom-exercise-form.tsx)
   renders the fields and
   [`custom-exercise-equipment-row.tsx`](../../apps/mobile/src/features/exercises/custom-exercise-equipment-row.tsx)
