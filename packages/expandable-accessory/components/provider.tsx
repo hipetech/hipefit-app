@@ -19,7 +19,7 @@ import { ExpandedContent } from './expanded-content';
  */
 export const ExpandableAccessoryProvider: React.FC<
   ExpandableAccessoryProviderProps
-> = ({ active, href, expandedPath, fallbackHref, children }) => {
+> = ({ active, href, presentation, expandedPath, fallbackHref, children }) => {
   const pathname = usePathname();
   const routeIsExpanded =
     normalizePath(pathname) === normalizePath(expandedPath);
@@ -61,12 +61,11 @@ export const ExpandableAccessoryProvider: React.FC<
     isActive: active,
     isExpanded: active && routeIsExpanded,
     href,
+    presentation,
     accessoryContent,
     expandedContent,
     open: () => {
-      if (active) {
-        router.push(href);
-      }
+      router.push(href);
     },
     close: () => {
       if (router.canGoBack()) {
