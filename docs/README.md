@@ -2,7 +2,7 @@
 type: index
 status: current
 area: documentation
-updated: 2026-10-13
+updated: 2026-10-14
 ---
 
 # Documentation
@@ -173,7 +173,7 @@ is how a document turns into an agent implementing the wrong thing.
 ### Flows
 
 A flow that does not fully ship opens with a callout stating how much of it does. Read that callout
-before assuming any step is reachable: three of the six below do not ship end to end, and the
+before assuming any step is reachable: two of the six below do not ship end to end, and the
 calendar flow renders an empty marker array even though its interactions ship.
 
 - [`flows/authentication.md`](flows/authentication.md) — Apple Sign-In, first-run profile creation,
@@ -187,9 +187,9 @@ calendar flow renders an empty marker array even though its interactions ship.
   record it. The **write** half does not ship; the read half renders correctly.
 - [`flows/create-custom-exercise.md`](flows/create-custom-exercise.md) — adding a custom exercise
   from the create panel's sheet and seeing it in the Exercises list. Ships end to end.
-- [`flows/create-routine.md`](flows/create-routine.md) — building a reusable workout template.
-  **Does not ship**; the filename is retained for stable links, and the only affordance is a disabled
-  action in the native create panel.
+- [`flows/create-routine.md`](flows/create-routine.md) — building a workout template from the create
+  panel's sheet and seeing it on the Workouts screen. Ships end to end. The filename is retained for
+  stable links.
 
 ### Templates
 

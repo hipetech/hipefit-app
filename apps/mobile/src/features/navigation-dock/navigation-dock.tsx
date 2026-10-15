@@ -7,6 +7,7 @@ import { useNavigationContainerRef } from 'expo-router';
 import {
   CUSTOM_EXERCISE_ACTION_ID,
   NAVIGATION_DOCK_ACTIONS,
+  NEW_WORKOUT_TEMPLATE_ACTION_ID,
 } from '@/features/navigation-dock/navigation-dock-actions';
 import { NAVIGATION_DOCK_BOTTOM_INSET } from '@/features/navigation-dock/navigation-dock-metrics';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
@@ -15,6 +16,7 @@ import { hapticImpact } from '@/lib/haptics';
 import { useAuthStore } from '@/stores/use-auth-store';
 import { useCustomExerciseSheetStore } from '@/stores/use-custom-exercise-sheet-store';
 import { useNavigationDockStore } from '@/stores/use-navigation-dock-store';
+import { useWorkoutTemplateSheetStore } from '@/stores/use-workout-template-sheet-store';
 
 /**
  * Mount edge to edge: an inset frame shrinks the safe-area insets UIKit hands
@@ -42,6 +44,9 @@ export const NavigationDock = () => {
   const expanded = useNavigationDockStore((state) => state.expanded);
   const close = useNavigationDockStore((state) => state.close);
   const openCustomExerciseSheet = useCustomExerciseSheetStore(
+    (state) => state.open
+  );
+  const openWorkoutTemplateSheet = useWorkoutTemplateSheetStore(
     (state) => state.open
   );
   const reduceMotion = useReduceMotion();
@@ -91,13 +96,13 @@ export const NavigationDock = () => {
   );
 
   /*
-   * Custom Exercise is the one enabled action. The other two are disabled
-   * natively and never fire, so any other `id` is ignored rather than guessed
-   * at: an unhandled event is how a stub becomes a silent navigation to the
-   * wrong place.
+   * New Workout Template and Custom Exercise are the enabled actions, and each
+   * opens its own sheet. Start Workout is disabled natively and never fires, so
+   * any other `id` is ignored rather than guessed at: an unhandled event is how
+   * a stub becomes a silent navigation to the wrong place.
    *
    * The panel is closed here because the `state` listener above cannot do it.
-   * The sheet is a SwiftUI presentation driven by store state, which emits no
+   * Both sheets are SwiftUI presentations driven by store state, which emit no
    * navigation event, and a panel left expanded would keep its modal scrim and
    * `accessibilityViewIsModal` under the sheet.
    *
@@ -108,12 +113,20 @@ export const NavigationDock = () => {
   const handleActionPress: NavigationDockViewProps['onActionPress'] = ({
     nativeEvent,
   }) => {
-    if (nativeEvent.id !== CUSTOM_EXERCISE_ACTION_ID) {
-      return;
+    let openSheet: () => void;
+    switch (nativeEvent.id) {
+      case NEW_WORKOUT_TEMPLATE_ACTION_ID:
+        openSheet = openWorkoutTemplateSheet;
+        break;
+      case CUSTOM_EXERCISE_ACTION_ID:
+        openSheet = openCustomExerciseSheet;
+        break;
+      default:
+        return;
     }
     hapticImpact();
     close();
-    openCustomExerciseSheet();
+    openSheet();
   };
 
   return (

@@ -2,7 +2,7 @@
 type: app
 status: current
 area: navigation
-updated: 2026-10-13
+updated: 2026-10-14
 ---
 
 # Navigation
@@ -25,7 +25,7 @@ apps/mobile/app/
 ├── (public)/
 │   └── login.tsx            Apple Sign-In
 └── (private)/
-    ├── _layout.tsx          NativeTabs (4 tabs + Create), the native panel, the custom exercise sheet
+    ├── _layout.tsx          NativeTabs (4 tabs + Create), the native panel, the two create sheets
     ├── create.tsx           No screen — the Create tab item's required route
     ├── (home)/              path "/"
     │   ├── _layout.tsx
@@ -166,9 +166,9 @@ One sharp edge is recorded in the Exercises screen:
 
 [`apps/mobile/app/(private)/_layout.tsx`](<../../apps/mobile/app/(private)/_layout.tsx>) is the only
 interesting layout. It
-renders three siblings inside one flex `View`: the `NativeTabs` navigator — which contains **five**
-triggers, the four tabs plus Create — the action panel that overlays it, and the custom exercise
-sheet described under [Sheets](#sheets), which takes no space in the layout.
+renders four siblings inside one flex `View`: the `NativeTabs` navigator — which contains **five**
+triggers, the four tabs plus Create — the action panel that overlays it, and the custom exercise and
+workout template sheets described under [Sheets](#sheets), which take no space in the layout.
 
 ### The tabs are the system's
 
@@ -261,11 +261,11 @@ The panel closes on all of the following, and every one of them routes through t
   overlay covers the tab bar, so that tap arrives as `onDismissRequest` with `reason: 'backdrop'`, not
   as a second `tabPress`.
 - **The VoiceOver escape gesture**, which arrives as `onDismissRequest` with `reason: 'escape'`.
-- **Pressing Custom Exercise.** The `onActionPress` handler in
+- **Pressing New Workout Template or Custom Exercise.** The `onActionPress` handler in
   [`navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx) calls
-  `close()` explicitly before it opens the custom exercise sheet. The navigation listener in the
-  next rule does not cover this case: the sheet is a SwiftUI presentation driven by store state, so
-  the navigation container emits no `state` event when it appears. A panel left expanded would keep
+  `close()` explicitly before it opens the matching sheet. The navigation listener in the next rule
+  does not cover this case: each sheet is a SwiftUI presentation driven by store state, so the
+  navigation container emits no `state` event when it appears. A panel left expanded would keep
   its modal scrim and `accessibilityViewIsModal` under the sheet.
 - **Any navigation** — a push, a sheet presented as a route, a deep link, or the redirect that
   follows a session change. The adapter listens to the navigation container's `state` event rather than watching route
@@ -299,13 +299,13 @@ Create/Close button, from VoiceOver while the panel is up. The escape gesture is
 through `accessibilityPerformEscape`. The practical consequence for QA: while the panel is open,
 `Close` cannot be found by an accessibility-driven driver and must be tapped by coordinate.
 
-Two events fire a haptic, both `hapticImpact()`: Create **opening** the panel, and a press on
-Custom Exercise, which presents the custom exercise sheet. Nothing fires on close, on the scrim, or
-on the escape gesture. Opening the panel and presenting the sheet each put something new on screen,
-which is what that intent name means; dismissal does not, and iOS itself stays silent when a sheet
-goes away. Both fire from a press handler rather than from a store updater: an updater must be pure
-and may be called twice, which would be a doubled tap. The Create handler is in the tab layout, and
-the Custom Exercise handler is in
+Two kinds of event fire a haptic, each a single `hapticImpact()`: Create **opening** the panel, and
+a press on New Workout Template or Custom Exercise, which presents that action's sheet. Nothing
+fires on close, on the scrim, or on the escape gesture. Opening the panel and presenting a sheet
+each put something new on screen, which is what that intent name means; dismissal does not, and iOS
+itself stays silent when a sheet goes away. Each haptic fires from a press handler rather than from
+a store updater: an updater must be pure and may be called twice, which would be a doubled tap. The
+Create handler is in the tab layout, and the action handler is in
 [`navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx).
 
 ### Being an overlay rather than an accessory
@@ -345,24 +345,26 @@ pre-iOS-26 rendering noted above.
 
 ### The actions
 
-**Two of the panel's three actions, Start Workout and New Workout Template, are disabled stubs.
-Custom Exercise is live.**
+**Start Workout is the panel's one disabled stub. New Workout Template and Custom Exercise are
+live.**
 
-The two stubs render, they are unreachable, and there is nowhere to send them: nothing in the app
-creates a workout or a workout template. Their descriptors in
+The stub renders, it is unreachable, and there is nowhere to send it: nothing in the app creates a
+workout. Its descriptor in
 [`apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts)
-ship `enabled: false`, and the native control is disabled with `isEnabled = false` rather than by
-switching off user interaction — so a disabled action **swallows** its touch instead of dropping it
+ships `enabled: false`, and the native control is disabled with `isEnabled = false` rather than by
+switching off user interaction, so a disabled action **swallows** its touch instead of dropping it
 through to the panel behind. Going live means flipping `enabled` and giving `onActionPress` a
 destination, which is a state change and so also earns a haptic.
 
-Custom Exercise ships `enabled: true`. The `onActionPress` handler in
+New Workout Template and Custom Exercise ship `enabled: true`. The `onActionPress` handler in
 [`navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx) receives
-the action `id` and compares it with `CUSTOM_EXERCISE_ACTION_ID`. On a match it does three things:
-it fires `hapticImpact()`, closes the panel through `useNavigationDockStore`, and calls `open()` on
-`useCustomExerciseSheetStore`, which presents the sheet described under [Sheets](#sheets). The
-handler ignores every other `id`, so a stub that is enabled before it has a destination does
-nothing instead of navigating somewhere unintended.
+the action `id` and compares it with `NEW_WORKOUT_TEMPLATE_ACTION_ID` and
+`CUSTOM_EXERCISE_ACTION_ID`. Both branches do the same three things: fire `hapticImpact()`, close
+the panel through `useNavigationDockStore`, and call `open()` on a sheet store. New Workout Template
+opens `useWorkoutTemplateSheetStore`, and Custom Exercise opens `useCustomExerciseSheetStore`. Each
+presents a sheet described under [Sheets](#sheets). The handler ignores every other `id`, so a stub
+that is enabled before it has a destination does nothing instead of navigating somewhere
+unintended.
 
 ## Sheets
 
@@ -387,6 +389,22 @@ not contain each other. And it is mounted once in
 [`apps/mobile/app/(private)/_layout.tsx`](<../../apps/mobile/app/(private)/_layout.tsx>), beside the
 panel, so it presents from every tab. It is not a route because it does not need to be addressable
 or survive a push: it has no URL and no back-stack entry, and nothing links to it.
+
+The workout template sheet in
+[`apps/mobile/src/features/workout-templates/workout-template-sheet.tsx`](../../apps/mobile/src/features/workout-templates/workout-template-sheet.tsx)
+is a SwiftUI presentation of the same kind, for the same reasons. Its presentation state is
+`isPresented` in
+[`apps/mobile/src/stores/use-workout-template-sheet-store.ts`](../../apps/mobile/src/stores/use-workout-template-sheet-store.ts),
+which the New Workout Template action opens, and it is mounted once in the private layout beside the
+custom exercise sheet. It presents a second sheet, the exercise picker in
+[`exercise-picker-sheet.tsx`](../../apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx),
+from inside its own content. The editor form renders the picker in its SwiftUI tree and drives it
+with component state, so the picker has no store, no `Host`, and no mount point in a layout.
+
+The workout template preview in
+[`apps/mobile/src/features/workouts/workout-template-preview-sheet.tsx`](../../apps/mobile/src/features/workouts/workout-template-preview-sheet.tsx)
+is local like the exercise detail: the Workouts screen drives it with component state, and it opens
+its own `Host` beside the screen's.
 
 ## Imperative navigation
 

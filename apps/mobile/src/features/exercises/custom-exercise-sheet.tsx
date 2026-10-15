@@ -28,9 +28,9 @@ import { CustomExerciseForm } from './custom-exercise-form';
  * short of full height is meant to keep the material while still showing most
  * of the form. 0.9 is the upper detent the Edit Profile form sheet uses.
  *
- * This is the app's only `List` inside a `BottomSheet`, and the layout was
- * written against the typings without a device run. If the list does not fill
- * the sheet or does not scroll, the fallback is `Form` from `@expo/ui/swift-ui`.
+ * The exercise picker sheet reuses this layout. It was written against the
+ * typings without a device run. If the list does not fill the sheet or does
+ * not scroll, the fallback is `Form` from `@expo/ui/swift-ui`.
  */
 const SHEET_PRESENTATION_MODIFIERS = [
   presentationDetents(['medium', { fraction: 0.9 }]),

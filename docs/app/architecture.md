@@ -2,7 +2,7 @@
 type: app
 status: current
 area: architecture
-updated: 2026-10-13
+updated: 2026-10-14
 ---
 
 # Application architecture
@@ -31,7 +31,7 @@ Cross-cutting mobile code sits beside those layers under
 [`apps/mobile/src/`](../../apps/mobile/src): [`theme/`](../../apps/mobile/src/theme) holds shared
 modifier arrays and React Native styles, [`components/`](../../apps/mobile/src/components) holds
 app-owned React Native wrappers, [`lib/`](../../apps/mobile/src/lib) holds formatting, constants,
-and haptics, and [`hooks/`](../../apps/mobile/src/hooks) holds cross-feature hooks.
+haptics, and unit conversion, and [`hooks/`](../../apps/mobile/src/hooks) holds cross-feature hooks.
 
 Workspace packages under [`packages/`](../../packages) are imported through package contracts.
 Portable Firestore contracts belong to `@hipefit/schemas`, and SDK-bound refs belong to
@@ -104,28 +104,35 @@ from the exercises feature, so the sheet presents from every tab. The panel's Cu
 opens it through
 [`use-custom-exercise-sheet-store.ts`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts),
 because the adapter that handles the action and the layout that mounts the sheet do not contain each
-other.
+other. Beside it, the layout mounts
+[`workout-template-sheet.tsx`](../../apps/mobile/src/features/workout-templates/workout-template-sheet.tsx)
+from the workout-templates feature, which the panel's New Workout Template action opens through
+[`use-workout-template-sheet-store.ts`](../../apps/mobile/src/stores/use-workout-template-sheet-store.ts)
+for the same reason.
 
 ## Stores
 
 Zustand stores are module-level singletons created with `create()` under
 [`apps/mobile/src/stores/`](../../apps/mobile/src/stores):
 
-| Store                                                                                            | Holds                                                                                                   |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                                 | Firebase user, auth loading state, quick sign-in availability, Apple and quick sign-in, and sign-out    |
-| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                                 | Profile, newest body measurement, current weight, and user write actions                                |
-| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)                         | Localized and visibility-filtered exercise catalogue view models, and the `createCustomExercise` action |
-| [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts)            | Whether the native create panel is expanded                                                             |
-| [`useCustomExerciseSheetStore`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts) | Whether the custom exercise sheet is presented                                                          |
+| Store                                                                                              | Holds                                                                                                   |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)                                   | Firebase user, auth loading state, quick sign-in availability, Apple and quick sign-in, and sign-out    |
+| [`useUserStore`](../../apps/mobile/src/stores/use-user-store.ts)                                   | Profile, newest body measurement, current weight, and user write actions                                |
+| [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts)                           | Localized and visibility-filtered exercise catalogue view models, and the `createCustomExercise` action |
+| [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts)              | Whether the native create panel is expanded                                                             |
+| [`useCustomExerciseSheetStore`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts)   | Whether the custom exercise sheet is presented                                                          |
+| [`useWorkoutTemplateStore`](../../apps/mobile/src/stores/use-workout-template-store.ts)            | Unarchived workout templates, newest update first, and the `createWorkoutTemplate` action               |
+| [`useWorkoutTemplateSheetStore`](../../apps/mobile/src/stores/use-workout-template-sheet-store.ts) | Whether the workout template sheet is presented                                                         |
 
 Zustand is used instead of React context because subscription orchestration drives stores through
 `getState()` outside component trees, while components can select narrow slices.
 
-The two Firestore data stores expose `subscribe(uid)`, which returns a teardown. A teardown removes
-the service listeners and restores the store's initial loading state. They do not expose separate
-`reset()` actions. The navigation-dock store and the custom-exercise-sheet store are UI state and
-have no Firestore lifecycle.
+The three Firestore data stores, user, exercise, and workout template, expose `subscribe(uid)`,
+which returns a teardown. A teardown removes the service listeners and restores the store's initial
+loading state. They do not expose separate `reset()` actions. The navigation-dock store, the
+custom-exercise-sheet store, and the workout-template-sheet store are UI state and have no Firestore
+lifecycle.
 
 Data-store conventions:
 
@@ -179,14 +186,14 @@ name remains unchanged.
 ## Subscription orchestration
 
 [`use-firestore-subscriptions.ts`](../../apps/mobile/src/hooks/use-firestore-subscriptions.ts) is the
-only place data subscriptions start. It watches the auth user, starts the user and exercise stores
-for that UID, and returns a teardown for both. The root layout mounts it once in
+only place data subscriptions start. It watches the auth user, starts the user, exercise, and
+workout template stores for that UID, and returns a teardown for all three. The root layout mounts it once in
 [`apps/mobile/app/_layout.tsx`](../../apps/mobile/app/_layout.tsx), above the protected route tree.
 
 This starts data before a feature screen mounts, keeps tab switches from creating duplicate
-listeners, and removes every user-scoped listener on sign-out. The consequence is that all seven
+listeners, and removes every user-scoped listener on sign-out. The consequence is that all eight
 current snapshot listeners remain live for the authenticated session. The app does not subscribe to
-workouts or workout templates.
+workouts.
 
 ## Firebase and data boundaries
 
@@ -315,12 +322,13 @@ code requires running `pod install` from `apps/mobile/ios/` and committing the r
 
 ## Deliberately absent
 
-- There is no workout player. Start and Add to Workout affordances remain disabled. Workout and
-  workout-template contracts and validation exist, but there is no app ref, listener, store, or
-  write path for either collection.
-- Two of the three global create actions, Start Workout and New Workout Template, are disabled in
+- There is no workout player. Start and Add to Workout affordances remain disabled. Workout
+  contracts and validation exist, but there is no app ref, listener, store, or write path for the
+  workouts collection. Workout templates have a ref, a listener, a store, and a create path; the app
+  does not edit, archive, or delete a template.
+- Start Workout is the one disabled global create action in
   [`navigation-dock-actions.ts`](../../apps/mobile/src/features/navigation-dock/navigation-dock-actions.ts).
-  Custom Exercise is enabled.
+  New Workout Template and Custom Exercise are enabled.
 - There is no automated test runner. `bun run type-check` is the primary code gate, with
   `bun run lint` and `bun run format:check` beside it.
 - There is no Android project. Reviving Android is a project-wide decision recorded in

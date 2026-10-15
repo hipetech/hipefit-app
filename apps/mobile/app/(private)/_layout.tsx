@@ -3,6 +3,7 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { CustomExerciseSheet } from '@/features/exercises/custom-exercise-sheet';
 import { NavigationDock } from '@/features/navigation-dock/navigation-dock';
+import { WorkoutTemplateSheet } from '@/features/workout-templates/workout-template-sheet';
 import { hapticImpact } from '@/lib/haptics';
 import { useNavigationDockStore } from '@/stores/use-navigation-dock-store';
 
@@ -131,6 +132,11 @@ export default function TabsLayout() {
         the sheet presents from any tab. It reads its own presentation store.
       */}
       <CustomExerciseSheet />
+      {/*
+        Mounted here for the same reason, beside the panel whose New Workout
+        Template action opens it. It reads its own presentation store.
+      */}
+      <WorkoutTemplateSheet />
     </View>
   );
 }

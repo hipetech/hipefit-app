@@ -39,6 +39,7 @@ const LONG_TEXT_MAX_LENGTH = 2000;
 const URL_MAX_LENGTH = 2048;
 const HIDDEN_REFS_MAX_LENGTH = 500;
 const EXERCISES_MAX_LENGTH = 50;
+const SUPERSET_ID_MAX_LENGTH = 64;
 const MAX_BODYWEIGHT_KG = 500;
 const TIMESTAMP_MIN_SECONDS = -62135596800;
 const TIMESTAMP_MAX_SECONDS = 253402300799;
@@ -593,7 +594,12 @@ function assertTemplateSet(
   value: unknown,
   path: string
 ): asserts value is TemplateSet {
-  assertKeys(value, [], ['weight', 'reps', 'duration', 'distance'], path);
+  assertKeys(
+    value,
+    [],
+    ['weight', 'reps', 'duration', 'distance', 'notes'],
+    path
+  );
   if (value.weight !== undefined) {
     assertNumber(value.weight, `${path}.weight`, { min: 0 });
   }
@@ -606,13 +612,23 @@ function assertTemplateSet(
   if (value.distance !== undefined) {
     assertNumber(value.distance, `${path}.distance`, { min: 0 });
   }
+  if (value.notes !== undefined) {
+    assertString(value.notes, `${path}.notes`, {
+      maxLength: LONG_TEXT_MAX_LENGTH,
+    });
+  }
 }
 
 function assertTemplateExercise(
   value: unknown,
   path: string
 ): asserts value is TemplateExercise {
-  assertKeys(value, ['exerciseRef', 'nameSnapshot', 'type', 'sets'], [], path);
+  assertKeys(
+    value,
+    ['exerciseRef', 'nameSnapshot', 'type', 'sets', 'supersetId'],
+    ['supersetNotes'],
+    path
+  );
   assertRefValue(value.exerciseRef, `${path}.exerciseRef`);
   assertString(value.nameSnapshot, `${path}.nameSnapshot`, {
     maxLength: NAME_MAX_LENGTH,
@@ -623,6 +639,61 @@ function assertTemplateExercise(
   value.sets.forEach((set, index) =>
     assertTemplateSet(set, `${path}.sets[${index}]`)
   );
+  if (value.supersetId !== null) {
+    assertString(value.supersetId, `${path}.supersetId`, {
+      maxLength: SUPERSET_ID_MAX_LENGTH,
+      nonEmpty: true,
+    });
+  }
+  if (value.supersetNotes !== undefined) {
+    assertString(value.supersetNotes, `${path}.supersetNotes`, {
+      maxLength: LONG_TEXT_MAX_LENGTH,
+    });
+  }
+}
+
+/** A superset's note belongs to the first exercise of its run, and only there. */
+function assertSupersetNotes(
+  exercises: readonly TemplateExercise[],
+  path: string
+): void {
+  exercises.forEach((exercise, index) => {
+    if (exercise.supersetNotes === undefined) {
+      return;
+    }
+    if (
+      exercise.supersetId === null ||
+      exercises[index - 1]?.supersetId === exercise.supersetId
+    ) {
+      fail(
+        `${path}[${index}].supersetNotes`,
+        'must be on the first exercise of a superset'
+      );
+    }
+  });
+}
+
+function assertSupersetRuns(
+  supersetIds: readonly (string | null)[],
+  path: string
+): void {
+  const startedIds = new Set<string>();
+  supersetIds.forEach((supersetId, index) => {
+    if (supersetId === null || supersetIds[index - 1] === supersetId) {
+      return;
+    }
+    const fieldPath = `${path}[${index}].supersetId`;
+    if (startedIds.has(supersetId)) {
+      fail(
+        fieldPath,
+        'must be adjacent to the other exercises in its superset'
+      );
+    }
+    if (supersetIds[index + 1] !== supersetId) {
+      fail(fieldPath, 'must be shared with at least one adjacent exercise');
+    }
+    startedIds.add(supersetId);
+  });
 }
 
 const validateWorkoutTemplate = (value: unknown): WorkoutTemplate => {
@@ -640,22 +711,31 @@ const validateWorkoutTemplate = (value: unknown): WorkoutTemplate => {
       'createdAt',
       'updatedAt',
     ],
-    [],
+    ['plannedDate'],
     path
   );
   assertString(value.name, `${path}.name`, {
     maxLength: NAME_MAX_LENGTH,
     nonEmpty: true,
   });
+  if (value.plannedDate !== undefined) {
+    assertCalendarDate(value.plannedDate, `${path}.plannedDate`);
+  }
   assertNullableString(
     value.description,
     `${path}.description`,
     LONG_TEXT_MAX_LENGTH
   );
   assertArray(value.exercises, `${path}.exercises`, EXERCISES_MAX_LENGTH);
-  value.exercises.forEach((exercise, index) =>
-    assertTemplateExercise(exercise, `${path}.exercises[${index}]`)
+  const exercises = value.exercises.map((exercise, index) => {
+    assertTemplateExercise(exercise, `${path}.exercises[${index}]`);
+    return exercise;
+  });
+  assertSupersetRuns(
+    exercises.map((exercise) => exercise.supersetId),
+    `${path}.exercises`
   );
+  assertSupersetNotes(exercises, `${path}.exercises`);
   assertNullableNumber(value.estimatedDuration, `${path}.estimatedDuration`, {
     min: 0,
   });

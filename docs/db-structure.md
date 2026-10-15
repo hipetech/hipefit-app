@@ -2,7 +2,7 @@
 type: app
 status: current
 area: database
-updated: 2026-10-13
+updated: 2026-10-14
 ---
 
 # Firestore database structure
@@ -30,10 +30,9 @@ users/{uid}
 
 The three global collections are readable by authenticated clients and have no client write path.
 Everything under `users/{uid}` is owner-scoped. The app writes the user document, creates
-body-measurement documents, and creates custom exercises. It cannot edit or delete a custom
-exercise, and custom categories, workout templates, and workouts have no shipped creation or
-mutation journey. Workout templates and workouts also have no current client read path; their
-schemas are retained for later implementation.
+body-measurement documents, and creates custom exercises and workout templates. It cannot edit or
+delete either, and custom categories and workouts have no shipped creation or mutation journey.
+Workouts also have no current client read path; their schema is retained for later implementation.
 
 ## Shared conventions
 
@@ -237,14 +236,17 @@ do not alter stored documents.
 
 ### `users/{uid}/workoutTemplates/{id}`
 
-This collection replaces the old routine vocabulary. Its contract remains defined, but the current
-app does not request, render, create, or edit its documents.
+This collection replaces the old routine vocabulary. The app listens to it, shows unarchived
+templates on the Workouts screen, and creates documents from the workout template sheet. It does
+not edit, archive, or delete them. The journey is in
+[create a workout template](flows/create-routine.md).
 
 | Field                     | Type                 | Meaning                         |
 | ------------------------- | -------------------- | ------------------------------- |
 | `name`                    | `string`             | Template name                   |
 | `description`             | `string \| null`     | Optional description            |
 | `exercises`               | `TemplateExercise[]` | Ordered embedded exercise array |
+| `plannedDate`             | `string` (optional)  | Planned local day, `YYYY-MM-DD` |
 | `estimatedDuration`       | `number \| null`     | Estimated minutes               |
 | `isArchived`              | `boolean`            | Soft-deletion/archive marker    |
 | `lastPerformedAt`         | `Timestamp \| null`  | Cached last-use instant         |
@@ -253,13 +255,17 @@ app does not request, render, create, or edit its documents.
 
 #### `TemplateExercise` and `TemplateSet`
 
-| Shape              | Fields                                                                    |
-| ------------------ | ------------------------------------------------------------------------- |
-| `TemplateExercise` | `exerciseRef`, `nameSnapshot`, `type`, ordered `sets[]`                   |
-| `TemplateSet`      | Optional `weight` (kg), `reps`, `duration` (seconds), `distance` (meters) |
+| Shape              | Fields                                                                                          |
+| ------------------ | ----------------------------------------------------------------------------------------------- |
+| `TemplateExercise` | `exerciseRef`, `nameSnapshot`, `type`, ordered `sets[]`, `supersetId`; optional `supersetNotes` |
+| `TemplateSet`      | Optional `weight` (kg), `reps`, `duration` (seconds), `distance` (meters), `notes`              |
 
 Array position is the exercise and set order; no ordinal field is stored. `nameSnapshot` is a
-fallback when the live exercise ref cannot resolve.
+fallback when the live exercise ref cannot resolve. `supersetId` is `null` for an exercise outside a
+superset, or a non-empty string of at most 64 characters that every exercise in one superset shares;
+the validator requires each non-null id to cover exactly one run of at least two adjacent exercises. `supersetNotes` is the superset's note, at most 2000 characters, and only the first exercise of a
+superset may carry it. A set's `notes` is at most 2000 characters. Both are left out rather than
+stored empty by the app.
 
 ### `users/{uid}/workouts/{id}`
 
@@ -310,17 +316,17 @@ listener, edit action, or delete action in the app.
 
 ## Current read and write status
 
-| Collection                 | Current read behavior                         | Current client writes                         |
-| -------------------------- | --------------------------------------------- | --------------------------------------------- |
-| `users`                    | One profile listener in the user service      | Create/self-heal; profile and settings update |
-| `exerciseCategories`       | One listener in the exercise service          | None                                          |
-| `equipment`                | One listener in the exercise service          | None                                          |
-| `exercises`                | One listener in the exercise service          | None                                          |
-| `customExerciseCategories` | One listener in the exercise service          | None                                          |
-| `customExercises`          | One listener in the exercise service          | Create only, from the custom exercise sheet   |
-| `workoutTemplates`         | None                                          | None                                          |
-| `workouts`                 | None                                          | None                                          |
-| `bodyMeasurements`         | One newest-first listener in the user service | Append weigh-in only                          |
+| Collection                 | Current read behavior                                 | Current client writes                         |
+| -------------------------- | ----------------------------------------------------- | --------------------------------------------- |
+| `users`                    | One profile listener in the user service              | Create/self-heal; profile and settings update |
+| `exerciseCategories`       | One listener in the exercise service                  | None                                          |
+| `equipment`                | One listener in the exercise service                  | None                                          |
+| `exercises`                | One listener in the exercise service                  | None                                          |
+| `customExerciseCategories` | One listener in the exercise service                  | None                                          |
+| `customExercises`          | One listener in the exercise service                  | Create only, from the custom exercise sheet   |
+| `workoutTemplates`         | One `updatedAt`-desc listener in the template service | Create only, from the workout template sheet  |
+| `workouts`                 | None                                                  | None                                          |
+| `bodyMeasurements`         | One newest-first listener in the user service         | Append weigh-in only                          |
 
 The three global collections are seeded by
 [`firebase/seed/seed-exercises.ts`](../firebase/seed/seed-exercises.ts). The persisted interfaces,

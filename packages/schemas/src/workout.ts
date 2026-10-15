@@ -8,6 +8,7 @@ export interface TemplateSet {
   reps?: number;
   duration?: number;
   distance?: number;
+  notes?: string;
 }
 
 export interface TemplateExercise {
@@ -15,12 +16,17 @@ export interface TemplateExercise {
   nameSnapshot: string;
   type: ExerciseType;
   sets: TemplateSet[];
+  supersetId: string | null;
+  /** The superset's note. Only the first exercise of a superset carries it. */
+  supersetNotes?: string;
 }
 
 export interface WorkoutTemplate {
   name: string;
   description: string | null;
   exercises: TemplateExercise[];
+  /** The local day the template is planned for, `YYYY-MM-DD`. Absent when none is set. */
+  plannedDate?: string;
   estimatedDuration: number | null;
   isArchived: boolean;
   lastPerformedAt: Timestamp | null;

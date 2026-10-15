@@ -2,7 +2,7 @@
 type: app
 status: current
 area: ui
-updated: 2026-10-13
+updated: 2026-10-14
 ---
 
 # The UI system
@@ -58,7 +58,7 @@ against
 
 The same property decides how a `List` is sized inside a `BottomSheet`.
 [apps/mobile/src/features/exercises/custom-exercise-sheet.tsx](../../apps/mobile/src/features/exercises/custom-exercise-sheet.tsx)
-is the app's only case. Its `Host` is absolutely positioned and takes no space, so the sheet supplies
+is the first case. Its `Host` is absolutely positioned and takes no space, so the sheet supplies
 the height: the content carries `presentationDetents(['medium', { fraction: 0.9 }])` and not
 `fitToContents`.
 `fitToContents` measures the sheet's children (`BottomSheetView.swift` at `@expo/ui` 57.0.7), and a
@@ -69,7 +69,37 @@ material only below full height, and the `List`
 adds `scrollContentBackground('hidden')` so the opaque `insetGrouped` page background does not
 cover that material. This layout was
 written against the typings and has not been run on a device. The file's comment names `Form` from
-`@expo/ui/swift-ui` as the fallback if the `List` does not fill the sheet or does not scroll.
+`@expo/ui/swift-ui` as the fallback if the `List` does not fill the sheet or does not scroll. The
+exercise picker in
+[apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx](../../apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx)
+uses the same header and `List` `VStack`, but opens no `Host`: it presents from inside the template
+editor's sheet. It carries `presentationDetents(['medium', 'large'], { selection: 'large' })`, so it
+opens at full height, where iOS 26 draws it opaque, and can be dragged down to `medium`. Its rows
+keep the system fill so they stay visible on the opaque background.
+
+The workout template editor is the second sheet layout, and it has no `List`.
+[apps/mobile/src/features/workout-templates/workout-template-form.tsx](../../apps/mobile/src/features/workout-templates/workout-template-form.tsx)
+puts a [`SortableList`](#the-sortable-list) in an `RNHostView` below the SwiftUI header row, inside
+the `BottomSheet` of
+[workout-template-sheet.tsx](../../apps/mobile/src/features/workout-templates/workout-template-sheet.tsx),
+which uses the same `medium` and `large` detents and opens at `large`. The `RNHostView` has no
+`matchContents`. Without it,
+`RNHostView.swift` at `@expo/ui` 57.0.7 frames the hosted view to fill the space SwiftUI offers, so
+the virtualized list takes the height the header leaves and does its own scrolling. It also carries
+no `pointerEvents="none"`: the list is interactive, and the header's SwiftUI buttons sit outside it,
+so the touch handler conflict described below does not reach them.
+
+The hosted subtree mounts its own `GestureHandlerRootView`. Gesture Handler recognizes a gesture only
+beneath one, and the root view in [apps/mobile/app/\_layout.tsx](../../apps/mobile/app/_layout.tsx)
+is not a native ancestor of sheet content, which is reparented into the sheet's own hosting
+controller. The nesting rule decides the rows: they render inside the `RNHostView`, which is
+already inside the sheet's `Host`, so each row is plain React Native and cannot be its own `Host`
+island the way a catalogue row is. The exercise picker presents over the editor from a `BottomSheet`
+in the form's SwiftUI tree. A `BottomSheet` draws itself in place as a hidden `Rectangle`, which
+would share the height below the header with the list, so the form gives it a zero frame. This
+layout has not been run on a device, including the drag inside the sheet. If the drag competes with
+the sheet's pan, the alternative is a SwiftUI `List` with `ListForEach onMove`, which would let the
+rows be SwiftUI and needs a new decision.
 
 Remote images inside a `Host` go through `RNHostView` + `expo-image`, **never a second `Host`**:
 SwiftUI's `Image` cannot load a URL. `RNHostView` attaches an `RCTSurfaceTouchHandler` to the hosted
@@ -453,7 +483,11 @@ is for a list the user reorders that is too long for a SwiftUI `List`. A bounded
 `List`, which is the default idiom above. `SortableList` wraps `AnimatedLegendList`, so it is virtualized, and its
 rows follow the same rule as the catalogue: a row is plain React Native or its own `Host` island.
 The user holds a row to lift it and drags it among rows of any height, and the list scrolls while
-the row is near its top or bottom edge. No screen in the app uses it yet.
+the row is near its top or bottom edge. Its first user is the workout template editor in
+[apps/mobile/src/features/workout-templates/workout-template-form.tsx](../../apps/mobile/src/features/workout-templates/workout-template-form.tsx),
+inside a `BottomSheet`, as [`Host` ownership](#host-ownership) describes. Its items are blocks, a
+single exercise or a whole superset, so a superset moves as one. Members move within a superset
+by up and down arrow buttons, not by a nested drag: the package is single level.
 
 **The order is committed once, on drop.** `data` does not change while a row is lifted. The other
 rows move aside with Reanimated transforms computed from a snapshot of every row's offset and size,

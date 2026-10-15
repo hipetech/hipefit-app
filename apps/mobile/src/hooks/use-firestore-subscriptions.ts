@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useAuthStore } from '@/stores/use-auth-store';
 import { useExerciseStore } from '@/stores/use-exercise-store';
 import { useUserStore } from '@/stores/use-user-store';
+import { useWorkoutTemplateStore } from '@/stores/use-workout-template-store';
 
 export const useFirestoreSubscriptions = (): void => {
   const user = useAuthStore((s) => s.user);
@@ -14,6 +15,7 @@ export const useFirestoreSubscriptions = (): void => {
     const unsubs = [
       useUserStore.getState().subscribe(uid),
       useExerciseStore.getState().subscribe(uid),
+      useWorkoutTemplateStore.getState().subscribe(uid),
     ];
 
     return () => unsubs.forEach((fn) => fn());

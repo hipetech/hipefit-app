@@ -2,7 +2,7 @@
 type: app
 status: current
 area: database
-updated: 2026-08-20
+updated: 2026-10-14
 ---
 
 # Firestore schema diagram
@@ -21,7 +21,7 @@ exercises/{slug}                           global, authenticated read only
 users/{uid}
 |-- customExerciseCategories/{id}          owner scoped
 |-- customExercises/{id}                   owner scoped
-|-- workoutTemplates/{id}                  owner scoped, not accessed by the current app
+|-- workoutTemplates/{id}                  owner scoped, read and created by the current app
 |-- workouts/{id}                          owner scoped, not accessed by the current app
 `-- bodyMeasurements/{id}                  owner scoped, append-only in the current UI
 ```
@@ -124,6 +124,7 @@ erDiagram
         string name
         string description "nullable"
         TemplateExercise exercises "embedded array"
+        string plannedDate "optional, YYYY-MM-DD"
         number estimatedDuration "nullable, minutes"
         boolean isArchived
         Timestamp lastPerformedAt "nullable"
@@ -137,6 +138,8 @@ erDiagram
         string nameSnapshot
         ExerciseType type
         TemplateSet sets "embedded array"
+        string supersetId "nullable, shared by one adjacent run"
+        string supersetNotes "optional, first member of a superset only"
     }
 
     TemplateSet {
@@ -144,6 +147,7 @@ erDiagram
         number reps "optional"
         number duration "optional, seconds"
         number distance "optional, meters"
+        string notes "optional"
     }
 
     workouts {
@@ -222,7 +226,7 @@ erDiagram
 
 ## Listener graph
 
-Two domain stores are started centrally after authentication. They own seven Firestore snapshot
+Three domain stores are started centrally after authentication. They own eight Firestore snapshot
 listeners in total.
 
 ```mermaid
@@ -231,6 +235,7 @@ flowchart LR
 
     subscriptions --> userStore["useUserStore"]
     subscriptions --> exerciseStore["useExerciseStore"]
+    subscriptions --> templateStore["useWorkoutTemplateStore"]
     userStore --> userDoc["users/{uid}"]
     userStore --> newestMeasurement["bodyMeasurements: recordedAt desc, limit 1"]
 
@@ -246,8 +251,9 @@ flowchart LR
     customExercises --> merged
     customCategories --> merged
 
+    templateStore --> workoutTemplates["workoutTemplates: updatedAt desc"]
 ```
 
 The exercise store also watches the Zustand user store so language and hidden-ref changes recompute
-the merged catalogue without adding a sixth Firestore listener. Workout and workout-template schemas
-remain in the diagram, but the current client has no listeners for those collections.
+the merged catalogue without adding a sixth Firestore listener. The workout schema remains in the
+diagram, but the current client has no listener for that collection.

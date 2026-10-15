@@ -2,7 +2,7 @@
 type: app
 status: current
 area: code-style
-updated: 2026-10-13
+updated: 2026-10-14
 ---
 
 # Code style and authoring
@@ -157,9 +157,10 @@ The data-store contract is:
 example. [`useExerciseStore`](../../apps/mobile/src/stores/use-exercise-store.ts) coordinates five
 decoded catalogue sources and a user-store subscription. [`useAuthStore`](../../apps/mobile/src/stores/use-auth-store.ts)
 produces the UID, so it has an idempotent `initialize()` lifecycle instead of `subscribe(uid)`.
-[`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts) and
-[`useCustomExerciseSheetStore`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts) are
-UI state and have no Firebase lifecycle.
+[`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts),
+[`useCustomExerciseSheetStore`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts), and
+[`useWorkoutTemplateSheetStore`](../../apps/mobile/src/stores/use-workout-template-sheet-store.ts)
+are UI state and have no Firebase lifecycle.
 
 ### Services
 
@@ -173,7 +174,11 @@ assertions from `@hipefit/schemas`.
 - [`user-service.ts`](../../apps/mobile/src/services/user-service.ts) owns profile and newest
   measurement listeners plus user writes.
 - [`exercise-service.ts`](../../apps/mobile/src/services/exercise-service.ts) owns the five exercise
-  catalogue listeners, snapshot decoding, and the custom exercise create.
+  catalogue listeners and the custom exercise create.
+- [`workout-template-service.ts`](../../apps/mobile/src/services/workout-template-service.ts) owns
+  the workout template listener and create.
+- [`firestore-timestamps.ts`](../../apps/mobile/src/services/firestore-timestamps.ts) holds the
+  snapshot decoding and pending-timestamp fill both listing services share.
 
 Services return data or invoke typed handlers. They do not import Zustand stores or React
 components. Stores call services and translate their results into application state.

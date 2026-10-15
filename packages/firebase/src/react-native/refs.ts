@@ -6,6 +6,7 @@ import {
   EXERCISE_CATEGORIES_PATH,
   EXERCISES_PATH,
   userPath,
+  workoutTemplatesPath,
 } from '@hipefit/schemas';
 import { collection, doc } from '@react-native-firebase/firestore';
 
@@ -28,6 +29,9 @@ export const customExerciseCategoriesRef = (uid: string) =>
 
 export const customExercisesRef = (uid: string) =>
   collection(getFirebaseFirestore(), customExercisesPath(uid));
+
+export const workoutTemplatesRef = (uid: string) =>
+  collection(getFirebaseFirestore(), workoutTemplatesPath(uid));
 
 export const bodyMeasurementsRef = (uid: string) =>
   collection(getFirebaseFirestore(), bodyMeasurementsPath(uid));

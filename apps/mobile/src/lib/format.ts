@@ -57,7 +57,7 @@ export const toLocalDateId = (date: Date): string => {
  * Never `new Date(dateId)`: a bare `YYYY-MM-DD` is specified to parse as UTC,
  * which undoes exactly what `toLocalDateId` was written to avoid.
  */
-const fromLocalDateId = (dateId: string): Date => {
+export const fromLocalDateId = (dateId: string): Date => {
   const [year, month, day] = dateId.split('-');
 
   return new Date(Number(year), Number(month) - 1, Number(day));
@@ -70,3 +70,12 @@ export const formatMonthName = (dateId: string): string =>
 /** The day of the month, in the locale's own digits: `2026-08-17` → "17". */
 export const formatDayOfMonth = (dateId: string): string =>
   fromLocalDateId(dateId).toLocaleDateString(undefined, { day: 'numeric' });
+
+/** A day ID with its weekday, in the locale's format: `2026-10-20` → "Tue, Oct 20, 2026". */
+export const formatLongDate = (dateId: string): string =>
+  fromLocalDateId(dateId).toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
