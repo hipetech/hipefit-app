@@ -2,7 +2,7 @@
 type: app
 status: current
 area: database
-updated: 2026-10-14
+updated: 2026-10-15
 ---
 
 # Data layer
@@ -202,7 +202,7 @@ rules enforce and the write assertion does not. The store publishes no optimisti
 `customExercises` listener delivers the new document. There is no update or delete action. The
 journey is documented in [create a custom exercise](../flows/create-custom-exercise.md).
 
-The workout template sheet is the only workout template writer, and it only creates. The template
+The workout template editor is the only workout template writer, and it only creates. The template
 store records the UID from `subscribe(uid)`, and its `createWorkoutTemplate` action throws when it is
 missing. The editor converts the draft to stored units before the call: weight to kilograms,
 distance to meters, and duration to seconds, from the profile's `settings.units`. The service trims

@@ -29,8 +29,8 @@ import { ExercisePickerList } from './exercise-picker-list';
  * Fixed detents, as in `custom-exercise-sheet.tsx`, because the body is a
  * `List`. `fitToContents` sizes the sheet from its children, and a `List`
  * reports no intrinsic height, so the sheet has to own the height and the
- * `VStack` hands the `List` whatever the header row leaves. Like the editor it
- * presents over, it opens at full height (`selection: 'large'`) and can be
+ * `VStack` hands the `List` whatever the header row leaves. It opens at full
+ * height (`selection: 'large'`), over the template editor, and can be
  * dragged down to `medium`. At full height iOS 26 draws it opaque, and the rows
  * keep their system fill so they stay visible against that background.
  */
@@ -62,9 +62,8 @@ export interface ExercisePickerSheetProps {
 
 /**
  * A `BottomSheet` that picks several exercises from the catalogue. It opens no
- * `Host`: the template editor renders it inside its own sheet's content, which
- * is already inside the editor's `Host`, and a `Host` must never nest. The
- * presenting `Host` also supplies the color scheme.
+ * `Host`: `workout-template-editor.tsx` wraps it in its own `Host` island,
+ * which also supplies the color scheme.
  */
 export const ExercisePickerSheet: React.FC<ExercisePickerSheetProps> = ({
   isPresented,

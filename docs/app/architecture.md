@@ -2,7 +2,7 @@
 type: app
 status: current
 area: architecture
-updated: 2026-10-14
+updated: 2026-10-15
 ---
 
 # Application architecture
@@ -104,11 +104,20 @@ from the exercises feature, so the sheet presents from every tab. The panel's Cu
 opens it through
 [`use-custom-exercise-sheet-store.ts`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts),
 because the adapter that handles the action and the layout that mounts the sheet do not contain each
-other. Beside it, the layout mounts
-[`workout-template-sheet.tsx`](../../apps/mobile/src/features/workout-templates/workout-template-sheet.tsx)
-from the workout-templates feature, which the panel's New Workout Template action opens through
-[`use-workout-template-sheet-store.ts`](../../apps/mobile/src/stores/use-workout-template-sheet-store.ts)
-for the same reason.
+other.
+
+The workout template editor is a root-level route,
+[`apps/mobile/app/workout-template.tsx`](../../apps/mobile/app/workout-template.tsx), presented as a
+page sheet. The root layout wraps its `Stack` in
+[`workout-template-expandable.tsx`](../../apps/mobile/src/features/workout-templates/workout-template-expandable.tsx),
+which registers the editor and its tab bar pill with `@hipefit/expandable-accessory`, and the private
+layout renders the pill in the tab bar's bottom accessory. The panel's New Workout Template action
+starts a draft in
+[`use-workout-template-draft-store.ts`](../../apps/mobile/src/stores/use-workout-template-draft-store.ts)
+and pushes the route. The draft lives in a store rather than in the editor because minimizing
+unmounts the editor. Unlike other routes, this one declares no chrome: it renders only the
+package's outlet, and the editor declares its own title and toolbar. The wiring is documented in
+[navigation.md](navigation.md#the-bottom-accessory).
 
 ## Stores
 
@@ -123,7 +132,7 @@ Zustand stores are module-level singletons created with `create()` under
 | [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts)              | Whether the native create panel is expanded                                                             |
 | [`useCustomExerciseSheetStore`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts)   | Whether the custom exercise sheet is presented                                                          |
 | [`useWorkoutTemplateStore`](../../apps/mobile/src/stores/use-workout-template-store.ts)            | Unarchived workout templates, newest update first, and the `createWorkoutTemplate` action               |
-| [`useWorkoutTemplateSheetStore`](../../apps/mobile/src/stores/use-workout-template-sheet-store.ts) | Whether the workout template sheet is presented                                                         |
+| [`useWorkoutTemplateDraftStore`](../../apps/mobile/src/stores/use-workout-template-draft-store.ts) | The workout template draft being created and the editor state that survives minimizing                  |
 
 Zustand is used instead of React context because subscription orchestration drives stores through
 `getState()` outside component trees, while components can select narrow slices.
@@ -131,8 +140,10 @@ Zustand is used instead of React context because subscription orchestration driv
 The three Firestore data stores, user, exercise, and workout template, expose `subscribe(uid)`,
 which returns a teardown. A teardown removes the service listeners and restores the store's initial
 loading state. They do not expose separate `reset()` actions. The navigation-dock store, the
-custom-exercise-sheet store, and the workout-template-sheet store are UI state and have no Firestore
-lifecycle.
+custom-exercise-sheet store, and the workout-template-draft store are UI state and have no Firestore
+lifecycle. The draft store is memory only, and
+[`workout-template-expandable.tsx`](../../apps/mobile/src/features/workout-templates/workout-template-expandable.tsx)
+discards its draft when the user signs out.
 
 Data-store conventions:
 
@@ -252,7 +263,7 @@ packages are:
 | Package                                                                         | Kind                  | Owns                                              |
 | ------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------- |
 | [`@hipefit/config`](../../packages/config/package.json)                         | Shared configuration  | TypeScript and ESLint bases                       |
-| [`@hipefit/expandable-accessory`](../../packages/expandable-accessory/index.ts) | React                 | Router provider, slots, outlets, and zoom trigger |
+| [`@hipefit/expandable-accessory`](../../packages/expandable-accessory/index.ts) | React                 | Router provider, slots, outlets, and trigger      |
 | [`@hipefit/firebase`](../../packages/firebase/src/react-native/index.ts)        | SDK-bound TypeScript  | Target-specific Firebase instances and refs       |
 | [`@hipefit/navigation-dock`](../../packages/navigation-dock/index.ts)           | Expo native view      | UIKit create panel, scrim, and bridge types       |
 | [`@hipefit/schemas`](../../packages/schemas/src/index.ts)                       | Pure TypeScript       | Persisted contracts, validation, and path strings |
@@ -270,7 +281,8 @@ and React Native Firebase so non-mobile consumers can reuse it.
 
 `@hipefit/navigation-dock` has Swift source, a podspec, `expo-module.config.json`, and a typed
 `requireNativeView` bridge. `@hipefit/expandable-accessory` is React-only because it coordinates a
-provider across the NativeTabs and root Stack trees. `@hipefit/sortable-list` is React Native only:
+provider across the NativeTabs and root Stack trees. The app mounts it once, for workout template
+drafts, from the root layout. `@hipefit/sortable-list` is React Native only:
 it wraps `LegendList` with a Gesture Handler and Reanimated drag, and it imports nothing from the
 app. The caller passes its haptics in as callbacks, so the package does not reach into
 [`apps/mobile/src/lib/haptics.ts`](../../apps/mobile/src/lib/haptics.ts). Its rules for app code are

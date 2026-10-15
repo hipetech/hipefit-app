@@ -8,27 +8,22 @@ import type { UnitSystem } from '@/lib/units';
 import type { SortableListRenderItemInfo } from '@hipefit/sortable-list';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import {
-  Button,
-  Group,
-  HStack,
-  RNHostView,
-  Spacer,
-  Text as SwiftUIText,
-  VStack,
-} from '@expo/ui/swift-ui';
-import {
-  disabled,
-  font,
-  frame,
-  lineLimit,
-  padding,
-} from '@expo/ui/swift-ui/modifiers';
+  ActionSheetIOS,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+import { Host } from '@expo/ui';
+import { useExpandableAccessory } from '@hipefit/expandable-accessory';
 import { SortableList } from '@hipefit/sortable-list';
+import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Text } from '@/components/text';
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { formatLongDate, toLocalDateId } from '@/lib/format';
 import {
   hapticImpact,
@@ -37,6 +32,7 @@ import {
   hapticSuccess,
 } from '@/lib/haptics';
 import { useUserStore } from '@/stores/use-user-store';
+import { useWorkoutTemplateDraftStore } from '@/stores/use-workout-template-draft-store';
 import { useWorkoutTemplateStore } from '@/stores/use-workout-template-store';
 import { colors } from '@/theme/colors';
 
@@ -71,26 +67,6 @@ const SAVE_ERROR_MESSAGE =
 const EMPTY_EXERCISES_MESSAGE = 'Add exercises to build this template.';
 
 /**
- * The header row stands in for a navigation bar: the sheet has no navigation
- * stack to draw one. The top inset clears the drag indicator.
- */
-const HEADER_MODIFIERS = [padding({ horizontal: 16, top: 20, bottom: 8 })];
-
-const TITLE_MODIFIERS = [font({ textStyle: 'headline' }), lineLimit(1)];
-
-const SAVE_LABEL_MODIFIERS = [font({ textStyle: 'body', weight: 'semibold' })];
-
-/**
- * `BottomSheet` draws itself in place as `Rectangle().hidden()` carrying the
- * `.sheet` modifier (`BottomSheetView.swift` at @expo/ui 57.0.7). A hidden
- * view keeps its layout, and a `Rectangle` takes all the space it is offered,
- * so in this `VStack` the picker's anchor would split the height below the
- * header with the hosted list. A zero frame keeps it out of the layout, and
- * the `.sheet` on it still presents.
- */
-const PICKER_ANCHOR_MODIFIERS = [frame({ width: 0, height: 0 })];
-
-/**
  * Height assumed for a list item before it is measured: a single exercise card
  * with one set, summed from `template-card-styles.ts`,
  * `template-exercise-content.tsx`, and `template-set-row.tsx` at the default
@@ -98,8 +74,22 @@ const PICKER_ANCHOR_MODIFIERS = [frame({ width: 0, height: 0 })];
  */
 const ESTIMATED_ROW_HEIGHT = 136;
 
+/**
+ * What the editor renders if the store holds no draft. `ExpandedOutlet`
+ * unmounts the editor as soon as the provider goes inactive, so this guards a
+ * render that should not occur rather than a state the user sees.
+ */
+const NO_DRAFT: WorkoutTemplateDraft = createWorkoutTemplateDraft();
+
 const styles = StyleSheet.create({
+  /** The background the form's fields and the exercise cards sit on. */
+  screen: { flex: 1, backgroundColor: colors.systemBackground },
   fill: { flex: 1 },
+  /**
+   * A self-presenting overlay: the `BottomSheet` inside the `Host` draws
+   * itself, so the host view takes no space in the layout.
+   */
+  sheetHost: { position: 'absolute' },
   listContent: { paddingBottom: 32 },
   header: {
     gap: 8,
@@ -109,7 +99,7 @@ const styles = StyleSheet.create({
   },
   /**
    * The same opaque card the exercise rows draw, so the fields and the rows
-   * read as one surface on the sheet's background.
+   * read as one surface on the screen's background.
    */
   field: {
     paddingHorizontal: 16,
@@ -161,8 +151,9 @@ const styles = StyleSheet.create({
   emptyMessage: { color: colors.secondaryLabel },
   /**
    * A centered capsule in the system fill with an accent label, the look of a
-   * SwiftUI `.bordered` button. A SwiftUI `Button` cannot be used here: the
-   * footer renders inside the `RNHostView`, and a `Host` there would nest.
+   * SwiftUI `.bordered` button. The footer is plain React Native list content
+   * like the rows, and a SwiftUI `Button` here would need a `Host` island of
+   * its own.
    */
   addExercises: {
     minHeight: 44,
@@ -186,66 +177,86 @@ interface RowContext {
   openNoteKeys: ReadonlySet<string>;
 }
 
-const NO_EDITED_EXERCISES: ReadonlySet<string> = new Set();
-const NO_OPEN_NOTES: ReadonlySet<string> = new Set();
-
 /** Module scope, so `SortableList` receives the same function every render. */
 const keyBlock = (block: TemplateExerciseBlock): string => block.key;
 
-export interface WorkoutTemplateFormProps {
-  /** Dismisses the sheet. Called by Cancel, and after a save that succeeded. */
-  onClose: () => void;
-  /**
-   * Reports whether the sheet must refuse an interactive dismissal: `true`
-   * while the draft has any input or a save is in flight.
-   */
-  onDismissLockChange: (isLocked: boolean) => void;
-}
-
 /**
- * The workout template editor: a SwiftUI header row with Cancel, the title,
- * and Save, above a React Native `SortableList` of exercises. Host-less. It
- * renders inside the `BottomSheet` of `workout-template-sheet.tsx`, which
- * mounts it once per presentation, so every presentation starts from an empty
- * draft.
+ * The workout template editor, the content of the modal route the template
+ * accessory expands into: a React Native `SortableList` of exercises, with
+ * Cancel, the title, and Save declared as the route's header. As a page sheet
+ * it minimizes by swiping down, which pops the route and leaves the draft in
+ * its store. Presented full screen it also shows Minimize, which calls the
+ * provider's `close()`: the zoom's swipe-down exists only when the pill opened
+ * the route, not when the create panel did.
+ * It takes no props and renders only inside `ExpandableAccessory.Provider`.
  *
- * The draft is one `useState` over the pure operations in
- * `workout-template-draft.ts`. Updaters stay pure because React may run them
- * twice, so haptics fire in the handlers. Field errors appear once the user
- * has edited that field or pressed Save.
+ * The draft and the UI state that must survive minimizing (edited fields,
+ * open notes, whether Save was pressed) live in `useWorkoutTemplateDraftStore`,
+ * so the editor can unmount when minimized and remount unchanged. The save error,
+ * the pending save, and which sheet is presented are local: they describe this
+ * mount, not the draft. Store updates stay pure, so haptics fire in the
+ * handlers. Field errors appear once the user has edited that field or
+ * pressed Save.
+ *
+ * Header items, checked against expo-router 57.0.8
+ * (`build/layouts/stack-utils/toolbar/`): `Stack.Toolbar` takes
+ * `placement="left"` or `"right"` for the navigation bar (`"bottom"`, the
+ * default, is the bottom toolbar), and its children are
+ * `Stack.Toolbar.Button`s. Right items render in declaration order, leading to
+ * trailing. A disabled Save is the button's `disabled` prop, which reaches the
+ * `UIBarButtonItem` through `unstable_headerRightItems`.
  */
-export const WorkoutTemplateForm: React.FC<WorkoutTemplateFormProps> = ({
-  onClose,
-  onDismissLockChange,
-}) => {
+export const WorkoutTemplateEditor: React.FC = () => {
+  const { presentation, close } = useExpandableAccessory();
+  const colorScheme = useAppColorScheme();
   // `metric` until the profile loads, which is the value a new profile is
   // provisioned with.
   const units = useUserStore(
     (state): UnitSystem => state.profile?.settings.units ?? 'metric'
   );
 
-  const [draft, setDraft] = useState<WorkoutTemplateDraft>(
-    createWorkoutTemplateDraft
+  const stored = useWorkoutTemplateDraftStore(
+    useShallow((state) => ({
+      draft: state.draft,
+      isNameEdited: state.isNameEdited,
+      editedExerciseKeys: state.editedExerciseKeys,
+      openNoteKeys: state.openNoteKeys,
+      didPressSave: state.didPressSave,
+      isSaving: state.isSaving,
+    }))
   );
-  const [isNameEdited, setIsNameEdited] = useState(false);
-  const [editedExerciseKeys, setEditedExerciseKeys] =
-    useState<ReadonlySet<string>>(NO_EDITED_EXERCISES);
-  // Which note fields the user has opened, by set key or superset id. UI
-  // state, not draft: an empty note that is closed again leaves no trace.
-  const [openNoteKeys, setOpenNoteKeys] =
-    useState<ReadonlySet<string>>(NO_OPEN_NOTES);
-  const [didPressSave, setDidPressSave] = useState(false);
+  const {
+    isNameEdited,
+    editedExerciseKeys,
+    openNoteKeys,
+    didPressSave,
+    isSaving,
+  } = stored;
+  const draft = stored.draft ?? NO_DRAFT;
+
+  const updateStoredDraft = useWorkoutTemplateDraftStore(
+    (state) => state.updateDraft
+  );
+  const markNameEdited = useWorkoutTemplateDraftStore(
+    (state) => state.markNameEdited
+  );
+  const markExerciseEdited = useWorkoutTemplateDraftStore(
+    (state) => state.markExerciseEdited
+  );
+  const toggleNote = useWorkoutTemplateDraftStore((state) => state.toggleNote);
+  const discard = useWorkoutTemplateDraftStore((state) => state.discard);
+
   const [isPickerPresented, setIsPickerPresented] = useState(false);
   const [isDateSheetPresented, setIsDateSheetPresented] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [didFail, setDidFail] = useState(false);
 
-  // A save can outlive the form: Cancel dismisses while the write is pending.
-  // `isMounted` stops that save from closing a sheet the user has since
-  // reopened. `isSavingRef` rejects a second press that lands before the
-  // disabled state reaches the native button.
+  // A save can outlive the editor: minimizing unmounts it while the write is
+  // pending. `isMounted` keeps that save from setting state or playing a
+  // haptic with no editor on screen. The in-flight flag lives in the draft
+  // store and is read synchronously, so it also rejects a second press that
+  // lands before the disabled state reaches the native button, and a press in
+  // an editor reopened during the write.
   const isMounted = useRef(true);
-  const isSavingRef = useRef(false);
 
   useEffect(() => {
     isMounted.current = true;
@@ -256,33 +267,22 @@ export const WorkoutTemplateForm: React.FC<WorkoutTemplateFormProps> = ({
 
   const errors = useMemo(() => validateWorkoutTemplateDraft(draft), [draft]);
   const canSave = !isSaving && !hasWorkoutTemplateDraftErrors(errors);
-  const isDismissLocked = isSaving || hasUnsavedInput(draft);
-
-  useEffect(() => {
-    onDismissLockChange(isDismissLocked);
-  }, [isDismissLocked, onDismissLockChange]);
 
   /** Every edit clears a save error, as in the custom exercise form. */
   const updateDraft = useCallback(
     (update: (current: WorkoutTemplateDraft) => WorkoutTemplateDraft) => {
-      setDraft(update);
+      updateStoredDraft(update);
       setDidFail(false);
     },
-    []
+    [updateStoredDraft]
   );
-
-  const markExerciseEdited = useCallback((exerciseKey: string) => {
-    setEditedExerciseKeys((current) =>
-      current.has(exerciseKey) ? current : new Set(current).add(exerciseKey)
-    );
-  }, []);
 
   const handleNameChange = useCallback(
     (name: string) => {
-      setIsNameEdited(true);
+      markNameEdited();
       updateDraft((current) => ({ ...current, name }));
     },
-    [updateDraft]
+    [markNameEdited, updateDraft]
   );
 
   // The rows play their own selection haptic for Add Set, removing a set, and
@@ -316,14 +316,6 @@ export const WorkoutTemplateForm: React.FC<WorkoutTemplateFormProps> = ({
     },
     [markExerciseEdited, updateDraft]
   );
-
-  const handleToggleNote = useCallback((noteKey: string) => {
-    setOpenNoteKeys((current) => {
-      const next = new Set(current);
-      if (!next.delete(noteKey)) next.add(noteKey);
-      return next;
-    });
-  }, []);
 
   const handleChangeSetNotes = useCallback(
     (exerciseKey: string, setKey: string, notes: string) => {
@@ -422,29 +414,64 @@ export const WorkoutTemplateForm: React.FC<WorkoutTemplateFormProps> = ({
     [updateDraft]
   );
 
+  // Discarding turns the provider inactive, and the provider pops the route,
+  // so neither branch navigates.
+  const handleCancel = useCallback(() => {
+    const current = useWorkoutTemplateDraftStore.getState().draft;
+    if (current === null || !hasUnsavedInput(current)) {
+      discard();
+      return;
+    }
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: ['Discard Template', 'Keep Editing'],
+        destructiveButtonIndex: 0,
+        cancelButtonIndex: 1,
+      },
+      (index) => {
+        if (index === 0) discard();
+      }
+    );
+  }, [discard]);
+
   const save = useCallback(async () => {
-    if (isSavingRef.current) return;
+    const {
+      draft: current,
+      isSaving: isAlreadySaving,
+      setDidPressSave,
+      setIsSaving,
+    } = useWorkoutTemplateDraftStore.getState();
+    if (current === null || isAlreadySaving) return;
 
     setDidPressSave(true);
-    const input = toWorkoutTemplateInput(draft, units);
+    const input = toWorkoutTemplateInput(current, units);
     if (!input) return;
 
-    isSavingRef.current = true;
     setIsSaving(true);
     setDidFail(false);
+    // A save that finishes after minimizing still clears the draft it wrote, so
+    // the accessory does not offer a template that already exists. A draft
+    // discarded during the write is left alone: by then the store may hold a
+    // newer draft that this save did not write.
+    let wasDiscarded = false;
+    const unsubscribe = useWorkoutTemplateDraftStore.subscribe((state) => {
+      if (state.draft === null) wasDiscarded = true;
+    });
     try {
       await useWorkoutTemplateStore.getState().createWorkoutTemplate(input);
-      if (!isMounted.current) return;
-      hapticSuccess();
-      onClose();
+      if (isMounted.current) hapticSuccess();
+      if (!wasDiscarded) discard();
     } catch (error) {
       console.error('[WorkoutTemplate] save', error);
-      isSavingRef.current = false;
+      // Cleared in the store even when the editor is gone, so a reopened
+      // editor can retry. A discarded draft has no flag left to clear.
+      if (!wasDiscarded) setIsSaving(false);
       if (!isMounted.current) return;
-      setIsSaving(false);
       setDidFail(true);
+    } finally {
+      unsubscribe();
     }
-  }, [draft, onClose, units]);
+  }, [discard, units]);
 
   const rowContext = useMemo<RowContext>(
     () => ({
@@ -494,7 +521,7 @@ export const WorkoutTemplateForm: React.FC<WorkoutTemplateFormProps> = ({
             onRemoveSet={handleRemoveSet}
             onChangeSetField={handleChangeSetField}
             openNoteKeys={rowContext.openNoteKeys}
-            onToggleNote={handleToggleNote}
+            onToggleNote={toggleNote}
             onChangeSetNotes={handleChangeSetNotes}
             onLinkWithNext={handleLinkWithNext}
             onUnlink={handleUnlink}
@@ -519,7 +546,7 @@ export const WorkoutTemplateForm: React.FC<WorkoutTemplateFormProps> = ({
           onRemoveSet={handleRemoveSet}
           onChangeSetField={handleChangeSetField}
           openNoteKeys={rowContext.openNoteKeys}
-          onToggleNote={handleToggleNote}
+          onToggleNote={toggleNote}
           onChangeSetNotes={handleChangeSetNotes}
           onLinkWithNext={handleLinkWithNext}
           onUnlink={handleUnlink}
@@ -536,9 +563,9 @@ export const WorkoutTemplateForm: React.FC<WorkoutTemplateFormProps> = ({
       handleRemove,
       handleRemoveSet,
       handleReorderMembers,
-      handleToggleNote,
       handleUnlink,
       rowContext,
+      toggleNote,
     ]
   );
 
@@ -635,69 +662,81 @@ export const WorkoutTemplateForm: React.FC<WorkoutTemplateFormProps> = ({
   );
 
   return (
-    <VStack spacing={0}>
-      <HStack modifiers={HEADER_MODIFIERS}>
-        <Button label="Cancel" onPress={onClose} />
-        <Spacer />
-        <SwiftUIText modifiers={TITLE_MODIFIERS}>
-          New Workout Template
-        </SwiftUIText>
-        <Spacer />
-        <Button onPress={save} modifiers={[disabled(!canSave)]}>
-          <SwiftUIText modifiers={SAVE_LABEL_MODIFIERS}>Save</SwiftUIText>
-        </Button>
-      </HStack>
-
-      {/* No `matchContents`: the list is virtualized and owns its scrolling,
-          so it must fill the height the header leaves rather than report a
-          content height. Without `matchContents`, `RNHostView.swift` at
-          @expo/ui 57.0.7 frames the hosted view with an infinite max width and
-          height and reports that size to Yoga, so it fills the `VStack` with
-          no explicit frame (`RNHostView` takes no `modifiers` either).
-          No `pointerEvents="none"` either: the hosted tree is interactive, and
-          the header's SwiftUI buttons sit outside it, so the touch handler
-          conflict `docs/app/ui.md` records does not reach them. */}
-      <RNHostView>
-        {/* Gesture Handler recognizes a gesture only beneath a native
-            `GestureHandlerRootView`. The one in `app/_layout.tsx` is not an
-            ancestor of this view: the sheet's content is reparented into the
-            sheet's own hosting controller. This subtree mounts its own root so
-            the list's drag gesture is recognized. */}
-        <GestureHandlerRootView style={styles.fill}>
-          <SortableList
-            data={blocks}
-            keyExtractor={keyBlock}
-            renderItem={renderItem}
-            onReorder={handleReorder}
-            onLift={hapticLift}
-            onSlotChange={hapticSelection}
-            extraData={rowContext}
-            style={styles.fill}
-            contentContainerStyle={styles.listContent}
-            estimatedItemSize={ESTIMATED_ROW_HEIGHT}
-            ListHeaderComponent={listHeader}
-            ListFooterComponent={listFooter}
+    <View style={styles.screen}>
+      <Stack.Screen.Title>New Workout Template</Stack.Screen.Title>
+      <Stack.Toolbar placement="left">
+        <Stack.Toolbar.Button onPress={handleCancel}>
+          Cancel
+        </Stack.Toolbar.Button>
+      </Stack.Toolbar>
+      <Stack.Toolbar placement="right">
+        {presentation === 'fullScreen' ? (
+          <Stack.Toolbar.Button
+            icon="chevron.down"
+            accessibilityLabel="Minimize"
+            onPress={close}
           />
-        </GestureHandlerRootView>
-      </RNHostView>
+        ) : null}
+        <Stack.Toolbar.Button variant="done" disabled={!canSave} onPress={save}>
+          Save
+        </Stack.Toolbar.Button>
+      </Stack.Toolbar>
 
-      {/* Rendered in the form's SwiftUI tree, so the exercise picker and the
-          date sheet present over the editor sheet. Neither opens a `Host`. */}
-      <Group modifiers={PICKER_ANCHOR_MODIFIERS}>
+      {/* Gesture Handler recognizes a gesture only beneath a native
+          `GestureHandlerRootView`. The root layout mounts one, but a
+          modal route is presented by its own view controller, so
+          its views are not native descendants of that root. This subtree
+          mounts its own root so the list's drag gesture is recognized. If the
+          outer root would have served, a nested one is harmless. Not yet run
+          on a device: if the block drag does not start here, check this
+          first. */}
+      <GestureHandlerRootView style={styles.fill}>
+        {/* `automatic`, as on Exercises: the list is the screen's content
+            under the navigation bar and above the home indicator, and the
+            drag's edge scrolling stops at those insets. */}
+        <SortableList
+          data={blocks}
+          keyExtractor={keyBlock}
+          renderItem={renderItem}
+          onReorder={handleReorder}
+          onLift={hapticLift}
+          onSlotChange={hapticSelection}
+          extraData={rowContext}
+          style={styles.fill}
+          contentContainerStyle={styles.listContent}
+          contentInsetAdjustmentBehavior="automatic"
+          estimatedItemSize={ESTIMATED_ROW_HEIGHT}
+          ListHeaderComponent={listHeader}
+          ListFooterComponent={listFooter}
+        />
+      </GestureHandlerRootView>
+
+      {/* Each sheet presents from its own `Host` island, as
+          `custom-exercise-sheet.tsx` does, because the editor is plain React
+          Native with no SwiftUI tree to render them in. */}
+      <Host
+        style={styles.sheetHost}
+        pointerEvents="none"
+        colorScheme={colorScheme}
+      >
         <ExercisePickerSheet
           isPresented={isPickerPresented}
           onCancel={handleCancelPicker}
           onAdd={handleAddExercises}
         />
-      </Group>
-      <Group modifiers={PICKER_ANCHOR_MODIFIERS}>
+      </Host>
+      <Host
+        style={styles.sheetHost}
+        pointerEvents="none"
+        colorScheme={colorScheme}
+      >
         <PlannedDateSheet
           isPresented={isDateSheetPresented}
           plannedDate={draft.plannedDate}
           onChange={handleChangePlannedDate}
           onClose={handleCloseDateSheet}
         />
-      </Group>
-    </VStack>
+      </Host>
+    </View>
   );
 };

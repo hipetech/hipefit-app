@@ -1,9 +1,12 @@
 import { StyleSheet, View } from 'react-native';
+import {
+  ExpandableAccessory,
+  useExpandableAccessory,
+} from '@hipefit/expandable-accessory';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { CustomExerciseSheet } from '@/features/exercises/custom-exercise-sheet';
 import { NavigationDock } from '@/features/navigation-dock/navigation-dock';
-import { WorkoutTemplateSheet } from '@/features/workout-templates/workout-template-sheet';
 import { hapticImpact } from '@/lib/haptics';
 import { useNavigationDockStore } from '@/stores/use-navigation-dock-store';
 
@@ -56,6 +59,7 @@ const styles = StyleSheet.create({
 export default function TabsLayout() {
   const expanded = useNavigationDockStore((state) => state.expanded);
   const toggle = useNavigationDockStore((state) => state.toggle);
+  const { isActive: isAccessoryActive } = useExpandableAccessory();
 
   /*
    * The haptic fires on the way open only. `hapticImpact` is documented as "a
@@ -124,6 +128,17 @@ export default function TabsLayout() {
             {expanded ? 'Close' : 'Create'}
           </NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
+
+        {/*
+          The workout template draft's pill, while a draft exists and the user
+          is signed in. `@hipefit/expandable-accessory` requires removing the
+          whole `BottomAccessory` wrapper while inactive, not only its outlet.
+        */}
+        {isAccessoryActive ? (
+          <NativeTabs.BottomAccessory>
+            <ExpandableAccessory.AccessoryOutlet />
+          </NativeTabs.BottomAccessory>
+        ) : null}
       </NativeTabs>
 
       <NavigationDock />
@@ -132,11 +147,6 @@ export default function TabsLayout() {
         the sheet presents from any tab. It reads its own presentation store.
       */}
       <CustomExerciseSheet />
-      {/*
-        Mounted here for the same reason, beside the panel whose New Workout
-        Template action opens it. It reads its own presentation store.
-      */}
-      <WorkoutTemplateSheet />
     </View>
   );
 }

@@ -128,8 +128,8 @@ export interface TemplateExerciseContentProps {
  * gets its card from `template-exercise-row.tsx`, and superset members share
  * the card of `template-superset-block.tsx`.
  *
- * Plain React Native, because it renders inside an `RNHostView` in the
- * template sheet's `Host`, and a `Host` cannot nest. It owns no state and
+ * Plain React Native, inside a row of the editor's `SortableList`. It owns no
+ * state and
  * renders only from its props, because `SortableList` draws the lifted item a
  * second time.
  */

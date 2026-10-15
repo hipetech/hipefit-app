@@ -153,9 +153,8 @@ export interface TemplateSetRowProps {
  * the exercise type uses, a note button, and a remove control. The note field
  * shows below the set once opened, and always when the set has a note.
  *
- * Plain React Native, because it renders inside an `RNHostView` in the
- * template sheet's `Host`, and a `Host` cannot nest. It renders only from its
- * props, because `SortableList` draws the lifted row a second time. Each input
+ * Plain React Native, inside a row of the editor's `SortableList`. It renders
+ * only from its props, because `SortableList` draws the lifted row a second time. Each input
  * sits in `SortableDragExclusion`, so a long press in a field selects text
  * instead of lifting the exercise row.
  */

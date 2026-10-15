@@ -2,7 +2,7 @@
 type: app
 status: current
 area: code-style
-updated: 2026-10-14
+updated: 2026-10-15
 ---
 
 # Code style and authoring
@@ -159,7 +159,7 @@ decoded catalogue sources and a user-store subscription. [`useAuthStore`](../../
 produces the UID, so it has an idempotent `initialize()` lifecycle instead of `subscribe(uid)`.
 [`useNavigationDockStore`](../../apps/mobile/src/stores/use-navigation-dock-store.ts),
 [`useCustomExerciseSheetStore`](../../apps/mobile/src/stores/use-custom-exercise-sheet-store.ts), and
-[`useWorkoutTemplateSheetStore`](../../apps/mobile/src/stores/use-workout-template-sheet-store.ts)
+[`useWorkoutTemplateDraftStore`](../../apps/mobile/src/stores/use-workout-template-draft-store.ts)
 are UI state and have no Firebase lifecycle.
 
 ### Services

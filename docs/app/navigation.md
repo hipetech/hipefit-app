@@ -2,7 +2,7 @@
 type: app
 status: current
 area: navigation
-updated: 2026-10-14
+updated: 2026-10-15
 ---
 
 # Navigation
@@ -20,12 +20,13 @@ space is exactly what the file tree describes.
 
 ```text
 apps/mobile/app/
-├── _layout.tsx              Root Stack + auth gate
+├── _layout.tsx              Root Stack + auth gate, inside the template accessory provider
 ├── index.tsx                Entry redirect
+├── workout-template.tsx     Workout template editor, a page sheet
 ├── (public)/
 │   └── login.tsx            Apple Sign-In
 └── (private)/
-    ├── _layout.tsx          NativeTabs (4 tabs + Create), the native panel, the two create sheets
+    ├── _layout.tsx          NativeTabs (4 tabs + Create), the bottom accessory, the native panel, the custom exercise sheet
     ├── create.tsx           No screen — the Create tab item's required route
     ├── (home)/              path "/"
     │   ├── _layout.tsx
@@ -42,9 +43,9 @@ apps/mobile/app/
         └── edit-profile.tsx
 ```
 
-That is the whole route surface. Eight route files: seven screens, one of which is a sheet, plus
-`create.tsx`, which is not a screen at all — it exists because a tab trigger must name a route, and
-it redirects. There is
+That is the whole route surface. Nine route files: eight screens, two of which are sheets, plus
+`create.tsx`. That file is not a screen at all. It exists because a tab
+trigger must name a route, and it redirects. There is
 no
 `apps/mobile/app/+not-found.tsx`, so an unmatched path falls through to Expo Router's built-in unmatched
 screen rather than anything this app authored.
@@ -52,9 +53,10 @@ screen rather than anything this app authored.
 ## The auth gate
 
 [`apps/mobile/app/_layout.tsx`](../../apps/mobile/app/_layout.tsx) is a single `Stack` registering
-three things: `index`,
-`(public)/login`, and `(private)` — the last wrapped in `Stack.Protected` with
-`guard={isLoggedIn}`.
+four things: `index`, `(public)/login`, `(private)`, and `workout-template`. The last two are wrapped
+in `Stack.Protected` with `guard={isLoggedIn}`. The `Stack` sits inside
+[`WorkoutTemplateExpandable`](../../apps/mobile/src/features/workout-templates/workout-template-expandable.tsx),
+described under [the bottom accessory](#the-bottom-accessory).
 
 `Stack.Protected` is not a redirect. A false guard **excludes** the wrapped screens from the
 navigator's screen list, so while signed out the `(private)` subtree does not exist as far as
@@ -88,7 +90,9 @@ Three details are load-bearing:
 ## Groups: `(public)` and `(private)`
 
 Both are route groups, so neither contributes a path segment. `(public)/login.tsx` is `/login`;
-the private tabs are `/`, `/workouts`, `/exercises`, `/settings`. The groups exist to give the
+the private tabs are `/`, `/workouts`, `/exercises`, `/settings`. `workout-template.tsx` sits at the
+root, outside both groups, so its path is `/workout-template`. It shares the private guard but not
+the tab navigator, which is what lets it present over the tab bar. The groups exist to give the
 guard a single node to wrap and to keep the signed-out screen physically separate from everything
 that assumes a session.
 
@@ -147,6 +151,15 @@ background, so a resume has to re-read them.
 Exercises' search bar writes into the same `useState` that filters the list. Configuring it from the
 layout would mean lifting that state above the screen that owns it for no benefit.
 
+The workout template editor is the one screen whose chrome is declared by a feature component
+rather than its route file.
+[`apps/mobile/app/workout-template.tsx`](../../apps/mobile/app/workout-template.tsx) renders only
+`ExpandableAccessory.ExpandedOutlet`, as the package requires, so
+[`workout-template-editor.tsx`](../../apps/mobile/src/features/workout-templates/workout-template-editor.tsx)
+declares `Stack.Screen.Title` and a `Stack.Toolbar` on each side of the navigation bar: Cancel
+leading, Save trailing. Cancel and Save depend on the draft, so the same reasoning
+applies. The route keeps the native header; it does not set `headerShown: false`.
+
 The pattern also keeps route files thin. A route is normally a title plus one island from
 `apps/mobile/src/features/` —
 [`apps/mobile/src/features/home/home-content.tsx`](../../apps/mobile/src/features/home/home-content.tsx),
@@ -166,9 +179,10 @@ One sharp edge is recorded in the Exercises screen:
 
 [`apps/mobile/app/(private)/_layout.tsx`](<../../apps/mobile/app/(private)/_layout.tsx>) is the only
 interesting layout. It
-renders four siblings inside one flex `View`: the `NativeTabs` navigator — which contains **five**
-triggers, the four tabs plus Create — the action panel that overlays it, and the custom exercise and
-workout template sheets described under [Sheets](#sheets), which take no space in the layout.
+renders three siblings inside one flex `View`: the `NativeTabs` navigator, the action panel that
+overlays it, and the custom exercise sheet described under [Sheets](#sheets), which takes no space in
+the layout. The navigator contains **five** triggers, the four tabs plus Create, and the
+[bottom accessory](#the-bottom-accessory) while a template draft exists.
 
 ### The tabs are the system's
 
@@ -238,7 +252,8 @@ This replaced an anchored SwiftUI `Menu` — a `UIMenu` presented from the butto
 full-width pill and the design calls for a circle. That is a rejection of the slot for the Create
 affordance, not of the API: a full-width pill is exactly the shape an active-workout accessory wants,
 which is what [`@hipefit/expandable-accessory`](../../packages/expandable-accessory/README.md) is
-built to fill. No route mounts it yet.
+built to fill. It is mounted today for workout template drafts, described under
+[The bottom accessory](#the-bottom-accessory).
 
 Ownership divides three ways:
 
@@ -263,10 +278,11 @@ The panel closes on all of the following, and every one of them routes through t
 - **The VoiceOver escape gesture**, which arrives as `onDismissRequest` with `reason: 'escape'`.
 - **Pressing New Workout Template or Custom Exercise.** The `onActionPress` handler in
   [`navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx) calls
-  `close()` explicitly before it opens the matching sheet. The navigation listener in the next rule
-  does not cover this case: each sheet is a SwiftUI presentation driven by store state, so the
-  navigation container emits no `state` event when it appears. A panel left expanded would keep
-  its modal scrim and `accessibilityViewIsModal` under the sheet.
+  `close()` explicitly before it opens the template editor or the custom exercise sheet. The
+  navigation listener in the next rule does not cover Custom Exercise: its sheet is a SwiftUI
+  presentation driven by store state, so the navigation container emits no `state` event when it
+  appears. A panel left expanded would keep its modal scrim and `accessibilityViewIsModal` under the
+  sheet. The editor push does emit one, and the explicit `close()` keeps the two branches alike.
 - **Any navigation** — a push, a sheet presented as a route, a deep link, or the redirect that
   follows a session change. The adapter listens to the navigation container's `state` event rather than watching route
   state in an effect. Not a tab switch while the panel is up: the scrim is modal and swallows it.
@@ -300,9 +316,10 @@ through `accessibilityPerformEscape`. The practical consequence for QA: while th
 `Close` cannot be found by an accessibility-driven driver and must be tapped by coordinate.
 
 Two kinds of event fire a haptic, each a single `hapticImpact()`: Create **opening** the panel, and
-a press on New Workout Template or Custom Exercise, which presents that action's sheet. Nothing
-fires on close, on the scrim, or on the escape gesture. Opening the panel and presenting a sheet
-each put something new on screen, which is what that intent name means; dismissal does not, and iOS
+a press on New Workout Template or Custom Exercise, which presents the template editor or the custom
+exercise sheet. Nothing fires on close, on the scrim, or on the escape gesture. Opening the panel and
+presenting the editor or a sheet each put something new on screen, which is what that intent name
+means; dismissal does not, and iOS
 itself stays silent when a sheet goes away. Each haptic fires from a press handler rather than from
 a store updater: an updater must be pure and may be called twice, which would be a doubled tap. The
 Create handler is in the tab layout, and the action handler is in
@@ -359,16 +376,68 @@ destination, which is a state change and so also earns a haptic.
 New Workout Template and Custom Exercise ship `enabled: true`. The `onActionPress` handler in
 [`navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx) receives
 the action `id` and compares it with `NEW_WORKOUT_TEMPLATE_ACTION_ID` and
-`CUSTOM_EXERCISE_ACTION_ID`. Both branches do the same three things: fire `hapticImpact()`, close
-the panel through `useNavigationDockStore`, and call `open()` on a sheet store. New Workout Template
-opens `useWorkoutTemplateSheetStore`, and Custom Exercise opens `useCustomExerciseSheetStore`. Each
-presents a sheet described under [Sheets](#sheets). The handler ignores every other `id`, so a stub
-that is enabled before it has a destination does nothing instead of navigating somewhere
-unintended.
+`CUSTOM_EXERCISE_ACTION_ID`. Both branches fire `hapticImpact()` and close the panel through
+`useNavigationDockStore`.
+
+- **New Workout Template** calls `start()` on
+  [`useWorkoutTemplateDraftStore`](../../apps/mobile/src/stores/use-workout-template-draft-store.ts),
+  then the accessory provider's `open()`. `start()` creates a draft only when none exists, so with
+  a draft minimized in the bottom accessory the press reopens that draft instead of replacing it.
+  `open()` pushes `/workout-template` without checking `active`, which is still false in this
+  render until `start()` re-renders the provider.
+- **Custom Exercise** calls `open()` on `useCustomExerciseSheetStore`, which presents the sheet
+  described under [Sheets](#sheets).
+
+The handler ignores every other `id`, so a stub that is enabled before it has a destination does
+nothing instead of navigating somewhere unintended.
+
+### The bottom accessory
+
+A workout template draft that the user minimizes shows as a pill in `NativeTabs.BottomAccessory`,
+built on [`@hipefit/expandable-accessory`](../../packages/expandable-accessory/README.md). The pill
+is [`workout-template-accessory.tsx`](../../apps/mobile/src/features/workout-templates/workout-template-accessory.tsx),
+and tapping it presents the editor route again.
+
+[`WorkoutTemplateExpandable`](../../apps/mobile/src/features/workout-templates/workout-template-expandable.tsx)
+wraps the root `Stack` in `ExpandableAccessory.Provider`. The provider must sit above both the tab
+navigator and the expanded route, so it wraps the root `Stack` rather than `(private)`. It registers
+the pill as `AccessoryContent` and the editor as `ExpandedContent`, with `href` and `expandedPath`
+both `/workout-template` and `fallbackHref` `/`.
+
+The provider is `active` while `useAuthStore` reports a signed-in user and the draft store holds a
+draft. That value controls three things:
+
+- **The accessory exists only while active.** The private layout renders
+  `NativeTabs.BottomAccessory` with `ExpandableAccessory.AccessoryOutlet` only while
+  `useExpandableAccessory().isActive` is true, and removes the whole wrapper otherwise, as the
+  package requires.
+- **Turning inactive closes the editor.** When `active` turns false while `/workout-template` is
+  focused, the provider pops the route with `router.back()`, or `router.replace('/')` when there is
+  no history. Save and Cancel call the draft store's `discard()` and rely on this instead of
+  navigating.
+- **Signing out discards the draft.** `WorkoutTemplateExpandable` subscribes to `useAuthStore` and
+  calls `discard()` when `isLoggedIn` goes from true to false, so a draft never carries over to the
+  next session.
+
+The package presents the expanded route either full screen with Apple Zoom or as a page sheet.
+`WORKOUT_TEMPLATE_PRESENTATION` in `workout-template-expandable.tsx` picks one and is `pageSheet`.
+The provider receives it, and the root layout registers the route with
+`expandedScreenOptions(WORKOUT_TEMPLATE_PRESENTATION)`, which is `presentation: 'modal'` for a page
+sheet, because the package cannot set a screen's presentation itself. Swiping the sheet down pops
+the route and leaves the draft in the store. Apple Zoom does not support sheets, so the pill's
+`ZoomSource` renders its content without a zoom and the editor slides up. With `fullScreen`, the
+pill zooms the editor out, and the editor adds a Minimize button that calls `close()`, because a
+full-screen modal opened from the create panel has no swipe-down.
+
+`NAVIGATION_DOCK_BOTTOM_INSET` was measured without an accessory and does not include one. Whether
+the open panel overlaps the pill has not been checked on a device.
 
 ## Sheets
 
-Only one sheet is a route:
+Two sheets are routes. The workout template editor,
+[`apps/mobile/app/workout-template.tsx`](../../apps/mobile/app/workout-template.tsx), is a page sheet
+(`presentation: 'modal'`), described under [The bottom accessory](#the-bottom-accessory). It is a
+route because the accessory package expands into a Stack route. The other is
 [`apps/mobile/app/(private)/settings/edit-profile.tsx`](<../../apps/mobile/app/(private)/settings/edit-profile.tsx>),
 presented as a `formSheet` with two detents, configured in the Settings layout because presentation
 belongs to route registration.
@@ -390,16 +459,13 @@ not contain each other. And it is mounted once in
 panel, so it presents from every tab. It is not a route because it does not need to be addressable
 or survive a push: it has no URL and no back-stack entry, and nothing links to it.
 
-The workout template sheet in
-[`apps/mobile/src/features/workout-templates/workout-template-sheet.tsx`](../../apps/mobile/src/features/workout-templates/workout-template-sheet.tsx)
-is a SwiftUI presentation of the same kind, for the same reasons. Its presentation state is
-`isPresented` in
-[`apps/mobile/src/stores/use-workout-template-sheet-store.ts`](../../apps/mobile/src/stores/use-workout-template-sheet-store.ts),
-which the New Workout Template action opens, and it is mounted once in the private layout beside the
-custom exercise sheet. It presents a second sheet, the exercise picker in
-[`exercise-picker-sheet.tsx`](../../apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx),
-from inside its own content. The editor form renders the picker in its SwiftUI tree and drives it
-with component state, so the picker has no store, no `Host`, and no mount point in a layout.
+The workout template editor presents two sheets of its own: the exercise picker in
+[`exercise-picker-sheet.tsx`](../../apps/mobile/src/features/workout-templates/exercise-picker-sheet.tsx)
+and the planned date sheet in
+[`planned-date-sheet.tsx`](../../apps/mobile/src/features/workout-templates/planned-date-sheet.tsx).
+The editor is plain React Native, so each sheet renders in its own absolutely positioned `Host`
+island, as the custom exercise sheet does. The editor drives both with component state, so neither
+has a store, a URL, or a mount point in a layout.
 
 The workout template preview in
 [`apps/mobile/src/features/workouts/workout-template-preview-sheet.tsx`](../../apps/mobile/src/features/workouts/workout-template-preview-sheet.tsx)
@@ -408,7 +474,7 @@ its own `Host` beside the screen's.
 
 ## Imperative navigation
 
-There are exactly two imperative navigation calls in the app, both in Settings:
+There are two imperative navigation calls in the app code, both in Settings:
 `router.push('/settings/edit-profile')` in
 [`apps/mobile/src/features/settings/settings-content.tsx`](../../apps/mobile/src/features/settings/settings-content.tsx),
 and
@@ -417,8 +483,15 @@ and
 **after** a successful write. The ordering there is a rule, not an accident: dismissing a form
 sheet reads to the user as a completed save, so the dismissal must follow the write.
 
+`@hipefit/expandable-accessory` also navigates imperatively inside the package: its provider pops
+the editor route with `router.back()` or `router.replace` when the draft is cleared, and its
+`open()` pushes the route with `router.push`. The create panel calls that `open()` from
+[`navigation-dock.tsx`](../../apps/mobile/src/features/navigation-dock/navigation-dock.tsx), as
+described under [The actions](#the-actions).
+
 Everything else navigates declaratively — tab switches through `NativeTabs`, session transitions
-through the guard and the two `Redirect`s. Note that a SwiftUI `List` cannot host an
+through the guard and the two `Redirect`s, and the template pill through the package's `Trigger`,
+which wraps an Expo Router `Link`. Note that a SwiftUI `List` cannot host an
 `expo-router` `<Link>` (an RN view cannot nest in the native tree), so rows that push a route use
 a SwiftUI `Button` with `router.push` and a hand-drawn disclosure chevron; the reasoning is
 written out in `settings-content.tsx`.

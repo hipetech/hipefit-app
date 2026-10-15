@@ -86,8 +86,8 @@ export interface TemplateSupersetBlockProps extends Omit<
  * a note. The editor's list moves the block as a whole; each member's up and
  * down arrows move it within the block.
  *
- * Plain React Native, for the same reason as the exercise row: it renders
- * inside an `RNHostView` in the sheet's `Host`.
+ * Plain React Native, like the exercise row: it is an item of the editor's
+ * `SortableList`.
  */
 export const TemplateSupersetBlock: React.FC<TemplateSupersetBlockProps> = ({
   block,

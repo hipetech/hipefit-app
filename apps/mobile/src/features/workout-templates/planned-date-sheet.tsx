@@ -45,9 +45,9 @@ export interface PlannedDateSheetProps {
  * `BottomSheet` with a graphical `DatePicker`, Remove Date, and Done. Picking a
  * day applies at once; Done only closes.
  *
- * Host-less, like the exercise picker: the editor form renders it in its
- * SwiftUI tree, so it presents over the editor sheet. Days before today are
- * not offered, since a plan is for a day still ahead.
+ * Host-less, like the exercise picker: `workout-template-editor.tsx` wraps it
+ * in its own `Host` island, which supplies the color scheme. Days before today
+ * are not offered, since a plan is for a day still ahead.
  */
 export const PlannedDateSheet: React.FC<PlannedDateSheetProps> = ({
   isPresented,

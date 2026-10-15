@@ -1,6 +1,8 @@
 import type { NavigationDockViewProps } from '@hipefit/navigation-dock';
+import type React from 'react';
 import { useEffect } from 'react';
 import { AppState, StyleSheet } from 'react-native';
+import { useExpandableAccessory } from '@hipefit/expandable-accessory';
 import { NavigationDockView } from '@hipefit/navigation-dock';
 import { useNavigationContainerRef } from 'expo-router';
 
@@ -16,7 +18,7 @@ import { hapticImpact } from '@/lib/haptics';
 import { useAuthStore } from '@/stores/use-auth-store';
 import { useCustomExerciseSheetStore } from '@/stores/use-custom-exercise-sheet-store';
 import { useNavigationDockStore } from '@/stores/use-navigation-dock-store';
-import { useWorkoutTemplateSheetStore } from '@/stores/use-workout-template-sheet-store';
+import { useWorkoutTemplateDraftStore } from '@/stores/use-workout-template-draft-store';
 
 /**
  * Mount edge to edge: an inset frame shrinks the safe-area insets UIKit hands
@@ -40,18 +42,19 @@ const styles = StyleSheet.create({
  * dismissals below subscribe to something outside React rather than watching
  * state, because the things that should close the panel are events, not renders.
  */
-export const NavigationDock = () => {
+export const NavigationDock: React.FC = () => {
   const expanded = useNavigationDockStore((state) => state.expanded);
   const close = useNavigationDockStore((state) => state.close);
   const openCustomExerciseSheet = useCustomExerciseSheetStore(
     (state) => state.open
   );
-  const openWorkoutTemplateSheet = useWorkoutTemplateSheetStore(
-    (state) => state.open
+  const startWorkoutTemplate = useWorkoutTemplateDraftStore(
+    (state) => state.start
   );
   const reduceMotion = useReduceMotion();
   const colorScheme = useAppColorScheme();
   const navigationRef = useNavigationContainerRef();
+  const { open: openWorkoutTemplate } = useExpandableAccessory();
 
   /*
    * Any navigation closes the panel — a push, a sheet, a deep link, a redirect.
@@ -96,37 +99,46 @@ export const NavigationDock = () => {
   );
 
   /*
-   * New Workout Template and Custom Exercise are the enabled actions, and each
-   * opens its own sheet. Start Workout is disabled natively and never fires, so
-   * any other `id` is ignored rather than guessed at: an unhandled event is how
-   * a stub becomes a silent navigation to the wrong place.
+   * New Workout Template and Custom Exercise are the enabled actions. Start
+   * Workout is disabled natively and never fires, so any other `id` is ignored
+   * rather than guessed at: an unhandled event is how a stub becomes a silent
+   * navigation to the wrong place.
    *
-   * The panel is closed here because the `state` listener above cannot do it.
-   * Both sheets are SwiftUI presentations driven by store state, which emit no
-   * navigation event, and a panel left expanded would keep its modal scrim and
-   * `accessibilityViewIsModal` under the sheet.
+   * New Workout Template starts a draft and opens the editor route. `start()`
+   * leaves an existing draft alone, so with a draft minimized in the tab bar
+   * this reopens it instead of replacing it. The accessory provider's `open()`
+   * pushes the route without checking `active`, which in this render is still
+   * false until `start()` re-renders the provider.
+   *
+   * Custom Exercise opens a SwiftUI sheet driven by store state, which emits
+   * no navigation event, so the `state` listener above cannot close the panel
+   * for it, and a panel left expanded would keep its modal scrim and
+   * `accessibilityViewIsModal` under the sheet. Both branches close the panel
+   * explicitly so neither depends on that listener.
    *
    * The haptic fires here, in the press handler, for the reason recorded in
    * `app/(private)/_layout.tsx`: a store updater must be pure and may run
-   * twice. `hapticImpact` is the intent for a tap that presents a sheet.
+   * twice. `hapticImpact` is the intent for a tap that puts something new on
+   * screen.
    */
   const handleActionPress: NavigationDockViewProps['onActionPress'] = ({
     nativeEvent,
   }) => {
-    let openSheet: () => void;
     switch (nativeEvent.id) {
       case NEW_WORKOUT_TEMPLATE_ACTION_ID:
-        openSheet = openWorkoutTemplateSheet;
-        break;
+        hapticImpact();
+        close();
+        startWorkoutTemplate();
+        openWorkoutTemplate();
+        return;
       case CUSTOM_EXERCISE_ACTION_ID:
-        openSheet = openCustomExerciseSheet;
-        break;
+        hapticImpact();
+        close();
+        openCustomExerciseSheet();
+        return;
       default:
         return;
     }
-    hapticImpact();
-    close();
-    openSheet();
   };
 
   return (

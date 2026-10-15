@@ -223,9 +223,15 @@ const updateExercise = (
   );
 };
 
-export const createWorkoutTemplateDraft = (): WorkoutTemplateDraft => ({
+/**
+ * An empty draft planned for `plannedDate`. The caller passes today's day ID,
+ * so this module stays free of the clock and every operation stays pure.
+ */
+export const createWorkoutTemplateDraft = (
+  plannedDate: string | null = null
+): WorkoutTemplateDraft => ({
   name: '',
-  plannedDate: null,
+  plannedDate,
   exercises: [],
   supersetNotes: {},
   nextId: 1,
@@ -723,8 +729,10 @@ export const toWorkoutTemplateInput = (
   };
 };
 
-/** Whether the user has entered anything that dismissing the sheet would discard. */
+/**
+ * Whether the user has entered anything that discarding would lose. The
+ * planned date does not count: every draft starts with one, and a date alone
+ * is not worth a confirmation.
+ */
 export const hasUnsavedInput = (draft: WorkoutTemplateDraft): boolean =>
-  draft.name.trim().length > 0 ||
-  draft.plannedDate !== null ||
-  draft.exercises.length > 0;
+  draft.name.trim().length > 0 || draft.exercises.length > 0;

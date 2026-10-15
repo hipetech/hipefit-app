@@ -2,7 +2,7 @@
 type: app
 status: current
 area: database
-updated: 2026-10-14
+updated: 2026-10-15
 ---
 
 # Firestore database structure
@@ -237,7 +237,7 @@ do not alter stored documents.
 ### `users/{uid}/workoutTemplates/{id}`
 
 This collection replaces the old routine vocabulary. The app listens to it, shows unarchived
-templates on the Workouts screen, and creates documents from the workout template sheet. It does
+templates on the Workouts screen, and creates documents from the workout template editor. It does
 not edit, archive, or delete them. The journey is in
 [create a workout template](flows/create-routine.md).
 
@@ -324,7 +324,7 @@ listener, edit action, or delete action in the app.
 | `exercises`                | One listener in the exercise service                  | None                                          |
 | `customExerciseCategories` | One listener in the exercise service                  | None                                          |
 | `customExercises`          | One listener in the exercise service                  | Create only, from the custom exercise sheet   |
-| `workoutTemplates`         | One `updatedAt`-desc listener in the template service | Create only, from the workout template sheet  |
+| `workoutTemplates`         | One `updatedAt`-desc listener in the template service | Create only, from the workout template editor |
 | `workouts`                 | None                                                  | None                                          |
 | `bodyMeasurements`         | One newest-first listener in the user service         | Append weigh-in only                          |
 
