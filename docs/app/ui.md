@@ -98,8 +98,8 @@ app color scheme. The two islands are siblings of the list, never nested in it.
 
 The list sits in its own `GestureHandlerRootView`. Gesture Handler recognizes a gesture only beneath
 one, and the editor's comment records why the root view in
-[apps/mobile/app/\_layout.tsx](../../apps/mobile/app/_layout.tsx) may not serve: a
-modal route is presented by its own view controller, so its views are not native
+[apps/mobile/app/\_layout.tsx](../../apps/mobile/app/_layout.tsx) may not serve: as a
+page sheet the route is presented by its own view controller, so its views are not native
 descendants of that root. If the outer root would have served, the nested one is harmless. This
 layout has not been run on a device. If the block drag does not start in the editor, check the
 nested root first.

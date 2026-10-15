@@ -422,12 +422,13 @@ draft. That value controls three things:
 The package presents the expanded route either full screen with Apple Zoom or as a page sheet.
 `WORKOUT_TEMPLATE_PRESENTATION` in `workout-template-expandable.tsx` picks one and is `pageSheet`.
 The provider receives it, and the root layout registers the route with
-`expandedScreenOptions(WORKOUT_TEMPLATE_PRESENTATION)`, which is `presentation: 'modal'` for a page
+`expandedScreenOptions(WORKOUT_TEMPLATE_PRESENTATION)`, which is `presentation: 'modal'`, a page
 sheet, because the package cannot set a screen's presentation itself. Swiping the sheet down pops
-the route and leaves the draft in the store. Apple Zoom does not support sheets, so the pill's
-`ZoomSource` renders its content without a zoom and the editor slides up. With `fullScreen`, the
-pill zooms the editor out, and the editor adds a Minimize button that calls `close()`, because a
-full-screen modal opened from the create panel has no swipe-down.
+the route and leaves the draft in the store, whether the pill or the create panel opened it, and the
+editor has no minimize button. Apple Zoom does not support sheets, so the pill's `ZoomSource` renders
+its content without a zoom and the editor slides up. With `fullScreen` the route would be pushed onto
+the root `Stack` as a `card`: the pill would zoom the editor out and a swipe down would shrink it back,
+while from the create panel it would slide in as a push and the edge swipe would pop it.
 
 `NAVIGATION_DOCK_BOTTOM_INSET` was measured without an accessory and does not include one. Whether
 the open panel overlaps the pill has not been checked on a device.

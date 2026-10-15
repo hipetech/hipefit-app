@@ -12,9 +12,9 @@ import { WorkoutTemplateEditor } from './workout-template-editor';
 
 /**
  * How the template editor is presented. The root layout registers the
- * `workout-template` route with the same value. A page sheet swipes down to
- * minimize; `fullScreen` expands from the pill with Apple Zoom and shows a
- * Minimize button in the editor.
+ * `workout-template` route with the same value. `fullScreen` pushes it, zooming
+ * out of the pill and swiping down to zoom back; a page sheet swipes down to
+ * minimize from either entry point.
  */
 export const WORKOUT_TEMPLATE_PRESENTATION: ExpandedPresentation = 'pageSheet';
 

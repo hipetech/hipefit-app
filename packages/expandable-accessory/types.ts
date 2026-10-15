@@ -2,16 +2,17 @@ import type { Href } from 'expo-router';
 import type { ReactElement, ReactNode } from 'react';
 
 /**
- * How the expanded route is presented. `fullScreen` is a full-screen modal
- * that expands from `ZoomSource` with Apple Zoom. `pageSheet` is a page sheet
- * with no zoom, which Apple Zoom does not support, and it swipes down to
+ * How the expanded route is presented. `fullScreen` pushes it full screen: it
+ * zooms out of `ZoomSource` and swipes down to zoom back, and opened without a
+ * zoom source it slides in and the edge swipe pops it. `pageSheet` is a page
+ * sheet with no zoom, which Apple Zoom does not support, and it swipes down to
  * dismiss.
  */
 export type ExpandedPresentation = 'fullScreen' | 'pageSheet';
 
 /** Stack screen options that present the expanded route. */
 export interface ExpandedScreenOptions {
-  presentation: 'fullScreenModal' | 'modal';
+  presentation: 'card' | 'modal';
 }
 
 export interface AccessoryContentProps {

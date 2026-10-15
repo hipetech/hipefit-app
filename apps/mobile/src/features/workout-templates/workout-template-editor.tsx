@@ -16,7 +16,6 @@ import {
   View,
 } from 'react-native';
 import { Host } from '@expo/ui';
-import { useExpandableAccessory } from '@hipefit/expandable-accessory';
 import { SortableList } from '@hipefit/sortable-list';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -181,13 +180,12 @@ interface RowContext {
 const keyBlock = (block: TemplateExerciseBlock): string => block.key;
 
 /**
- * The workout template editor, the content of the modal route the template
+ * The workout template editor, the content of the route the template
  * accessory expands into: a React Native `SortableList` of exercises, with
- * Cancel, the title, and Save declared as the route's header. As a page sheet
- * it minimizes by swiping down, which pops the route and leaves the draft in
- * its store. Presented full screen it also shows Minimize, which calls the
- * provider's `close()`: the zoom's swipe-down exists only when the pill opened
- * the route, not when the create panel did.
+ * Cancel, the title, and Save declared as the route's header. A gesture
+ * minimizes it, popping the route and leaving the draft in its store: swiping
+ * down after the pill zoomed it open, the edge swipe after the create panel
+ * pushed it, or swiping down as a page sheet.
  * It takes no props and renders only inside `ExpandableAccessory.Provider`.
  *
  * The draft and the UI state that must survive minimizing (edited fields,
@@ -207,7 +205,6 @@ const keyBlock = (block: TemplateExerciseBlock): string => block.key;
  * `UIBarButtonItem` through `unstable_headerRightItems`.
  */
 export const WorkoutTemplateEditor: React.FC = () => {
-  const { presentation, close } = useExpandableAccessory();
   const colorScheme = useAppColorScheme();
   // `metric` until the profile loads, which is the value a new profile is
   // provisioned with.
@@ -670,21 +667,14 @@ export const WorkoutTemplateEditor: React.FC = () => {
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
       <Stack.Toolbar placement="right">
-        {presentation === 'fullScreen' ? (
-          <Stack.Toolbar.Button
-            icon="chevron.down"
-            accessibilityLabel="Minimize"
-            onPress={close}
-          />
-        ) : null}
         <Stack.Toolbar.Button variant="done" disabled={!canSave} onPress={save}>
           Save
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
 
       {/* Gesture Handler recognizes a gesture only beneath a native
-          `GestureHandlerRootView`. The root layout mounts one, but a
-          modal route is presented by its own view controller, so
+          `GestureHandlerRootView`. The root layout mounts one, but as a
+          page sheet the route is presented by its own view controller, so
           its views are not native descendants of that root. This subtree
           mounts its own root so the list's drag gesture is recognized. If the
           outer root would have served, a nested one is harmless. Not yet run

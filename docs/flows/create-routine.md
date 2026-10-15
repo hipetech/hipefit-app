@@ -83,9 +83,8 @@ featured here.", but the Workouts tab has no creation control.
 
 ## Minimizing
 
-The user minimizes the editor by swiping the sheet down, which pops the route and leaves the draft
-in the store. The editor shows no minimize button while it is a page sheet; the
-[bottom accessory](../app/navigation.md#the-bottom-accessory) notes when it does. The store also keeps which fields the user has edited, which note fields are
+The user minimizes the editor by swiping the sheet down, which pops the editor route and leaves the
+draft in the store. The editor has no minimize button. The store also keeps which fields the user has edited, which note fields are
 open, whether Save was pressed, and whether a save is in flight, so the editor reopens as the user
 left it. A save error belongs to one opening of the editor and starts cleared the next time it
 opens.
@@ -96,9 +95,9 @@ Its first line reads New Workout Template. The second line is the trimmed name, 
 the name is blank, and the exercise count, such as "Push Day · 3 exercises". VoiceOver reads the pill
 as one button with the hint "Opens the template editor."
 
-Tapping the pill opens the editor route through the package's `Trigger`, an Expo Router `Link`. The
-pill's Apple Zoom source is inactive, because the zoom does not support sheets, so the editor slides
-up as a sheet. Pressing New Workout Template in the create panel also reopens the minimized draft. There
+Tapping the pill opens the editor route through the package's `Trigger`, an Expo Router `Link`, with
+the pill's content as the Apple Zoom source. The zoom does not support sheets, so it is inactive and
+the editor slides up as a sheet. Pressing New Workout Template in the create panel also reopens the minimized draft. There
 is one draft at a time. The pill has no discard control; the user discards from the editor with
 [Cancel](#alternative-empty-and-error-paths).
 
